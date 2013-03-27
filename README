@@ -1,0 +1,85 @@
+Rockband 3 ProDrum Midi Driver
+by Randommatt
+
+Version 0.1
+
+This userland program uses libusb to gain access to the velocity sensitive 
+data in the rockband 3 wireless usb prodrum controller (with cymbals) and use it as an ALSA 
+MIDI controller. It has a low latency setup so that it can give a fairly 
+good drumming experience. This is an evolution of the Rockband 2 Drum Driver of which I have 
+attached the original README.
+
+Installation:
+Requires libusb and libasound2 dev packages to compile and runtime libraries to run
+It follows the ussual cmmi:
+./configure
+make 
+make install
+
+Execution:
+either run the executable localy: 
+src/rbdrum2midi (you may have to run this as root if you do not have the correct usb permissions)
+or run from terminal:
+rbdrum2midi
+
+Usage:
+connect rbdrumkit wireless dongle (PS3 works, Wii should, xbox probably won't), 
+start rbdrum2midi. This will create an ALSA midiport, start the jack audio server and Hydrogen,
+in the connection window under the alsa tab connect "129:PS3 Joystick Client" to Hydrogen.
+the midi channels are mapped as follows
+
+kick pedal 1: 	midi note 36
+kick pedal 2: 	midi note 42
+red pad : 	midi note 37
+yellow pad:	midi note 38
+yellow Cymbal:	midi note 41
+blue pad:	midi note 39
+blue Cymbal:	midi note 43
+green pad:	midi note 40
+green Cymbal:	midi note 45
+
+This corresponds to the setup for the Hydrogen YamahaVintageKit.
+
+To fix usb permission problems create the file 90-PS3-drumkit.rules with the following line:
+
+SUBSYSTEM=="usb", ATTR{idVendor}=="12ba", ATTR{idProduct}=="0210", GROUP="audio", MODE="0664"
+
+place this file in /etc/udev/rules.d/
+
+and reload the udev deamon.
+
+The original programs' copyrights, disclaimers and limitations still hold.
+
+
+
+
+Rockband 2 Drum Driver
+by Javantea
+
+Version 0.1
+
+This userland program uses libusb to gain access to the velocity sensitive 
+data in the rockband 2 wireless usb drum controller and use it as an ALSA 
+MIDI controller. It has a low latency setup so that it can give a fairly 
+good drumming experience.
+
+The official homepage:
+https://www.altsci.com/concepts/page.php?s=rockband2-drum&p=1
+
+Copyright (C) 2008  Joel R. Voss
+
+This program is free software; you can redistribute it and/or
+modify it under the terms of the GNU General Public License
+as published by the Free Software Foundation; either version 2
+of the License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+USA.
+
