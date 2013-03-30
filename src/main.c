@@ -120,220 +120,220 @@ static struct libusb_transfer *irq_transfer = NULL;
 
 static int find_rbdrum_device(int i)
 {
-	// TODO: Currently the i argument is ignored.
-	//PS3 RB kit
-	devh = libusb_open_device_with_vid_pid(NULL, 0x12ba, 0x0210);
-	//xbox RB kit
-	if(!devh){
-		devh = libusb_open_device_with_vid_pid(NULL, 0x1bad, 0x0003);
-		}
-	//Wìì RB kit??
-	if(!devh){
-		devh = libusb_open_device_with_vid_pid(NULL, 0x1bad, 0x0005);
-		}
-	
-	if(devh){
+    // TODO: Currently the i argument is ignored.
+    //PS3 RB kit
+    devh = libusb_open_device_with_vid_pid(NULL, 0x12ba, 0x0210);
+    //xbox RB kit
+    if(!devh){
+        devh = libusb_open_device_with_vid_pid(NULL, 0x1bad, 0x0003);
+        }
+    //Wìì RB kit??
+    if(!devh){
+        devh = libusb_open_device_with_vid_pid(NULL, 0x1bad, 0x0005);
+        }
+
+    if(devh){
         kit=ROCKBAND;
-		}
-	//PS3 GH kit
-	if(!devh){
-		devh = libusb_open_device_with_vid_pid(NULL, 0x12ba, 0x0120);
+        }
+    //PS3 GH kit
+    if(!devh){
+        devh = libusb_open_device_with_vid_pid(NULL, 0x12ba, 0x0120);
 
         if(devh){
             kit=GUITARHERO;
             }
         }
-		
-	return devh ? 0 : -EIO;
+
+    return devh ? 0 : -EIO;
 }
 
 // IS THIS THE HARDWARE PROBING CODE?
 /*static int print_f0_data(void)
 {
-	unsigned char data[0x10];
-	int r;
-	unsigned int i;
+    unsigned char data[0x10];
+    int r;
+    unsigned int i;
 
-	r = libusb_control_transfer(devh, CTRL_IN, USB_RQ, 0xf0, 0, data,
-		sizeof(data), 0);
-	if (r < 0) {
-		fprintf(stderr, "F0 error %d\n", r);
-		return r;
-	}
-	if ((unsigned int) r < sizeof(data)) {
-		fprintf(stderr, "short read (%d)\n", r);
-		return -1;
-	}
+    r = libusb_control_transfer(devh, CTRL_IN, USB_RQ, 0xf0, 0, data,
+        sizeof(data), 0);
+    if (r < 0) {
+        fprintf(stderr, "F0 error %d\n", r);
+        return r;
+    }
+    if ((unsigned int) r < sizeof(data)) {
+        fprintf(stderr, "short read (%d)\n", r);
+        return -1;
+    }
 
-	printf("F0 data:");
-	for (i = 0; i < sizeof(data); i++)
-		printf("%02x ", data[i]);
-	printf("\n");
-	return 0;
+    printf("F0 data:");
+    for (i = 0; i < sizeof(data); i++)
+        printf("%02x ", data[i]);
+    printf("\n");
+    return 0;
 }
 
 static int set_hwstat(unsigned char data)
 {
-	int r;
+    int r;
 
-	printf("set hwstat to %02x\n", data);
-	r = libusb_control_transfer(devh, CTRL_OUT, USB_RQ, 0x07, 0, &data, 1, 0);
-	if (r < 0) {
-		fprintf(stderr, "set hwstat error %d\n", r);
-		return r;
-	}
-	if ((unsigned int) r < 1) {
-		fprintf(stderr, "short write (%d)", r);
-		return -1;
-	}
+    printf("set hwstat to %02x\n", data);
+    r = libusb_control_transfer(devh, CTRL_OUT, USB_RQ, 0x07, 0, &data, 1, 0);
+    if (r < 0) {
+        fprintf(stderr, "set hwstat error %d\n", r);
+        return r;
+    }
+    if ((unsigned int) r < 1) {
+        fprintf(stderr, "short write (%d)", r);
+        return -1;
+    }
 
-	return 0;
+    return 0;
 }
 
 static int get_hwstat(unsigned char *status)
 {
-	int r;
+    int r;
 
-	r = libusb_control_transfer(devh, CTRL_IN, USB_RQ, 0x07, 0, status, 1, 0);
-	if (r < 0) {
-		fprintf(stderr, "read hwstat error %d\n", r);
-		return r;
-	}
-	if ((unsigned int) r < 1) {
-		fprintf(stderr, "short read (%d)\n", r);
-		return -1;
-	}
+    r = libusb_control_transfer(devh, CTRL_IN, USB_RQ, 0x07, 0, status, 1, 0);
+    if (r < 0) {
+        fprintf(stderr, "read hwstat error %d\n", r);
+        return r;
+    }
+    if ((unsigned int) r < 1) {
+        fprintf(stderr, "short read (%d)\n", r);
+        return -1;
+    }
 
-	printf("hwstat reads %02x\n", *status);
-	return 0;
+    printf("hwstat reads %02x\n", *status);
+    return 0;
 }
 
 static int set_mode(unsigned char data)
 {
-	int r;
-	printf("set mode %02x\n", data);
+    int r;
+    printf("set mode %02x\n", data);
 
-	r = libusb_control_transfer(devh, CTRL_OUT, USB_RQ, 0x4e, 0, &data, 1, 0);
-	if (r < 0) {
-		fprintf(stderr, "set mode error %d\n", r);
-		return r;
-	}
-	if ((unsigned int) r < 1) {
-		fprintf(stderr, "short write (%d)", r);
-		return -1;
-	}
+    r = libusb_control_transfer(devh, CTRL_OUT, USB_RQ, 0x4e, 0, &data, 1, 0);
+    if (r < 0) {
+        fprintf(stderr, "set mode error %d\n", r);
+        return r;
+    }
+    if ((unsigned int) r < 1) {
+        fprintf(stderr, "short write (%d)", r);
+        return -1;
+    }
 
-	return 0;
+    return 0;
 }
 
 static void cb_mode_changed(struct libusb_transfer *transfer)
 {
-	if (transfer->status != LIBUSB_TRANSFER_COMPLETED) {
-		fprintf(stderr, "mode change transfer not completed!\n");
-		do_exit = 2;
-	}
+    if (transfer->status != LIBUSB_TRANSFER_COMPLETED) {
+        fprintf(stderr, "mode change transfer not completed!\n");
+        do_exit = 2;
+    }
 
-	printf("async cb_mode_changed length=%d actual_length=%d\n",
-		transfer->length, transfer->actual_length);
-	if (next_state() < 0)
-		do_exit = 2;
+    printf("async cb_mode_changed length=%d actual_length=%d\n",
+        transfer->length, transfer->actual_length);
+    if (next_state() < 0)
+        do_exit = 2;
 }
 
 static int set_mode_async(unsigned char data)
 {
-	unsigned char *buf = malloc(LIBUSB_CONTROL_SETUP_SIZE + 1);
-	struct libusb_transfer *transfer;
+    unsigned char *buf = malloc(LIBUSB_CONTROL_SETUP_SIZE + 1);
+    struct libusb_transfer *transfer;
 
-	if (!buf)
-		return -ENOMEM;
-	
-	transfer = libusb_alloc_transfer(0);
-	if (!transfer) {
-		free(buf);
-		return -ENOMEM;
-	}
+    if (!buf)
+        return -ENOMEM;
 
-	printf("async set mode %02x\n", data);
-	libusb_fill_control_setup(buf, CTRL_OUT, USB_RQ, 0x4e, 0, 1);
-	buf[LIBUSB_CONTROL_SETUP_SIZE] = data;
-	libusb_fill_control_transfer(transfer, devh, buf, cb_mode_changed, NULL,
-		1000);
+    transfer = libusb_alloc_transfer(0);
+    if (!transfer) {
+        free(buf);
+        return -ENOMEM;
+    }
 
-	transfer->flags = LIBUSB_TRANSFER_SHORT_NOT_OK
-		| LIBUSB_TRANSFER_FREE_BUFFER | LIBUSB_TRANSFER_FREE_TRANSFER;
-	return libusb_submit_transfer(transfer);
+    printf("async set mode %02x\n", data);
+    libusb_fill_control_setup(buf, CTRL_OUT, USB_RQ, 0x4e, 0, 1);
+    buf[LIBUSB_CONTROL_SETUP_SIZE] = data;
+    libusb_fill_control_transfer(transfer, devh, buf, cb_mode_changed, NULL,
+        1000);
+
+    transfer->flags = LIBUSB_TRANSFER_SHORT_NOT_OK
+        | LIBUSB_TRANSFER_FREE_BUFFER | LIBUSB_TRANSFER_FREE_TRANSFER;
+    return libusb_submit_transfer(transfer);
 }*/
 
 static int do_sync_intr(unsigned char *data)
 {
-	int r;
-	int transferred;
+    int r;
+    int transferred;
 
-	r = libusb_interrupt_transfer(devh, EP_INTR, data, INTR_LENGTH,
-		&transferred, 1000);
-	if (r < 0) {
-		fprintf(stderr, "intr error %d\n", r);
-		return r;
+    r = libusb_interrupt_transfer(devh, EP_INTR, data, INTR_LENGTH,
+        &transferred, 1000);
+    if (r < 0) {
+        fprintf(stderr, "intr error %d\n", r);
+        return r;
     }
-	if (transferred < INTR_LENGTH) {
-		fprintf(stderr, "short read (%d)\n", r);
-		return -1;
-	}
+    if (transferred < INTR_LENGTH) {
+        fprintf(stderr, "short read (%d)\n", r);
+        return -1;
+    }
 
-	printf("recv interrupt %04x\n", *((uint16_t *) data));
-	return 0;
+    printf("recv interrupt %04x\n", *((uint16_t *) data));
+    return 0;
 }
 
 static int sync_intr(unsigned char type)
-{	
-	int r;
-	unsigned char data[INTR_LENGTH];
+{
+    int r;
+    unsigned char data[INTR_LENGTH];
 
-	while (1) {
-		r = do_sync_intr(data);
-		if (r < 0)
-			return r;
-		if (data[0] == type)
-			return 0;
-	}
+    while (1) {
+        r = do_sync_intr(data);
+        if (r < 0)
+            return r;
+        if (data[0] == type)
+            return 0;
+    }
 }
 
 /*static int next_state(void)
 {
-	int r = 0;
-	printf("old state: %d\n", state);
-	switch (state) {
-	case STATE_AWAIT_IRQ_FINGER_REMOVED:
-		state = STATE_AWAIT_MODE_CHANGE_AWAIT_FINGER_ON;
-		r = set_mode_async(MODE_AWAIT_FINGER_ON);
-		break;
-	case STATE_AWAIT_MODE_CHANGE_AWAIT_FINGER_ON:
-		state = STATE_AWAIT_IRQ_FINGER_DETECTED;
-		break;
-	case STATE_AWAIT_IRQ_FINGER_DETECTED:
-		state = STATE_AWAIT_MODE_CHANGE_CAPTURE;
-		r = set_mode_async(MODE_CAPTURE);
-		break;
-	case STATE_AWAIT_MODE_CHANGE_CAPTURE:
-		state = STATE_AWAIT_IMAGE;
-		break;
-	case STATE_AWAIT_IMAGE:
-		state = STATE_AWAIT_MODE_CHANGE_AWAIT_FINGER_OFF;
-		r = set_mode_async(MODE_AWAIT_FINGER_OFF);
-		break;
-	case STATE_AWAIT_MODE_CHANGE_AWAIT_FINGER_OFF:
-		state = STATE_AWAIT_IRQ_FINGER_REMOVED;
-		break;
-	default:
-		printf("unrecognised state %d\n", state);
-	}
-	if (r < 0) {
-		fprintf(stderr, "error detected changing state\n");
-		return r;
-	}
+    int r = 0;
+    printf("old state: %d\n", state);
+    switch (state) {
+    case STATE_AWAIT_IRQ_FINGER_REMOVED:
+        state = STATE_AWAIT_MODE_CHANGE_AWAIT_FINGER_ON;
+        r = set_mode_async(MODE_AWAIT_FINGER_ON);
+        break;
+    case STATE_AWAIT_MODE_CHANGE_AWAIT_FINGER_ON:
+        state = STATE_AWAIT_IRQ_FINGER_DETECTED;
+        break;
+    case STATE_AWAIT_IRQ_FINGER_DETECTED:
+        state = STATE_AWAIT_MODE_CHANGE_CAPTURE;
+        r = set_mode_async(MODE_CAPTURE);
+        break;
+    case STATE_AWAIT_MODE_CHANGE_CAPTURE:
+        state = STATE_AWAIT_IMAGE;
+        break;
+    case STATE_AWAIT_IMAGE:
+        state = STATE_AWAIT_MODE_CHANGE_AWAIT_FINGER_OFF;
+        r = set_mode_async(MODE_AWAIT_FINGER_OFF);
+        break;
+    case STATE_AWAIT_MODE_CHANGE_AWAIT_FINGER_OFF:
+        state = STATE_AWAIT_IRQ_FINGER_REMOVED;
+        break;
+    default:
+        printf("unrecognised state %d\n", state);
+    }
+    if (r < 0) {
+        fprintf(stderr, "error detected changing state\n");
+        return r;
+    }
 
-	printf("new state: %d\n", state);
-	return 0;
+    printf("new state: %d\n", state);
+    return 0;
 }*/
 
 static void cb_irq_rb(struct libusb_transfer *transfer)
@@ -356,59 +356,59 @@ static void cb_irq_rb(struct libusb_transfer *transfer)
         bass2   = RB_BLACK; //Black Pedal
         bass_down = 0;
 
-		// Events:
-		// Down
-		if (red && !drum_state[0]) {
-			velocity = red * 2;
-			velocity = min(max(velocity, 0), 127);
-			noteup(g_seq, g_port, DEFAULT_CHANNEL, DRUM_MIDI.red, 0);
-			notedown(g_seq, g_port, DEFAULT_CHANNEL, DRUM_MIDI.red, velocity);
-			}
+        // Events:
+        // Down
+        if (red && !drum_state[0]) {
+            velocity = red * 2;
+            velocity = min(max(velocity, 0), 127);
+            noteup(g_seq, g_port, DEFAULT_CHANNEL, DRUM_MIDI.red, 0);
+            notedown(g_seq, g_port, DEFAULT_CHANNEL, DRUM_MIDI.red, velocity);
+            }
         //yellow pad and cymbal
-		// Events:
-		// Down
-		if (yel && !drum_state[1]) {
-			velocity = yel * 2;
-			velocity = min(max(velocity, 0), 127);
-			if(RB_CYMBAL){
-				noteup(g_seq, g_port, DEFAULT_CHANNEL, DRUM_MIDI.yellow_cymbal, 0);
-				notedown(g_seq, g_port, DEFAULT_CHANNEL, DRUM_MIDI.yellow_cymbal, velocity);
-				}
-			else{
-				noteup(g_seq, g_port, DEFAULT_CHANNEL, DRUM_MIDI.yellow, 0);
-				notedown(g_seq, g_port, DEFAULT_CHANNEL, DRUM_MIDI.yellow, velocity);
-				}
-			}
+        // Events:
+        // Down
+        if (yel && !drum_state[1]) {
+            velocity = yel * 2;
+            velocity = min(max(velocity, 0), 127);
+            if(RB_CYMBAL){
+                noteup(g_seq, g_port, DEFAULT_CHANNEL, DRUM_MIDI.yellow_cymbal, 0);
+                notedown(g_seq, g_port, DEFAULT_CHANNEL, DRUM_MIDI.yellow_cymbal, velocity);
+                }
+            else{
+                noteup(g_seq, g_port, DEFAULT_CHANNEL, DRUM_MIDI.yellow, 0);
+                notedown(g_seq, g_port, DEFAULT_CHANNEL, DRUM_MIDI.yellow, velocity);
+                }
+            }
         //Blue pad and cymbal
-		// Events:
-		// Down
-		if (blu && !drum_state[2]) {
-			velocity = blu * 2;
-			velocity = min(max(velocity, 0), 127);
-			if(RB_CYMBAL){
-				noteup(g_seq, g_port, DEFAULT_CHANNEL, DRUM_MIDI.blue_cymbal, 0);
-				notedown(g_seq, g_port, DEFAULT_CHANNEL, DRUM_MIDI.blue_cymbal, velocity);
-				}
-			else{
-				noteup(g_seq, g_port, DEFAULT_CHANNEL, DRUM_MIDI.blue, 0);
-				notedown(g_seq, g_port, DEFAULT_CHANNEL, DRUM_MIDI.blue, velocity);
-				}
-			}
+        // Events:
+        // Down
+        if (blu && !drum_state[2]) {
+            velocity = blu * 2;
+            velocity = min(max(velocity, 0), 127);
+            if(RB_CYMBAL){
+                noteup(g_seq, g_port, DEFAULT_CHANNEL, DRUM_MIDI.blue_cymbal, 0);
+                notedown(g_seq, g_port, DEFAULT_CHANNEL, DRUM_MIDI.blue_cymbal, velocity);
+                }
+            else{
+                noteup(g_seq, g_port, DEFAULT_CHANNEL, DRUM_MIDI.blue, 0);
+                notedown(g_seq, g_port, DEFAULT_CHANNEL, DRUM_MIDI.blue, velocity);
+                }
+            }
         //Green pad and Cymbal
-		// Events:
-		// Down
-		if (grn && !drum_state[3]) {
-			velocity = grn * 2;
-			velocity = min(max(velocity, 0), 127);
-			if(RB_CYMBAL){
-				noteup(g_seq, g_port, DEFAULT_CHANNEL, DRUM_MIDI.green_cymbal, 0);
-				notedown(g_seq, g_port, DEFAULT_CHANNEL, DRUM_MIDI.green_cymbal, velocity);
-				}
-			else{
-				noteup(g_seq, g_port, DEFAULT_CHANNEL, DRUM_MIDI.green, 0);
-				notedown(g_seq, g_port, DEFAULT_CHANNEL, DRUM_MIDI.green, velocity);
-				}
-			}
+        // Events:
+        // Down
+        if (grn && !drum_state[3]) {
+            velocity = grn * 2;
+            velocity = min(max(velocity, 0), 127);
+            if(RB_CYMBAL){
+                noteup(g_seq, g_port, DEFAULT_CHANNEL, DRUM_MIDI.green_cymbal, 0);
+                notedown(g_seq, g_port, DEFAULT_CHANNEL, DRUM_MIDI.green_cymbal, velocity);
+                }
+            else{
+                noteup(g_seq, g_port, DEFAULT_CHANNEL, DRUM_MIDI.green, 0);
+                notedown(g_seq, g_port, DEFAULT_CHANNEL, DRUM_MIDI.green, velocity);
+                }
+            }
         // Pedal 1 (orange)
         if (bass != drum_state[4]) {
             // Events:
@@ -439,21 +439,21 @@ static void cb_irq_rb(struct libusb_transfer *transfer)
                 noteup(g_seq, g_port, DEFAULT_CHANNEL, DRUM_MIDI.black_bass, 0);
                 }
             }
-		//now that the time-critical stuff is done, lets do the assignments
-		drum_state[0] = red;
-		drum_state[1] = yel;
-		drum_state[2] = blu;
-		drum_state[3] = grn;
-		drum_state[4] = bass;
-		drum_state[5] = bass2;
-		if (verbose && (red || yel || blu || grn || bass_down)) {
-			printf("%s %s %s %s %s %s \n", red>0?"VV":"  ", yel>0?"VV":"  ", blu>0?"VV":"  ", grn>0?"VV":"  ", bass>0?"VV":"  ", bass2>0?"VV":"  ");
-			printf("%02i %02i %02i %02i %02i %02i\n", red, yel, blu, grn, bass, bass2);
-			printf("%02x%02x%02x%02x %02x%02x%02x%02x %02x%02x%02x%02x %02x%02x%02x%02x %02x%02x%02x%02x %02x%02x%02x%02x %02x%02x%02x\n",
-			buf[0], buf[1], buf[2], buf[3], buf[4], buf[5], buf[6], buf[7], buf[8], buf[9],
-			buf[10], buf[11], buf[12], buf[13], buf[14], buf[15], buf[16], buf[17], buf[18], buf[19],
-			buf[20], buf[21], buf[22], buf[23], buf[24], buf[25], buf[26]);
-		}
+        //now that the time-critical stuff is done, lets do the assignments
+        drum_state[0] = red;
+        drum_state[1] = yel;
+        drum_state[2] = blu;
+        drum_state[3] = grn;
+        drum_state[4] = bass;
+        drum_state[5] = bass2;
+        if (verbose && (red || yel || blu || grn || bass_down)) {
+            printf("%s %s %s %s %s %s \n", red>0?"VV":"  ", yel>0?"VV":"  ", blu>0?"VV":"  ", grn>0?"VV":"  ", bass>0?"VV":"  ", bass2>0?"VV":"  ");
+            printf("%02i %02i %02i %02i %02i %02i\n", red, yel, blu, grn, bass, bass2);
+            printf("%02x%02x%02x%02x %02x%02x%02x%02x %02x%02x%02x%02x %02x%02x%02x%02x %02x%02x%02x%02x %02x%02x%02x%02x %02x%02x%02x\n",
+            buf[0], buf[1], buf[2], buf[3], buf[4], buf[5], buf[6], buf[7], buf[8], buf[9],
+            buf[10], buf[11], buf[12], buf[13], buf[14], buf[15], buf[16], buf[17], buf[18], buf[19],
+            buf[20], buf[21], buf[22], buf[23], buf[24], buf[25], buf[26]);
+        }
 
     if (verbose && (g_i++ % 200 == 199)) {
         printf("%02x%02x%02x%02x %02x%02x%02x%02x %02x%02x%02x%02x %02x%02x%02x%02x %02x%02x%02x%02x %02x%02x%02x%02x %02x%02x%02x kit type=%d\n",
@@ -488,33 +488,33 @@ static void cb_irq_rb1(struct libusb_transfer *transfer)
     bass_down = 0;
     velocity = 125;
 
-	// Events:
-	// Down
-	if (red && !drum_state[0]) {
-		noteup(g_seq, g_port, DEFAULT_CHANNEL, DRUM_MIDI.red, 0);
-		notedown(g_seq, g_port, DEFAULT_CHANNEL, DRUM_MIDI.red, velocity);
-		}
+    // Events:
+    // Down
+    if (red && !drum_state[0]) {
+        noteup(g_seq, g_port, DEFAULT_CHANNEL, DRUM_MIDI.red, 0);
+        notedown(g_seq, g_port, DEFAULT_CHANNEL, DRUM_MIDI.red, velocity);
+        }
     //yellow pad and cymbal
-	// Events:
-	// Down
-	if (yel && !drum_state[1]) {
-		noteup(g_seq, g_port, DEFAULT_CHANNEL, DRUM_MIDI.yellow, 0);
-		notedown(g_seq, g_port, DEFAULT_CHANNEL, DRUM_MIDI.yellow, velocity);
-		}
+    // Events:
+    // Down
+    if (yel && !drum_state[1]) {
+        noteup(g_seq, g_port, DEFAULT_CHANNEL, DRUM_MIDI.yellow, 0);
+        notedown(g_seq, g_port, DEFAULT_CHANNEL, DRUM_MIDI.yellow, velocity);
+        }
     //Blue pad and cymbal
-	// Events:
-	// Down
-	if (blu && !drum_state[2]) {
-		noteup(g_seq, g_port, DEFAULT_CHANNEL, DRUM_MIDI.blue, 0);
-		notedown(g_seq, g_port, DEFAULT_CHANNEL, DRUM_MIDI.blue, velocity);
-		}
+    // Events:
+    // Down
+    if (blu && !drum_state[2]) {
+        noteup(g_seq, g_port, DEFAULT_CHANNEL, DRUM_MIDI.blue, 0);
+        notedown(g_seq, g_port, DEFAULT_CHANNEL, DRUM_MIDI.blue, velocity);
+        }
     //Green pad and Cymbal
-	// Events:
-	// Down
-	if (!drum_state[3]) {
-		noteup(g_seq, g_port, DEFAULT_CHANNEL, DRUM_MIDI.green, 0);
-		notedown(g_seq, g_port, DEFAULT_CHANNEL, DRUM_MIDI.green, velocity);
-		}
+    // Events:
+    // Down
+    if (!drum_state[3]) {
+        noteup(g_seq, g_port, DEFAULT_CHANNEL, DRUM_MIDI.green, 0);
+        notedown(g_seq, g_port, DEFAULT_CHANNEL, DRUM_MIDI.green, velocity);
+        }
     // Pedal 1 (orange)
     if (bass != drum_state[4]) {
         // Events:
@@ -528,12 +528,12 @@ static void cb_irq_rb1(struct libusb_transfer *transfer)
             noteup(g_seq, g_port, DEFAULT_CHANNEL, DRUM_MIDI.orange_bass, 0);
             }
         }
-	//now that the time-critical stuff is done, lets do the assignments
-	drum_state[0] = red;
-	drum_state[1] = yel;
-	drum_state[2] = blu;
-	drum_state[3] = grn;
-	drum_state[4] = bass;
+    //now that the time-critical stuff is done, lets do the assignments
+    drum_state[0] = red;
+    drum_state[1] = yel;
+    drum_state[2] = blu;
+    drum_state[3] = grn;
+    drum_state[4] = bass;
      if (verbose && (red || yel || blu || grn || bass_down)) {
         printf("%s %s %s %s %s %s \n", red>0?"VV":"  ", yel>0?"VV":"  ", blu>0?"VV":"  ", grn>0?"VV":"  ", bass>0?"VV":"  ", bass2>0?"VV":"  ");
         printf("%02i %02i %02i %02i %02i %02i\n", red, yel, blu, grn, bass, bass2);
@@ -572,67 +572,67 @@ static void cb_irq_gh(struct libusb_transfer *transfer)
     bass    = GH_PEDAL; //Black Pedal
     bass_down = 0;
     //guitar hero world tour drumset
-		// Events:
-		// Down
-		if (red && !drum_state[0]) {
-			velocity = red * 2;
-			velocity = min(max(velocity, 0), 127);
-			noteup(g_seq, g_port, DEFAULT_CHANNEL, DRUM_MIDI.red, 0);
-			notedown(g_seq, g_port, DEFAULT_CHANNEL, DRUM_MIDI.red, velocity);
-			}
+        // Events:
+        // Down
+        if (red && !drum_state[0]) {
+            velocity = red * 2;
+            velocity = min(max(velocity, 0), 127);
+            noteup(g_seq, g_port, DEFAULT_CHANNEL, DRUM_MIDI.red, 0);
+            notedown(g_seq, g_port, DEFAULT_CHANNEL, DRUM_MIDI.red, velocity);
+            }
         //Yellow Cymabl
-		// Events:
-		// Down
-		if (yel && !drum_state[1]) {
-			velocity = yel * 2;
-			velocity = min(max(velocity, 0), 127);
-			noteup(g_seq, g_port, DEFAULT_CHANNEL, DRUM_MIDI.yellow_cymbal, 0);
-			notedown(g_seq, g_port, DEFAULT_CHANNEL, DRUM_MIDI.yellow_cymbal, velocity);
-			}
+        // Events:
+        // Down
+        if (yel && !drum_state[1]) {
+            velocity = yel * 2;
+            velocity = min(max(velocity, 0), 127);
+            noteup(g_seq, g_port, DEFAULT_CHANNEL, DRUM_MIDI.yellow_cymbal, 0);
+            notedown(g_seq, g_port, DEFAULT_CHANNEL, DRUM_MIDI.yellow_cymbal, velocity);
+            }
         // Blue pad
-		// Events:
-		// Down
-		if (blu && !drum_state[2]) {
-			velocity = blu * 2;
-			velocity = min(max(velocity, 0), 127);
-			noteup(g_seq, g_port, DEFAULT_CHANNEL, DRUM_MIDI.blue, 0);
-			notedown(g_seq, g_port, DEFAULT_CHANNEL, DRUM_MIDI.blue, velocity);
-			}
+        // Events:
+        // Down
+        if (blu && !drum_state[2]) {
+            velocity = blu * 2;
+            velocity = min(max(velocity, 0), 127);
+            noteup(g_seq, g_port, DEFAULT_CHANNEL, DRUM_MIDI.blue, 0);
+            notedown(g_seq, g_port, DEFAULT_CHANNEL, DRUM_MIDI.blue, velocity);
+            }
         // Orange Cymbal
-		// Events:
-		// Down
-		if (orange && !drum_state[7]) {
-			velocity = orange * 2;
-			velocity = min(max(velocity, 0), 127);
-			noteup(g_seq, g_port, DEFAULT_CHANNEL, DRUM_MIDI.orange_cymbal, 0);
-			notedown(g_seq, g_port, DEFAULT_CHANNEL, DRUM_MIDI.orange_cymbal, velocity);
-			}
+        // Events:
+        // Down
+        if (orange && !drum_state[7]) {
+            velocity = orange * 2;
+            velocity = min(max(velocity, 0), 127);
+            noteup(g_seq, g_port, DEFAULT_CHANNEL, DRUM_MIDI.orange_cymbal, 0);
+            notedown(g_seq, g_port, DEFAULT_CHANNEL, DRUM_MIDI.orange_cymbal, velocity);
+            }
         //Green pad
-		// Events:
-		// Down
-		if (grn && !drum_state[3]) {
-			velocity = grn * 2;
-			velocity = min(max(velocity, 0), 127);
-			noteup(g_seq, g_port, DEFAULT_CHANNEL, DRUM_MIDI.green, 0);
-			notedown(g_seq, g_port, DEFAULT_CHANNEL, DRUM_MIDI.green, velocity);
-			}
+        // Events:
+        // Down
+        if (grn && !drum_state[3]) {
+            velocity = grn * 2;
+            velocity = min(max(velocity, 0), 127);
+            noteup(g_seq, g_port, DEFAULT_CHANNEL, DRUM_MIDI.green, 0);
+            notedown(g_seq, g_port, DEFAULT_CHANNEL, DRUM_MIDI.green, velocity);
+            }
         //Pedal
-		// Events:
-		// Down
-		if (bass && !drum_state[6]) {
-			bass_down = 1;
-			velocity = bass * 2;
-			velocity = min(max(velocity, 0), 127);
-			noteup(g_seq, g_port, DEFAULT_CHANNEL, DRUM_MIDI.black_bass, 0);
-			notedown(g_seq, g_port, DEFAULT_CHANNEL, DRUM_MIDI.black_bass, velocity);
-			}
-		drum_state[0] = red;
-		drum_state[1] = yel;
-		drum_state[2] = blu;
-		drum_state[3] = grn;
-		drum_state[6] = bass;
-		if (verbose && (red || yel || blu || grn || bass_down || orange)) {
-			printf("%s %s %s %s %s %s\n", red>0?"VV":"  ", yel>0?"VV":"  ", blu>0?"VV":"  ", grn>0?"VV":"  ", bass>0?"VV":"  ", orange>0?"VV":"  ");
+        // Events:
+        // Down
+        if (bass && !drum_state[6]) {
+            bass_down = 1;
+            velocity = bass * 2;
+            velocity = min(max(velocity, 0), 127);
+            noteup(g_seq, g_port, DEFAULT_CHANNEL, DRUM_MIDI.black_bass, 0);
+            notedown(g_seq, g_port, DEFAULT_CHANNEL, DRUM_MIDI.black_bass, velocity);
+            }
+        drum_state[0] = red;
+        drum_state[1] = yel;
+        drum_state[2] = blu;
+        drum_state[3] = grn;
+        drum_state[6] = bass;
+        if (verbose && (red || yel || blu || grn || bass_down || orange)) {
+            printf("%s %s %s %s %s %s\n", red>0?"VV":"  ", yel>0?"VV":"  ", blu>0?"VV":"  ", grn>0?"VV":"  ", bass>0?"VV":"  ", orange>0?"VV":"  ");
             printf("%02i %02i %02i %02i %02i %02i\n", red, yel, blu, grn, bass, orange);
             printf("%02x%02x%02x%02x %02x%02x%02x%02x %02x%02x%02x%02x %02x%02x%02x%02x %02x%02x%02x%02x %02x%02x%02x%02x %02x%02x%02x\n",
             buf[0], buf[1], buf[2], buf[3], buf[4], buf[5], buf[6], buf[7], buf[8], buf[9],
@@ -652,18 +652,40 @@ static void cb_irq_gh(struct libusb_transfer *transfer)
         do_exit = 2;
 }
 
+static int init_capture(void)
+{
+    int r;
+
+    r = libusb_submit_transfer(irq_transfer);
+    if (r < 0)
+        return r;
+
+    /*r = libusb_submit_transfer(img_transfer);
+    if (r < 0) {
+        libusb_cancel_transfer(irq_transfer);
+        while (irq_transfer)
+            if (libusb_handle_events(NULL) < 0)
+                break;
+        return r;
+    }*/
+
+    /* start state machine */
+    state = 6; //STATE_AWAIT_IRQ_FINGER_REMOVED;
+    return state; //next_state();
+}
+
 static int alloc_transfers(int type)
 {
-	/*img_transfer = libusb_alloc_transfer(0);
-	if (!img_transfer)
-		return -ENOMEM;*/
-	
-	irq_transfer = libusb_alloc_transfer(0);
-	if (!irq_transfer)
-		return -ENOMEM;
+    /*img_transfer = libusb_alloc_transfer(0);
+    if (!img_transfer)
+        return -ENOMEM;*/
 
-	/*libusb_fill_bulk_transfer(img_transfer, devh, EP_DATA, imgbuf,
-		sizeof(imgbuf), cb_img, NULL, 0);*/
+    irq_transfer = libusb_alloc_transfer(0);
+    if (!irq_transfer)
+        return -ENOMEM;
+
+    /*libusb_fill_bulk_transfer(img_transfer, devh, EP_DATA, imgbuf,
+        sizeof(imgbuf), cb_img, NULL, 0);*/
     if(type == ROCKBAND){
         libusb_fill_interrupt_transfer(irq_transfer, devh, EP_INTR, irqbuf,
             sizeof(irqbuf), cb_irq_rb, NULL, 0);
@@ -685,7 +707,7 @@ static int alloc_transfers(int type)
         printf("error in drum type! %i\n",type);
     }
 
-	return 0;
+    return 0;
 }
 
 /*
@@ -696,112 +718,112 @@ http://www.alsa-project.org/alsa-doc/alsa-lib/seq.html
 // create a new client
 snd_seq_t *open_client()
 {
-	snd_seq_t *handle;
-	int err;
-	err = snd_seq_open(&handle, "default", SND_SEQ_OPEN_OUTPUT, 0);
-	if (err < 0)
-		return NULL;
-	snd_seq_set_client_name(handle, "PS3 Joystick Client");
-	return handle;
+    snd_seq_t *handle;
+    int err;
+    err = snd_seq_open(&handle, "default", SND_SEQ_OPEN_OUTPUT, 0);
+    if (err < 0)
+        return NULL;
+    snd_seq_set_client_name(handle, "PS3 Joystick Client");
+    return handle;
 }
 
 // create a new port; return the port id
 // port will be writable and accept the write-subscription.
 int my_new_port(snd_seq_t *handle)
 {
-	// |SND_SEQ_PORT_CAP_WRITE||SND_SEQ_PORT_CAP_SUBS_WRITE
-	return snd_seq_create_simple_port(handle, "PS3 Joystick port 2",
-		SND_SEQ_PORT_CAP_READ|SND_SEQ_PORT_CAP_SUBS_READ,
-		SND_SEQ_PORT_TYPE_MIDI_GENERIC | SND_SEQ_PORT_TYPE_APPLICATION);
+    // |SND_SEQ_PORT_CAP_WRITE||SND_SEQ_PORT_CAP_SUBS_WRITE
+    return snd_seq_create_simple_port(handle, "PS3 Joystick port 2",
+        SND_SEQ_PORT_CAP_READ|SND_SEQ_PORT_CAP_SUBS_READ,
+        SND_SEQ_PORT_TYPE_MIDI_GENERIC | SND_SEQ_PORT_TYPE_APPLICATION);
 }
 
 // create a queue and return its id
 int my_queue(snd_seq_t *handle)
 {
-	return snd_seq_alloc_named_queue(handle, "PS3 Joystick queue");
+    return snd_seq_alloc_named_queue(handle, "PS3 Joystick queue");
 }
 
 // set the tempo and pulse per quarter note
 void set_tempo(snd_seq_t *handle, int q)
 {
-	snd_seq_queue_tempo_t *tempo;
-	snd_seq_queue_tempo_alloca(&tempo);
-	perror("snd_seq_queue_tempo_alloca");
-	snd_seq_queue_tempo_set_tempo(tempo, 1000000); // 60 BPM
-	perror("snd_seq_queue_tempo_set_tempo");
-	snd_seq_queue_tempo_set_ppq(tempo, 48); // 48 PPQ
-	perror("snd_seq_queue_tempo_set_ppq");
-	snd_seq_set_queue_tempo(handle, q, tempo);
-	perror("snd_seq_set_queue_tempo");
+    snd_seq_queue_tempo_t *tempo;
+    snd_seq_queue_tempo_alloca(&tempo);
+    perror("snd_seq_queue_tempo_alloca");
+    snd_seq_queue_tempo_set_tempo(tempo, 1000000); // 60 BPM
+    perror("snd_seq_queue_tempo_set_tempo");
+    snd_seq_queue_tempo_set_ppq(tempo, 48); // 48 PPQ
+    perror("snd_seq_queue_tempo_set_ppq");
+    snd_seq_set_queue_tempo(handle, q, tempo);
+    perror("snd_seq_set_queue_tempo");
 }
 
 // change the tempo on the fly
 int change_tempo(snd_seq_t *handle, int my_client_id, int my_port_id, int q, unsigned int tempo)
 {
-	snd_seq_event_t ev;
-	snd_seq_ev_clear(&ev);
-	ev.dest.client = SND_SEQ_CLIENT_SYSTEM;
-	ev.dest.port = SND_SEQ_PORT_SYSTEM_TIMER;
-	ev.source.client = my_client_id;
-	ev.source.port = my_port_id;
-	ev.queue = SND_SEQ_QUEUE_DIRECT; // no scheduling
-	ev.data.queue.queue = q;        // affected queue id
-	ev.data.queue.param.value = tempo;    // new tempo in microsec.
-	return snd_seq_event_output(handle, &ev);
+    snd_seq_event_t ev;
+    snd_seq_ev_clear(&ev);
+    ev.dest.client = SND_SEQ_CLIENT_SYSTEM;
+    ev.dest.port = SND_SEQ_PORT_SYSTEM_TIMER;
+    ev.source.client = my_client_id;
+    ev.source.port = my_port_id;
+    ev.queue = SND_SEQ_QUEUE_DIRECT; // no scheduling
+    ev.data.queue.queue = q;        // affected queue id
+    ev.data.queue.param.value = tempo;    // new tempo in microsec.
+    return snd_seq_event_output(handle, &ev);
 }
 
 static void program_change(snd_seq_t *seq, int port, int chan, int program)
 {
-	snd_seq_event_t ev;
+    snd_seq_event_t ev;
 
-	snd_seq_ev_clear(&ev);
-	snd_seq_ev_set_source(&ev, port);
-	snd_seq_ev_set_subs(&ev);
-	snd_seq_ev_set_direct(&ev);
-	//... // set event type, data, so on..
-	//set_event_time(&ev, Mf_currtime);
-	//snd_seq_ev_schedule_tick(&ev, q, 0, Mf_currtime);
+    snd_seq_ev_clear(&ev);
+    snd_seq_ev_set_source(&ev, port);
+    snd_seq_ev_set_subs(&ev);
+    snd_seq_ev_set_direct(&ev);
+    //... // set event type, data, so on..
+    //set_event_time(&ev, Mf_currtime);
+    //snd_seq_ev_schedule_tick(&ev, q, 0, Mf_currtime);
 
-	snd_seq_ev_set_pgmchange(&ev, chan, program);
-	
-	int rc = snd_seq_event_output(seq, &ev);
-	if (rc < 0) {
-		printf("written = %i (%s)\n", rc, snd_strerror(rc));
-	}
-	snd_seq_drain_output(seq);
+    snd_seq_ev_set_pgmchange(&ev, chan, program);
+
+    int rc = snd_seq_event_output(seq, &ev);
+    if (rc < 0) {
+        printf("written = %i (%s)\n", rc, snd_strerror(rc));
+    }
+    snd_seq_drain_output(seq);
 }
 
 // A lot easier:
 void subscribe_output(snd_seq_t *seq, int client, int port)
 {
-	snd_seq_connect_to(seq, DEFAULT_CHANNEL, client, port);
+    snd_seq_connect_to(seq, DEFAULT_CHANNEL, client, port);
 }
 
 /*// send an event to our subscriber.
 // since we want realtime instead of tick clock, we replace the function.
 void schedule_event(snd_seq_t *seq, int my_port_id, int q)
 {
-	snd_seq_event_t ev;
+    snd_seq_event_t ev;
 
-	snd_seq_ev_clear(&ev);
-	snd_seq_ev_set_source(&ev, my_port_id);
-	snd_seq_ev_set_subs(&ev);
-	// this t makes no sense...
-	snd_seq_real_time_t t;
-	// Use realtime instead of tick clock.
-	snd_seq_ev_schedule_real(&ev, q, 0, &t);
-	//snd_seq_ev_schedule_tick(&ev, Q, 0, t);
-	//... TODO:
-	// set event type, data, so on..
-	snd_seq_ev_clear(&ev);
-	
-	ev.queue = SND_SEQ_QUEUE_DIRECT; // no scheduling
-	ev.data.queue.queue = q;        // affected queue id
-	//ev.data.queue.param.value = ...
+    snd_seq_ev_clear(&ev);
+    snd_seq_ev_set_source(&ev, my_port_id);
+    snd_seq_ev_set_subs(&ev);
+    // this t makes no sense...
+    snd_seq_real_time_t t;
+    // Use realtime instead of tick clock.
+    snd_seq_ev_schedule_real(&ev, q, 0, &t);
+    //snd_seq_ev_schedule_tick(&ev, Q, 0, t);
+    //... TODO:
+    // set event type, data, so on..
+    snd_seq_ev_clear(&ev);
 
-	snd_seq_event_output(seq, &ev);
-	//... TODO: ?
-	snd_seq_drain_output(seq);  // if necessary
+    ev.queue = SND_SEQ_QUEUE_DIRECT; // no scheduling
+    ev.data.queue.queue = q;        // affected queue id
+    //ev.data.queue.param.value = ...
+
+    snd_seq_event_output(seq, &ev);
+    //... TODO: ?
+    snd_seq_drain_output(seq);  // if necessary
 }*/
 
 // From test/playmidi1.c from alsa-lib-1.0.3.
@@ -809,92 +831,92 @@ void schedule_event(snd_seq_t *seq, int my_port_id, int q)
 // Direct delivery seems like what I'm doing..
 void notedown(snd_seq_t *seq, int port, int chan, int pitch, int vol)
 {
-	snd_seq_event_t ev;
+    snd_seq_event_t ev;
 
-	snd_seq_ev_clear(&ev);
-	snd_seq_ev_set_source(&ev, port);
-	snd_seq_ev_set_subs(&ev);
-	snd_seq_ev_set_direct(&ev);
-	//... // set event type, data, so on..
-	//set_event_time(&ev, Mf_currtime);
-	//snd_seq_ev_schedule_tick(&ev, q, 0, Mf_currtime);
+    snd_seq_ev_clear(&ev);
+    snd_seq_ev_set_source(&ev, port);
+    snd_seq_ev_set_subs(&ev);
+    snd_seq_ev_set_direct(&ev);
+    //... // set event type, data, so on..
+    //set_event_time(&ev, Mf_currtime);
+    //snd_seq_ev_schedule_tick(&ev, q, 0, Mf_currtime);
 
-	snd_seq_ev_set_noteon(&ev, chan, pitch, vol);
-	
-	int rc = snd_seq_event_output(seq, &ev);
-	if (rc < 0) {
-		printf("written = %i (%s)\n", rc, snd_strerror(rc));
-	}
-	snd_seq_drain_output(seq);
+    snd_seq_ev_set_noteon(&ev, chan, pitch, vol);
+
+    int rc = snd_seq_event_output(seq, &ev);
+    if (rc < 0) {
+        printf("written = %i (%s)\n", rc, snd_strerror(rc));
+    }
+    snd_seq_drain_output(seq);
 }
 
 // When the note up, note off.
 void noteup(snd_seq_t *seq, int port, int chan, int pitch, int vol)
 {
-	snd_seq_event_t ev;
+    snd_seq_event_t ev;
 
-	snd_seq_ev_clear(&ev);
-	snd_seq_ev_set_source(&ev, port);
-	snd_seq_ev_set_subs(&ev);
-	snd_seq_ev_set_direct(&ev);
-	//... // set event type, data, so on..
+    snd_seq_ev_clear(&ev);
+    snd_seq_ev_set_source(&ev, port);
+    snd_seq_ev_set_subs(&ev);
+    snd_seq_ev_set_direct(&ev);
+    //... // set event type, data, so on..
 
-	snd_seq_ev_set_noteoff(&ev, chan, pitch, vol);
-	
-	snd_seq_event_output(seq, &ev);
-	snd_seq_drain_output(seq);
+    snd_seq_ev_set_noteoff(&ev, chan, pitch, vol);
+
+    snd_seq_event_output(seq, &ev);
+    snd_seq_drain_output(seq);
 }
 
 int setup_alsa(snd_seq_t **seq, int *port)
 {
-	if (verbose) printf("Setting up alsa\n");
-	
-	*seq = open_client();
-	if (*seq == NULL) {
-		if (verbose >= 0) printf("Error: open_client failed: %s\n", snd_strerror(seq));
-		return 0;
-	}
-	
-	int my_client_id = snd_seq_client_id(*seq);
-	*port = my_new_port(*seq);
-	if (verbose) printf("client:port = %i:%i\n", my_client_id, *port);
+    if (verbose) printf("Setting up alsa\n");
 
-	program_change(*seq, *port, DEFAULT_CHANNEL, 0);
-	// Subscribing to something else seems unnecssary until we figure out more.
-	//subscribe_output(seq, 128, 0);
-	
-	//int tempo = 120;
-	//int q = my_queue(seq);
-	int ret = 1;
-	/*
-	// tempo isn't being used yet, errors *shrug*.
-	set_tempo(seq, q);
-	int ret = change_tempo(seq, my_client_id, my_port_id, q, tempo);
-	if (ret < 0) {
-		if (verbose >= 0) printf("Error: change_tempo failed: %s\n", snd_strerror(ret));
-		return ret;
-	}
-	*/
-	// Scheduling is scheduling, direct delivery is what I'm doing.
-	//schedule_event(seq, my_port_id, q);
-	notedown(*seq, *port, DEFAULT_CHANNEL, 57, 55);
-	
-	if (verbose) printf("Returning %i\n", ret);
-	return ret;
+    *seq = open_client();
+    if (*seq == NULL) {
+        if (verbose >= 0) printf("Error: open_client failed: %s\n", snd_strerror(seq));
+        return 0;
+    }
+
+    int my_client_id = snd_seq_client_id(*seq);
+    *port = my_new_port(*seq);
+    if (verbose) printf("client:port = %i:%i\n", my_client_id, *port);
+
+    program_change(*seq, *port, DEFAULT_CHANNEL, 0);
+    // Subscribing to something else seems unnecssary until we figure out more.
+    //subscribe_output(seq, 128, 0);
+
+    //int tempo = 120;
+    //int q = my_queue(seq);
+    int ret = 1;
+    /*
+    // tempo isn't being used yet, errors *shrug*.
+    set_tempo(seq, q);
+    int ret = change_tempo(seq, my_client_id, my_port_id, q, tempo);
+    if (ret < 0) {
+        if (verbose >= 0) printf("Error: change_tempo failed: %s\n", snd_strerror(ret));
+        return ret;
+    }
+    */
+    // Scheduling is scheduling, direct delivery is what I'm doing.
+    //schedule_event(seq, my_port_id, q);
+    notedown(*seq, *port, DEFAULT_CHANNEL, 57, 55);
+
+    if (verbose) printf("Returning %i\n", ret);
+    return ret;
 }
 
 void testAlsa(snd_seq_t *seq, int port)
 {
-	notedown(seq, port, DEFAULT_CHANNEL, 57, 127);
-	usleep(1000000);
-	noteup(seq, port, DEFAULT_CHANNEL, 57, 0);
-	usleep(1000000);
+    notedown(seq, port, DEFAULT_CHANNEL, 57, 127);
+    usleep(1000000);
+    noteup(seq, port, DEFAULT_CHANNEL, 57, 0);
+    usleep(1000000);
 
 }
 
 static void sighandler(int signum)
 {
-	do_exit = 1;
+    do_exit = 1;
 }
 
 void useage()
@@ -928,9 +950,9 @@ void useage()
 
 int main(int argc, char **argv)
 {
-	struct sigaction sigact;
-	int r = 1;
-	int i = 0;
+    struct sigaction sigact;
+    int r = 1;
+    int i = 0;
     buf = irqbuf;
 
     //default midi values;
@@ -945,7 +967,7 @@ int main(int argc, char **argv)
     DRUM_MIDI.orange_bass = YVK_KICK;
     DRUM_MIDI.black_bass = YVK_KICK;
 
-	if (argc > 1) {
+    if (argc > 1) {
         for (i = 1;i<argc;i++)
         {
             if (strcmp(argv[i], "-v") == 0) {
@@ -1018,34 +1040,34 @@ int main(int argc, char **argv)
     }
     else
         r = find_rbdrum_device(i);
-	if (r < 0) {
-		fprintf(stderr, "Could not find/open device\n");
-		libusb_close(devh);
-		libusb_exit(NULL);
-		return -r;
-	}
+    if (r < 0) {
+        fprintf(stderr, "Could not find/open device\n");
+        libusb_close(devh);
+        libusb_exit(NULL);
+        return -r;
+    }
 
-	if (libusb_kernel_driver_active(devh, 0)) {
-		/*char driver_name[100];
-		driver_name[0] = 0;
-		r = usb_get_driver_np(devh, 0, driver_name, 100);
-		if (r < 0) {
-			printf("did not get driver_name.\n");
-			driver_name[0] = 0;
-		}*/
-		r = libusb_detach_kernel_driver(devh, 0);
-		if (r < 0) {
-			printf("did not detach.\n");
-		}
+    if (libusb_kernel_driver_active(devh, 0)) {
+        /*char driver_name[100];
+        driver_name[0] = 0;
+        r = usb_get_driver_np(devh, 0, driver_name, 100);
+        if (r < 0) {
+            printf("did not get driver_name.\n");
+            driver_name[0] = 0;
+        }*/
+        r = libusb_detach_kernel_driver(devh, 0);
+        if (r < 0) {
+            printf("did not detach.\n");
+        }
     }
     r = libusb_claim_interface(devh, 0);
-	if (r < 0) {
-		fprintf(stderr, "usb_claim_interface error %d %d\n", r, LIBUSB_ERROR_BUSY);
-		libusb_close(devh);
-		libusb_exit(NULL);
-		return -r;
-	}
-	printf("claimed interface\n");
+    if (r < 0) {
+        fprintf(stderr, "usb_claim_interface error %d %d\n", r, LIBUSB_ERROR_BUSY);
+        libusb_close(devh);
+        libusb_exit(NULL);
+        return -r;
+    }
+    printf("claimed interface\n");
 
     if(kit!=ROCKBAND && DRUM_MIDI.yellow==YVK_HI_TOM)
     {
@@ -1054,132 +1076,131 @@ int main(int argc, char **argv)
 
     }
 
-	int ret = setup_alsa(&g_seq, &g_port);
-	// 0 is fail.
-	if (ret == 0) {
-		printf("Error: Alsa setup failed.\n");
-		return 1;
-	}
+    int ret = setup_alsa(&g_seq, &g_port);
+    // 0 is fail.
+    if (ret == 0) {
+        printf("Error: Alsa setup failed.\n");
+        return 1;
+    }
 
-	/*r = print_f0_data();
-	if (r < 0) {
-		// Release
-		libusb_release_interface(devh, 0);
-		libusb_close(devh);
-		libusb_exit(NULL);
-		return -r;
-	}*/
+    /*r = print_f0_data();
+    if (r < 0) {
+        // Release
+        libusb_release_interface(devh, 0);
+        libusb_close(devh);
+        libusb_exit(NULL);
+        return -r;
+    }*/
 
-	r = do_init();
-	if (r < 0) {
-		// Deinit & Release
-		libusb_free_transfer(irq_transfer);
-		libusb_release_interface(devh, 0);
-		libusb_close(devh);
-		libusb_exit(NULL);
-		snd_seq_close(g_seq);
-		printf("do_init failed.\n");
-		return -r;
-	}
+    if (r < 0) {
+        // Deinit & Release
+        libusb_free_transfer(irq_transfer);
+        libusb_release_interface(devh, 0);
+        libusb_close(devh);
+        libusb_exit(NULL);
+        snd_seq_close(g_seq);
+        printf("do_init failed.\n");
+        return -r;
+    }
 
-	/* async from here onwards */
+    /* async from here onwards */
 
     r = alloc_transfers(kit);
-	if (r < 0) {
-		// Deinit & Release
-		libusb_free_transfer(irq_transfer);
-		libusb_release_interface(devh, 0);
-		libusb_close(devh);
-		libusb_exit(NULL);
-		snd_seq_close(g_seq);
-		printf("alloc_transfers failed.\n");
-		return -r;
-	}
+    if (r < 0) {
+        // Deinit & Release
+        libusb_free_transfer(irq_transfer);
+        libusb_release_interface(devh, 0);
+        libusb_close(devh);
+        libusb_exit(NULL);
+        snd_seq_close(g_seq);
+        printf("alloc_transfers failed.\n");
+        return -r;
+    }
 
-	r = init_capture();
-	if (r < 0) {
-		// Deinit & Release
-		libusb_free_transfer(irq_transfer);
-		libusb_release_interface(devh, 0);
-		libusb_close(devh);
-		libusb_exit(NULL);
-		snd_seq_close(g_seq);
-		printf("init_capture failed.\n");
-		return -r;
-	}
+    r = init_capture();
+    if (r < 0) {
+        // Deinit & Release
+        libusb_free_transfer(irq_transfer);
+        libusb_release_interface(devh, 0);
+        libusb_close(devh);
+        libusb_exit(NULL);
+        snd_seq_close(g_seq);
+        printf("init_capture failed.\n");
+        return -r;
+    }
 
-	sigact.sa_handler = sighandler;
-	sigemptyset(&sigact.sa_mask);
-	sigact.sa_flags = SA_RESTART;
-	r = sigaction(SIGINT, &sigact, NULL);
-	r = sigaction(SIGTERM, &sigact, NULL);
-	r = sigaction(SIGQUIT, &sigact, NULL);
+    sigact.sa_handler = sighandler;
+    sigemptyset(&sigact.sa_mask);
+    sigact.sa_flags = SA_RESTART;
+    r = sigaction(SIGINT, &sigact, NULL);
+    r = sigaction(SIGTERM, &sigact, NULL);
+    r = sigaction(SIGQUIT, &sigact, NULL);
 
-	// Drum state is all up.
+    // Drum state is all up.
     memset(drum_state, 0, 8);
-	while (!do_exit) {
-		r = libusb_handle_events(NULL);
-		if (r < 0) {
-			/*printf("why?\n");
-			// Deinit & Release
-			libusb_free_transfer(irq_transfer);
-			libusb_release_interface(devh, 0);
-			libusb_close(devh);
-			libusb_exit(NULL);
-			return -r;*/
-			break;
-		}
-	}
+    while (!do_exit) {
+        r = libusb_handle_events(NULL);
+        if (r < 0) {
+            /*printf("why?\n");
+            // Deinit & Release
+            libusb_free_transfer(irq_transfer);
+            libusb_release_interface(devh, 0);
+            libusb_close(devh);
+            libusb_exit(NULL);
+            return -r;*/
+            break;
+        }
+    }
 
-	printf("shutting down...\n");
-	
-	if (irq_transfer) {
-		r = libusb_cancel_transfer(irq_transfer);
-		if (r < 0) {
-			// Deinit & Release
-			libusb_free_transfer(irq_transfer);
-			libusb_release_interface(devh, 0);
-			libusb_close(devh);
-			libusb_exit(NULL);
-			snd_seq_close(g_seq);
-			printf("libusb_cancel_transfer failed.\n");
-			return -r;
-		}
-	}
+    printf("shutting down...\n");
 
-	/*if (img_transfer) {
-		r = libusb_cancel_transfer(img_transfer);
-		if (r < 0) {
-			// TODO: Deinit & Release
-			libusb_release_interface(devh, 0);
-			libusb_close(devh);
-			libusb_exit(NULL);
-			return -r;
-		}
-	}*/
+    if (irq_transfer) {
+        r = libusb_cancel_transfer(irq_transfer);
+        if (r < 0) {
+            // Deinit & Release
+            libusb_free_transfer(irq_transfer);
+            libusb_release_interface(devh, 0);
+            libusb_close(devh);
+            libusb_exit(NULL);
+            snd_seq_close(g_seq);
+            printf("libusb_cancel_transfer failed.\n");
+            return -r;
+        }
+    }
 
-	// || img_transfer
-	while (irq_transfer)
-		if (libusb_handle_events(NULL) < 0)
-			break;
-	
-	if (do_exit == 1)
-		r = 0;
-	else
-		r = 1;
+    /*if (img_transfer) {
+        r = libusb_cancel_transfer(img_transfer);
+        if (r < 0) {
+            // TODO: Deinit & Release
+            libusb_release_interface(devh, 0);
+            libusb_close(devh);
+            libusb_exit(NULL);
+            return -r;
+        }
+    }*/
+
+    // || img_transfer
+    while (irq_transfer)
+        if (libusb_handle_events(NULL) < 0)
+            break;
+
+    if (do_exit == 1)
+        r = 0;
+    else
+        r = 1;
 
 //out_deinit:
-	//libusb_free_transfer(img_transfer);
-	libusb_free_transfer(irq_transfer);
-	/*set_mode(0);
-	set_hwstat(0x80);*/
+    //libusb_free_transfer(img_transfer);
+    libusb_free_transfer(irq_transfer);
+    /*set_mode(0);
+    set_hwstat(0x80);*/
 //out_release:
-	libusb_release_interface(devh, 0);
+    libusb_release_interface(devh, 0);
 //out:
-	libusb_close(devh);
-	libusb_exit(NULL);
-	snd_seq_close(g_seq);
-	return 23;
-	return r >= 0 ? r : -r;
+    libusb_close(devh);
+    libusb_exit(NULL);
+    snd_seq_close(g_seq);
+    return 23;
+    return r >= 0 ? r : -r;
 }
 
