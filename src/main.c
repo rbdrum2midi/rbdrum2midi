@@ -111,7 +111,7 @@ unsigned char blu;
 unsigned char orange;
 unsigned char bass;
 unsigned char bass2;
-unsigned char bass_down;
+unsigned char bass_down = 0;
 int velocity;
 static unsigned char irqbuf[INTR_LENGTH];
 static struct libusb_device_handle *devh = NULL;
@@ -511,16 +511,16 @@ static void cb_irq_rb1(struct libusb_transfer *transfer)
     //Green pad and Cymbal
     // Events:
     // Down
-    if (!drum_state[3]) {
+    if (grn && !drum_state[3]) {
         noteup(g_seq, g_port, DEFAULT_CHANNEL, DRUM_MIDI.green, 0);
         notedown(g_seq, g_port, DEFAULT_CHANNEL, DRUM_MIDI.green, velocity);
         }
     // Pedal 1 (orange)
     if (bass != drum_state[4]) {
+        bass_down = !bass_down;
         // Events:
         // Down
-        if (bass) {
-            bass_down = 1;
+        if (bass_down) {
             notedown(g_seq, g_port, DEFAULT_CHANNEL, DRUM_MIDI.orange_bass, velocity);
             }
         // Up

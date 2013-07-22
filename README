@@ -1,3 +1,12 @@
+Generic Rockband MIDI Driver
+This project continues to evolve. The original readmes are below. I have always found it simplest to build with the terminal command:
+
+ gcc -Wall main.c -o rbdrum2midi -lasound -lusb-1.0
+
+then running the output program using
+
+./rbdrum2midi
+
 Rockband 3 ProDrum Midi Driver
 by Randommatt
 
