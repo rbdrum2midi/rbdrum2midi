@@ -516,7 +516,7 @@ static void cb_irq_rb1(struct libusb_transfer *transfer)
         notedown(g_seq, g_port, DEFAULT_CHANNEL, DRUM_MIDI.green, velocity);
         }
     // Pedal 1 (orange)
-    if (bass != drum_state[4]) {
+    if (bass && !drum_state[4]) {
         bass_down = !bass_down;
         // Events:
         // Down
