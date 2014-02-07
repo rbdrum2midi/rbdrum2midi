@@ -114,6 +114,7 @@ unsigned char bass2;
 unsigned char bass_down = 0;
 int velocity;
 static unsigned char irqbuf[INTR_LENGTH];
+static unsigned char oldbuf[INTR_LENGTH];
 static struct libusb_device_handle *devh = NULL;
 //static struct libusb_transfer *img_transfer = NULL;
 static struct libusb_transfer *irq_transfer = NULL;
@@ -455,14 +456,14 @@ static void cb_irq_rb(struct libusb_transfer *transfer)
             buf[20], buf[21], buf[22], buf[23], buf[24], buf[25], buf[26]);
         }
 
-    if (verbose && (g_i++ % 200 == 199)) {
+    if (verbose && memcmp(oldbuf,buf,INTR_LENGTH))
+    {
         printf("%02x%02x%02x%02x %02x%02x%02x%02x %02x%02x%02x%02x %02x%02x%02x%02x %02x%02x%02x%02x %02x%02x%02x%02x %02x%02x%02x kit type=%d\n",
         buf[0], buf[1], buf[2], buf[3], buf[4], buf[5], buf[6], buf[7], buf[8], buf[9],
         buf[10], buf[11], buf[12], buf[13], buf[14], buf[15], buf[16], buf[17], buf[18], buf[19],
         buf[20], buf[21], buf[22], buf[23], buf[24], buf[25], buf[26],kit);
+	memcpy(oldbuf,buf,INTR_LENGTH);
     }
-
-
     if (libusb_submit_transfer(irq_transfer) < 0)
         do_exit = 2;
 }
@@ -544,12 +545,30 @@ static void cb_irq_rb1(struct libusb_transfer *transfer)
         }
 
 
-    if (verbose && (g_i++ % 200 == 199)) {
+/*    if (verbose && (g_i++ % 200 == 199)) {
         printf("%02x%02x%02x%02x %02x%02x%02x%02x %02x%02x%02x%02x %02x%02x%02x%02x %02x%02x%02x%02x %02x%02x%02x%02x %02x%02x%02x kit type=%d\n",
         buf[0], buf[1], buf[2], buf[3], buf[4], buf[5], buf[6], buf[7], buf[8], buf[9],
         buf[10], buf[11], buf[12], buf[13], buf[14], buf[15], buf[16], buf[17], buf[18], buf[19],
         buf[20], buf[21], buf[22], buf[23], buf[24], buf[25], buf[26],kit);
+    }*/
+    if (verbose && memcmp(oldbuf,buf,INTR_LENGTH))/*
+    	(buf[0] != oldbuf[0] || buf[1] != oldbuf[1] || buf[2] != oldbuf[2] ||
+	 buf[3] != oldbuf[3] || buf[4] != oldbuf[4] || buf[5] != oldbuf[5] ||
+	 buf[6] != oldbuf[6] || buf[7] != oldbuf[7] || buf[8] != oldbuf[8] ||
+	 buf[9] != oldbuf[9] || buf[10] != oldbuf[10] || buf[11] != oldbuf[11] ||
+ 	 buf[12] != oldbuf[12] || buf[13] != oldbuf[13] || buf[14] != oldbuf[14] ||
+ 	 buf[15] != oldbuf[15] || buf[16] != oldbuf[16] || buf[17] != oldbuf[17] ||
+ 	 buf[18] != oldbuf[18] || buf[19] != oldbuf[19] || buf[20] != oldbuf[20] ||
+ 	 buf[21] != oldbuf[21] || buf[22] != oldbuf[22] || buf[23] != oldbuf[23] ||
+ 	 buf[24] != oldbuf[24] || buf[25] != oldbuf[25] || buf[26] != oldbuf[26]))*/
+   {
+        printf("%02x%02x%02x%02x %02x%02x%02x%02x %02x%02x%02x%02x %02x%02x%02x%02x %02x%02x%02x%02x %02x%02x%02x%02x %02x%02x%02x kit type=%d\n",
+        buf[0], buf[1], buf[2], buf[3], buf[4], buf[5], buf[6], buf[7], buf[8], buf[9],
+        buf[10], buf[11], buf[12], buf[13], buf[14], buf[15], buf[16], buf[17], buf[18], buf[19],
+        buf[20], buf[21], buf[22], buf[23], buf[24], buf[25], buf[26],kit);
+	memcpy(oldbuf,buf,INTR_LENGTH);
     }
+
 
     if (libusb_submit_transfer(irq_transfer) < 0)
         do_exit = 2;
@@ -640,14 +659,14 @@ static void cb_irq_gh(struct libusb_transfer *transfer)
             buf[20], buf[21], buf[22], buf[23], buf[24], buf[25], buf[26]);
             }
 
-
-    if (verbose && (g_i++ % 200 == 199)) {
+    if (verbose && memcmp(oldbuf,buf,INTR_LENGTH))
+    {
         printf("%02x%02x%02x%02x %02x%02x%02x%02x %02x%02x%02x%02x %02x%02x%02x%02x %02x%02x%02x%02x %02x%02x%02x%02x %02x%02x%02x kit type=%d\n",
         buf[0], buf[1], buf[2], buf[3], buf[4], buf[5], buf[6], buf[7], buf[8], buf[9],
         buf[10], buf[11], buf[12], buf[13], buf[14], buf[15], buf[16], buf[17], buf[18], buf[19],
         buf[20], buf[21], buf[22], buf[23], buf[24], buf[25], buf[26],kit);
+	memcpy(oldbuf,buf,INTR_LENGTH);
     }
-
     if (libusb_submit_transfer(irq_transfer) < 0)
         do_exit = 2;
 }
@@ -966,6 +985,8 @@ int main(int argc, char **argv)
     DRUM_MIDI.orange_cymbal = YVK_CRASH;
     DRUM_MIDI.orange_bass = YVK_KICK;
     DRUM_MIDI.black_bass = YVK_KICK;
+
+    memset(oldbuf,0,INTR_LENGTH);
 
     if (argc > 1) {
         for (i = 1;i<argc;i++)
