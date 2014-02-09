@@ -360,7 +360,7 @@ static void cb_irq_rb(struct libusb_transfer *transfer)
         // Events:
         // Down
         if (red && !drum_state[0]) {
-            velocity = red * 2;
+            velocity = (280-red) * 2;
             velocity = min(max(velocity, 0), 127);
             noteup(g_seq, g_port, DEFAULT_CHANNEL, DRUM_MIDI.red, 0);
             notedown(g_seq, g_port, DEFAULT_CHANNEL, DRUM_MIDI.red, velocity);
@@ -369,7 +369,7 @@ static void cb_irq_rb(struct libusb_transfer *transfer)
         // Events:
         // Down
         if (yel && !drum_state[1]) {
-            velocity = yel * 2;
+            velocity = (280-yel) * 2;
             velocity = min(max(velocity, 0), 127);
             if(RB_CYMBAL){
                 noteup(g_seq, g_port, DEFAULT_CHANNEL, DRUM_MIDI.yellow_cymbal, 0);
@@ -384,7 +384,7 @@ static void cb_irq_rb(struct libusb_transfer *transfer)
         // Events:
         // Down
         if (blu && !drum_state[2]) {
-            velocity = blu * 2;
+            velocity = (280-blu) * 2;
             velocity = min(max(velocity, 0), 127);
             if(RB_CYMBAL){
                 noteup(g_seq, g_port, DEFAULT_CHANNEL, DRUM_MIDI.blue_cymbal, 0);
@@ -399,9 +399,11 @@ static void cb_irq_rb(struct libusb_transfer *transfer)
         // Events:
         // Down
         if (grn && !drum_state[3]) {
-            velocity = grn * 2;
+            velocity = (280-grn) * 2;
             velocity = min(max(velocity, 0), 127);
             if(RB_CYMBAL){
+                velocity = (280-grn);
+                velocity = min(max(velocity, 0), 127);
                 noteup(g_seq, g_port, DEFAULT_CHANNEL, DRUM_MIDI.green_cymbal, 0);
                 notedown(g_seq, g_port, DEFAULT_CHANNEL, DRUM_MIDI.green_cymbal, velocity);
                 }
