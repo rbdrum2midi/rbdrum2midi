@@ -1,5 +1,13 @@
-Generic Rockband MIDI Driver
-This project continues to evolve. The original readmes are below. I have always found it simplest to build with the terminal command:
+Rockband 3 ProDrum Midi Driver
+by Randommatt and Spencer
+
+Version 0.3
+
+Support for rb1 xbox drumkit has been added. 
+Problem with dynamic velocity detection for RB2 and RB3-pro kits is solved. 
+
+
+Since Ubuntu 12.04 and other "newer distros" regular cmmi may not work so please try the following:
 
  gcc main.c -o rbdrum2midi -lasound -lusb-1.0
 
@@ -9,8 +17,35 @@ then running the output program using
 
 For addition information on useage, run it with the -h option.
 
-Rockband 3 ProDrum Midi Driver
-by Randommatt
+See previous versions for more detailed instructions.
+
+
+Version 0.2
+Added support for Guitar Hero: World Tour drumkit for the PS3, xbox and wii support is now possible for Rockband drumkits (in the sence that now they may actually work).
+
+Guitar Hero drumkit midi mapping:  
+kick pedal : 	midi note 36
+red pad : 	midi note 37
+yellow Cymbal:	midi note 41
+blue pad:	midi note 39
+Orange Cymbal:	midi note 43
+green pad:	midi note 40
+
+Xbox and wii RB drumkits should get recognized by the program, but if the signalling is different from the PS3 kits, they won't work or at the verry least the mapping will be different.
+Unfortunately I don't have xbox and wii hardware to test with, so this is the best I can do.
+
+To use rbdrum2midi without root priviledges create a rules file in /etc/udev/rules.d/
+
+
+file 90-drumkit.rules:
+
+SUBSYSTEM=="usb", ATTR{idVendor}=="12ba", ATTR{idProduct}=="0210", GROUP="audio", MODE="0664"
+SUBSYSTEM=="usb", ATTR{idVendor}=="12ba", ATTR{idProduct}=="0120", GROUP="audio", MODE="0664"
+SUBSYSTEM=="usb", ATTR{idVendor}=="1bad", ATTR{idProduct}=="0003", GROUP="audio", MODE="0664"
+SUBSYSTEM=="usb", ATTR{idVendor}=="1bad", ATTR{idProduct}=="0005", GROUP="audio", MODE="0664"
+
+
+this will work if your linux distro has an "audio" group and your user is a member, otherwise substitute "audio" with "users".
 
 Version 0.1
 
@@ -38,6 +73,8 @@ connect rbdrumkit wireless dongle (PS3 works, Wii should, xbox probably won't),
 start rbdrum2midi. This will create an ALSA midiport, start the jack audio server and Hydrogen,
 in the connection window under the alsa tab connect "129:PS3 Joystick Client" to Hydrogen.
 the midi channels are mapped as follows
+
+RB3 drumkit midi mapping: 
 
 kick pedal 1: 	midi note 36
 kick pedal 2: 	midi note 42
@@ -93,4 +130,3 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
 USA.
-
