@@ -77,23 +77,35 @@
 #define YVK_RIDE        43
 #define YVK_CRASH       45
 int drum_conn[10] = {36, 42, 37, 38, 41, 39, 43, 40, 45, 36};
+
+enum drums{
+    RED = 0,
+    YELLOW,
+    BLUE,
+    GREEN,
+    YELLOW_CYMBAL,
+    BLUE_CYMBAL,
+    GREEN_CYMBAL,
+    ORANGE_CYMBAL,
+    ORANGE_BASS,
+    BLACK_BASS
+};
+
+enum kit_types{
+    PS_ROCKBAND = 0,
+    XB_ROCKBAND,
+    XB_ROCKBAND1,
+    PS_ROCKBAND1,
+    GUITAR_HERO
+}
 struct drum_midi
 {
-    unsigned char red;
-    unsigned char yellow;
-    unsigned char blue;
-    unsigned char green;
-    unsigned char yellow_cymbal;
-    unsigned char blue_cymbal;
-    unsigned char green_cymbal;
-    unsigned char orange_cymbal;
-    unsigned char orange_bass;
-    unsigned char black_bass;
-}DRUM_MIDI;
-
-void notedown(snd_seq_t *seq, int port, int chan, int pitch, int vol);
-void noteup(snd_seq_t *seq, int port, int chan, int pitch, int vol);
-
+    unsigned char kit_type;
+    unsigned char midi_note[10];
+    unsigned char buf_indx[10];
+    unsigned char buf_mask[10];
+    unsigned char *buf;
+    unsigned char drum_state[10];
 static snd_seq_t *g_seq;
 static int g_port;
 static int kit;
@@ -118,6 +130,12 @@ static unsigned char oldbuf[INTR_LENGTH];
 static struct libusb_device_handle *devh = NULL;
 //static struct libusb_transfer *img_transfer = NULL;
 static struct libusb_transfer *irq_transfer = NULL;
+}MIDI_DRUM;
+
+
+void notedown(snd_seq_t *seq, int port, int chan, int pitch, int vol);
+void noteup(snd_seq_t *seq, int port, int chan, int pitch, int vol);
+
 
 static int find_rbdrum_device(int i)
 {
@@ -148,122 +166,6 @@ static int find_rbdrum_device(int i)
     return devh ? 0 : -EIO;
 }
 
-// IS THIS THE HARDWARE PROBING CODE?
-/*static int print_f0_data(void)
-{
-    unsigned char data[0x10];
-    int r;
-    unsigned int i;
-
-    r = libusb_control_transfer(devh, CTRL_IN, USB_RQ, 0xf0, 0, data,
-        sizeof(data), 0);
-    if (r < 0) {
-        fprintf(stderr, "F0 error %d\n", r);
-        return r;
-    }
-    if ((unsigned int) r < sizeof(data)) {
-        fprintf(stderr, "short read (%d)\n", r);
-        return -1;
-    }
-
-    printf("F0 data:");
-    for (i = 0; i < sizeof(data); i++)
-        printf("%02x ", data[i]);
-    printf("\n");
-    return 0;
-}
-
-static int set_hwstat(unsigned char data)
-{
-    int r;
-
-    printf("set hwstat to %02x\n", data);
-    r = libusb_control_transfer(devh, CTRL_OUT, USB_RQ, 0x07, 0, &data, 1, 0);
-    if (r < 0) {
-        fprintf(stderr, "set hwstat error %d\n", r);
-        return r;
-    }
-    if ((unsigned int) r < 1) {
-        fprintf(stderr, "short write (%d)", r);
-        return -1;
-    }
-
-    return 0;
-}
-
-static int get_hwstat(unsigned char *status)
-{
-    int r;
-
-    r = libusb_control_transfer(devh, CTRL_IN, USB_RQ, 0x07, 0, status, 1, 0);
-    if (r < 0) {
-        fprintf(stderr, "read hwstat error %d\n", r);
-        return r;
-    }
-    if ((unsigned int) r < 1) {
-        fprintf(stderr, "short read (%d)\n", r);
-        return -1;
-    }
-
-    printf("hwstat reads %02x\n", *status);
-    return 0;
-}
-
-static int set_mode(unsigned char data)
-{
-    int r;
-    printf("set mode %02x\n", data);
-
-    r = libusb_control_transfer(devh, CTRL_OUT, USB_RQ, 0x4e, 0, &data, 1, 0);
-    if (r < 0) {
-        fprintf(stderr, "set mode error %d\n", r);
-        return r;
-    }
-    if ((unsigned int) r < 1) {
-        fprintf(stderr, "short write (%d)", r);
-        return -1;
-    }
-
-    return 0;
-}
-
-static void cb_mode_changed(struct libusb_transfer *transfer)
-{
-    if (transfer->status != LIBUSB_TRANSFER_COMPLETED) {
-        fprintf(stderr, "mode change transfer not completed!\n");
-        do_exit = 2;
-    }
-
-    printf("async cb_mode_changed length=%d actual_length=%d\n",
-        transfer->length, transfer->actual_length);
-    if (next_state() < 0)
-        do_exit = 2;
-}
-
-static int set_mode_async(unsigned char data)
-{
-    unsigned char *buf = malloc(LIBUSB_CONTROL_SETUP_SIZE + 1);
-    struct libusb_transfer *transfer;
-
-    if (!buf)
-        return -ENOMEM;
-
-    transfer = libusb_alloc_transfer(0);
-    if (!transfer) {
-        free(buf);
-        return -ENOMEM;
-    }
-
-    printf("async set mode %02x\n", data);
-    libusb_fill_control_setup(buf, CTRL_OUT, USB_RQ, 0x4e, 0, 1);
-    buf[LIBUSB_CONTROL_SETUP_SIZE] = data;
-    libusb_fill_control_transfer(transfer, devh, buf, cb_mode_changed, NULL,
-        1000);
-
-    transfer->flags = LIBUSB_TRANSFER_SHORT_NOT_OK
-        | LIBUSB_TRANSFER_FREE_BUFFER | LIBUSB_TRANSFER_FREE_TRANSFER;
-    return libusb_submit_transfer(transfer);
-}*/
 
 static int do_sync_intr(unsigned char *data)
 {
@@ -299,44 +201,7 @@ static int sync_intr(unsigned char type)
     }
 }
 
-/*static int next_state(void)
-{
-    int r = 0;
-    printf("old state: %d\n", state);
-    switch (state) {
-    case STATE_AWAIT_IRQ_FINGER_REMOVED:
-        state = STATE_AWAIT_MODE_CHANGE_AWAIT_FINGER_ON;
-        r = set_mode_async(MODE_AWAIT_FINGER_ON);
-        break;
-    case STATE_AWAIT_MODE_CHANGE_AWAIT_FINGER_ON:
-        state = STATE_AWAIT_IRQ_FINGER_DETECTED;
-        break;
-    case STATE_AWAIT_IRQ_FINGER_DETECTED:
-        state = STATE_AWAIT_MODE_CHANGE_CAPTURE;
-        r = set_mode_async(MODE_CAPTURE);
-        break;
-    case STATE_AWAIT_MODE_CHANGE_CAPTURE:
-        state = STATE_AWAIT_IMAGE;
-        break;
-    case STATE_AWAIT_IMAGE:
-        state = STATE_AWAIT_MODE_CHANGE_AWAIT_FINGER_OFF;
-        r = set_mode_async(MODE_AWAIT_FINGER_OFF);
-        break;
-    case STATE_AWAIT_MODE_CHANGE_AWAIT_FINGER_OFF:
-        state = STATE_AWAIT_IRQ_FINGER_REMOVED;
-        break;
-    default:
-        printf("unrecognised state %d\n", state);
-    }
-    if (r < 0) {
-        fprintf(stderr, "error detected changing state\n");
-        return r;
-    }
-
-    printf("new state: %d\n", state);
-    return 0;
-}*/
-
+//interrupt callback for RB3 drumkit
 static void cb_irq_rb(struct libusb_transfer *transfer)
 {
     if (transfer->status != LIBUSB_TRANSFER_COMPLETED) {
