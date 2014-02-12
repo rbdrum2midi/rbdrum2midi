@@ -76,7 +76,7 @@
 #define YVK_OPEN_HAT    42
 #define YVK_RIDE        43
 #define YVK_CRASH       45
-int drum_conn[10] = {36, 42, 37, 38, 41, 39, 43, 40, 45, 36};
+//int drum_conn[10] = {36, 42, 37, 38, 41, 39, 43, 40, 45, 36};
 
 enum drums{
     RED = 0,
@@ -97,8 +97,9 @@ enum kit_types{
     XB_ROCKBAND1,
     PS_ROCKBAND1,
     GUITAR_HERO
-}
-struct drum_midi
+};
+
+static struct drum_midi
 {
     unsigned char kit_type;
     unsigned char midi_note[10];
@@ -106,30 +107,31 @@ struct drum_midi
     unsigned char buf_mask[10];
     unsigned char *buf;
     unsigned char drum_state[10];
-static snd_seq_t *g_seq;
-static int g_port;
-static int kit;
+    unsigned char prev_state[10];
+    snd_seq_t *g_seq;
+    int g_port;
+//    static int kit;
 
-static int verbose = 0;
-static int g_i = 0;
-static int state = 0;
-static int drum_state[8];
-static int do_exit = 0;
-unsigned char *buf;
-unsigned char yel;
-unsigned char red;
-unsigned char grn;
-unsigned char blu;
-unsigned char orange;
-unsigned char bass;
-unsigned char bass2;
-unsigned char bass_down = 0;
-int velocity;
-static unsigned char irqbuf[INTR_LENGTH];
-static unsigned char oldbuf[INTR_LENGTH];
-static struct libusb_device_handle *devh = NULL;
-//static struct libusb_transfer *img_transfer = NULL;
-static struct libusb_transfer *irq_transfer = NULL;
+    int verbose;// = 0;
+    //static int g_i = 0;
+//    int state;// = 0;
+//    static int drum_state[8];
+    int do_exit;// = 0;
+//    unsigned char *buf;
+//    unsigned char yel;
+//    unsigned char red;
+//    unsigned char grn;
+//    unsigned char blu;
+//    unsigned char orange;
+//    unsigned char bass;
+//    unsigned char bass2;
+//    unsigned char bass_down;// = 0;
+    int velocity;
+    unsigned char irqbuf[INTR_LENGTH];
+    unsigned char oldbuf[INTR_LENGTH];
+    struct libusb_device_handle *devh;// = NULL;
+//    static struct libusb_transfer *img_transfer = NULL;
+    struct libusb_transfer *irq_transfer;// = NULL;
 }MIDI_DRUM;
 
 
@@ -141,29 +143,29 @@ static int find_rbdrum_device(int i)
 {
     // TODO: Currently the i argument is ignored.
     //PS3 RB kit
-    devh = libusb_open_device_with_vid_pid(NULL, 0x12ba, 0x0210);
+    MIDI_DRUM.devh = libusb_open_device_with_vid_pid(NULL, 0x12ba, 0x0210);
     //xbox RB kit
-    if(!devh){
-        devh = libusb_open_device_with_vid_pid(NULL, 0x1bad, 0x0003);
+    if(!MIDI_DRUM.devh){
+        MIDI_DRUM.devh = libusb_open_device_with_vid_pid(NULL, 0x1bad, 0x0003);
         }
     //Wìì RB kit??
-    if(!devh){
-        devh = libusb_open_device_with_vid_pid(NULL, 0x1bad, 0x0005);
+    if(!MIDI_DRUM.devh){
+        MIDI_DRUM.devh = libusb_open_device_with_vid_pid(NULL, 0x1bad, 0x0005);
         }
 
-    if(devh){
+    if(MIDI_DRUM.devh){
         kit=ROCKBAND;
         }
     //PS3 GH kit
-    if(!devh){
-        devh = libusb_open_device_with_vid_pid(NULL, 0x12ba, 0x0120);
+    if(!MIDI_DRUM.devh){
+        MIDI_DRUM.devh = libusb_open_device_with_vid_pid(NULL, 0x12ba, 0x0120);
 
-        if(devh){
+        if(MIDI_DRUM.devh){
             kit=GUITARHERO;
             }
         }
 
-    return devh ? 0 : -EIO;
+    return MIDI_DRUM.devh ? 0 : -EIO;
 }
 
 
@@ -172,7 +174,7 @@ static int do_sync_intr(unsigned char *data)
     int r;
     int transferred;
 
-    r = libusb_interrupt_transfer(devh, EP_INTR, data, INTR_LENGTH,
+    r = libusb_interrupt_transfer(MIDI_DRUM.devh, EP_INTR, data, INTR_LENGTH,
         &transferred, 1000);
     if (r < 0) {
         fprintf(stderr, "intr error %d\n", r);
@@ -201,6 +203,37 @@ static int sync_intr(unsigned char type)
     }
 }
 
+void get_state(unsigned char drum)
+{
+    MIDI_DRUM.drum_state[drum] = MIDI_DRUM.buf[MIDI_DRUM.buf_indx[drum]] & MIDI_DRUM.buf_mask[color];
+}
+
+void handle_drum_rb(unsigned char drum)
+{
+   if (MIDI_DRUM.drum_state[drum] && !MIDI_DRUM.prev_state[drum]) {
+            MIDI_DRUM.velocity = (280-MIDI_DRUM.drum_state[drum]) * 2;
+            MIDI_DRUM.velocity = min(max(MIDI_DRUM.velocity, 0), 127);
+   noteup(MIDI_DRUM.g_seq, MIDI_DRUM.g_port, DEFAULT_CHANNEL, MIDI_DRUM.midi_note[drum], -1);
+   notedown( MIDI_DRUM.g_seq,  MIDI_DRUM.g_port, DEFAULT_CHANNEL, MIDI_DRUM.midi_note[drum], MIDI_DRUM.velocity);
+            }
+}
+
+void handle_bass_rb(unsigned char bass)
+{
+    if (MIDI_DRUM.drum_state[bass] != MIDI_DRUM.prev_state[bass]) {
+        if (MIDI_DRUM.drum_state[bass]) {
+            //bass_down = 1;
+            MIDI_DRUM.velocity = 127;
+            //MIDI_DRUM.velocity = min(max( MIDI_DRUM.velocity, 0), 127);
+            notedown( MIDI_DRUM.g_seq,  MIDI_DRUM.g_port, DEFAULT_CHANNEL, MIDI_DRUM.midi_note[bass],  MIDI_DRUM.velocity);
+        }
+        // Up
+        else {
+            noteup( MIDI_DRUM.g_seq,  MIDI_DRUM.g_port, DEFAULT_CHANNEL, MIDI_DRUM.midi_note[bass], 0);
+        }
+    }
+}
+
 //interrupt callback for RB3 drumkit
 static void cb_irq_rb(struct libusb_transfer *transfer)
 {
@@ -214,7 +247,7 @@ static void cb_irq_rb(struct libusb_transfer *transfer)
 
     //RockBand 3 Drumkit
 
-        yel     = RB_YELLOW; //Yellow
+/*        yel     = RB_YELLOW; //Yellow
         red     = RB_RED; //Red
         grn     = RB_GREEN; //Green
         blu     = RB_BLUE; //Blue
@@ -222,74 +255,99 @@ static void cb_irq_rb(struct libusb_transfer *transfer)
         bass2   = RB_BLACK; //Black Pedal
         bass_down = 0;
 
+	MIDI_DRUM.drum_state[YELLOW] = MIDI_DRUM.buf[MIDI_DRUM.buf_indx[YELLOW]] &MIDI_DRUM.buf_mask[YELLOW];
+	MIDI_DRUM.drum_state[RED] = MIDI_DRUM.buf[MIDI_DRUM.buf_indx[RED]] &MIDI_DRUM.buf_mask[RED];
+	MIDI_DRUM.drum_state[GREEN] = MIDI_DRUM.buf[MIDI_DRUM.buf_indx[GREEN]] &MIDI_DRUM.buf_mask[GREEN];
+	MIDI_DRUM.drum_state[BLUE] = MIDI_DRUM.buf[MIDI_DRUM.buf_indx[BLUE]] &MIDI_DRUM.buf_mask[BLUE];
         // Events:
         // Down
-        if (red && !drum_state[0]) {
-            velocity = (280-red) * 2;
-            velocity = min(max(velocity, 0), 127);
-            noteup(g_seq, g_port, DEFAULT_CHANNEL, DRUM_MIDI.red, 0);
-            notedown(g_seq, g_port, DEFAULT_CHANNEL, DRUM_MIDI.red, velocity);
+        if (MIDI_DRUM.drum_state[RED] && !MIDI_DRUM.prev_state[RED]) {
+            MIDI_DRUM.velocity = (280-MIDI_DRUM.drum_state[RED]) * 2;
+            MIDI_DRUM.velocity = min(max(MIDI_DRUM.velocity, 0), 127);
+            noteup(MIDI_DRUM.g_seq, MIDI_DRUM.g_port, DEFAULT_CHANNEL, MIDI_DRUM.midi_note[RED], 0);
+            notedown( MIDI_DRUM.g_seq,  MIDI_DRUM.g_port, DEFAULT_CHANNEL, MIDI_DRUM.midi_note[RED], MIDI_DRUM.velocity);
             }
-        //yellow pad and cymbal
+	    */
+    get_state(RED);
+    get_state(YELLOW);
+    get_state(GREEN);
+    get_state(BLUE);
+    get_state(YELLOW_CYMBAL);
+    get_state(ORANGE_BASS);
+    get_state(BLACK_BASS);
+    handle_drum(RED);
+    if(MIDI_DRUM.drum_state[YELLOW_CYMBAL]){//only 1 flag to indicate all cymbals
+        handle_drum(YELLOW_CYMBAL);
+        handle_drum(GREEN_CYMBAL);
+        handle_drum(BLUE_CYMBAL);
+    }
+    else{
+        handle_drum(YELLOW);
+        handle_drum(GREEN);
+        handle_drum(BLUE);
+    }
+    handle_drum(ORANGE_BASS);
+    handle_drum(BLACK_BASS);
+/*        //yellow pad and cymbal
         // Events:
         // Down
-        if (yel && !drum_state[1]) {
-            velocity = (280-yel) * 2;
-            velocity = min(max(velocity, 0), 127);
+//        if (yel && !drum_state[1]) {
+             MIDI_DRUM.velocity = (280-yel) * 2;
+             MIDI_DRUM.velocity = min(max( MIDI_DRUM.velocity, 0), 127);
             if(RB_CYMBAL){
-                noteup(g_seq, g_port, DEFAULT_CHANNEL, DRUM_MIDI.yellow_cymbal, 0);
-                notedown(g_seq, g_port, DEFAULT_CHANNEL, DRUM_MIDI.yellow_cymbal, velocity);
+                noteup( MIDI_DRUM.g_seq,  MIDI_DRUM.g_port, DEFAULT_CHANNEL, DRUM_MIDI.yellow_cymbal, 0);
+                notedown( MIDI_DRUM.g_seq,  MIDI_DRUM.g_port, DEFAULT_CHANNEL, DRUM_MIDI.yellow_cymbal,  MIDI_DRUM.velocity);
                 }
             else{
-                noteup(g_seq, g_port, DEFAULT_CHANNEL, DRUM_MIDI.yellow, 0);
-                notedown(g_seq, g_port, DEFAULT_CHANNEL, DRUM_MIDI.yellow, velocity);
+                noteup( MIDI_DRUM.g_seq,  MIDI_DRUM.g_port, DEFAULT_CHANNEL, DRUM_MIDI.yellow, 0);
+                notedown( MIDI_DRUM.g_seq,  MIDI_DRUM.g_port, DEFAULT_CHANNEL, DRUM_MIDI.yellow,  MIDI_DRUM.velocity);
                 }
             }
         //Blue pad and cymbal
         // Events:
         // Down
         if (blu && !drum_state[2]) {
-            velocity = (280-blu) * 2;
-            velocity = min(max(velocity, 0), 127);
+             MIDI_DRUM.velocity = (280-blu) * 2;
+             MIDI_DRUM.velocity = min(max( MIDI_DRUM.velocity, 0), 127);
             if(RB_CYMBAL){
-                noteup(g_seq, g_port, DEFAULT_CHANNEL, DRUM_MIDI.blue_cymbal, 0);
-                notedown(g_seq, g_port, DEFAULT_CHANNEL, DRUM_MIDI.blue_cymbal, velocity);
+                noteup( MIDI_DRUM.g_seq,  MIDI_DRUM.g_port, DEFAULT_CHANNEL, DRUM_MIDI.blue_cymbal, 0);
+                notedown( MIDI_DRUM.g_seq,  MIDI_DRUM.g_port, DEFAULT_CHANNEL, DRUM_MIDI.blue_cymbal,  MIDI_DRUM.velocity);
                 }
             else{
-                noteup(g_seq, g_port, DEFAULT_CHANNEL, DRUM_MIDI.blue, 0);
-                notedown(g_seq, g_port, DEFAULT_CHANNEL, DRUM_MIDI.blue, velocity);
+                noteup( MIDI_DRUM.g_seq,  MIDI_DRUM.g_port, DEFAULT_CHANNEL, DRUM_MIDI.blue, 0);
+                notedown( MIDI_DRUM.g_seq,  MIDI_DRUM.g_port, DEFAULT_CHANNEL, DRUM_MIDI.blue,  MIDI_DRUM.velocity);
                 }
             }
         //Green pad and Cymbal
         // Events:
         // Down
         if (grn && !drum_state[3]) {
-            velocity = (280-grn) * 2;
-            velocity = min(max(velocity, 0), 127);
+             MIDI_DRUM.velocity = (280-grn) * 2;
+             MIDI_DRUM.velocity = min(max( MIDI_DRUM.velocity, 0), 127);
             if(RB_CYMBAL){
-                velocity = (280-grn);
-                velocity = min(max(velocity, 0), 127);
-                noteup(g_seq, g_port, DEFAULT_CHANNEL, DRUM_MIDI.green_cymbal, 0);
-                notedown(g_seq, g_port, DEFAULT_CHANNEL, DRUM_MIDI.green_cymbal, velocity);
+                 MIDI_DRUM.velocity = (280-grn);
+                 MIDI_DRUM.velocity = min(max( MIDI_DRUM.velocity, 0), 127);
+                noteup( MIDI_DRUM.g_seq,  MIDI_DRUM.g_port, DEFAULT_CHANNEL, DRUM_MIDI.green_cymbal, 0);
+                notedown( MIDI_DRUM.g_seq,  MIDI_DRUM.g_port, DEFAULT_CHANNEL, DRUM_MIDI.green_cymbal,  MIDI_DRUM.velocity);
                 }
             else{
-                noteup(g_seq, g_port, DEFAULT_CHANNEL, DRUM_MIDI.green, 0);
-                notedown(g_seq, g_port, DEFAULT_CHANNEL, DRUM_MIDI.green, velocity);
+                noteup( MIDI_DRUM.g_seq,  MIDI_DRUM.g_port, DEFAULT_CHANNEL, DRUM_MIDI.green, 0);
+                notedown( MIDI_DRUM.g_seq,  MIDI_DRUM.g_port, DEFAULT_CHANNEL, DRUM_MIDI.green,  MIDI_DRUM.velocity);
                 }
-            }
+//            }
         // Pedal 1 (orange)
         if (bass != drum_state[4]) {
             // Events:
             // Down
             if (bass) {
                 bass_down = 1;
-                velocity = 127;
-                velocity = min(max(velocity, 0), 127);
-                notedown(g_seq, g_port, DEFAULT_CHANNEL, DRUM_MIDI.orange_bass, velocity);
+                 MIDI_DRUM.velocity = 127;
+                 MIDI_DRUM.velocity = min(max( MIDI_DRUM.velocity, 0), 127);
+                notedown( MIDI_DRUM.g_seq,  MIDI_DRUM.g_port, DEFAULT_CHANNEL, DRUM_MIDI.orange_bass,  MIDI_DRUM.velocity);
                 }
             // Up
             else{
-                noteup(g_seq, g_port, DEFAULT_CHANNEL, DRUM_MIDI.orange_bass, 0);
+                noteup( MIDI_DRUM.g_seq,  MIDI_DRUM.g_port, DEFAULT_CHANNEL, DRUM_MIDI.orange_bass, 0);
                 }
             }
         // Pedal 2 (black)
@@ -298,15 +356,15 @@ static void cb_irq_rb(struct libusb_transfer *transfer)
             // Down
             if (bass2) {
                 bass_down = 1;
-                velocity = 127;
-                velocity = min(max(velocity, 0), 127);
-                notedown(g_seq, g_port, DEFAULT_CHANNEL, DRUM_MIDI.black_bass, velocity);
+                 MIDI_DRUM.velocity = 127;
+                 MIDI_DRUM.velocity = min(max( MIDI_DRUM.velocity, 0), 127);
+                notedown( MIDI_DRUM.g_seq,  MIDI_DRUM.g_port, DEFAULT_CHANNEL, DRUM_MIDI.black_bass,  MIDI_DRUM.velocity);
                 }
             // Up
             else {
-                noteup(g_seq, g_port, DEFAULT_CHANNEL, DRUM_MIDI.black_bass, 0);
+                noteup( MIDI_DRUM.g_seq,  MIDI_DRUM.g_port, DEFAULT_CHANNEL, DRUM_MIDI.black_bass, 0);
                 }
-            }
+            }*/
         //now that the time-critical stuff is done, lets do the assignments
         drum_state[0] = red;
         drum_state[1] = yel;
@@ -354,34 +412,34 @@ static void cb_irq_rb1(struct libusb_transfer *transfer)
     blu     = RB1_BLUE; //Blue
     bass    = RB1_ORANGE; //Orange Pedal
     bass_down = 0;
-    velocity = 125;
+     MIDI_DRUM.velocity = 125;
 
     // Events:
     // Down
     if (red && !drum_state[0]) {
-        noteup(g_seq, g_port, DEFAULT_CHANNEL, DRUM_MIDI.red, 0);
-        notedown(g_seq, g_port, DEFAULT_CHANNEL, DRUM_MIDI.red, velocity);
+        noteup( MIDI_DRUM.g_seq,  MIDI_DRUM.g_port, DEFAULT_CHANNEL, DRUM_MIDI.red, 0);
+        notedown( MIDI_DRUM.g_seq,  MIDI_DRUM.g_port, DEFAULT_CHANNEL, DRUM_MIDI.red,  MIDI_DRUM.velocity);
         }
     //yellow pad and cymbal
     // Events:
     // Down
     if (yel && !drum_state[1]) {
-        noteup(g_seq, g_port, DEFAULT_CHANNEL, DRUM_MIDI.yellow, 0);
-        notedown(g_seq, g_port, DEFAULT_CHANNEL, DRUM_MIDI.yellow, velocity);
+        noteup( MIDI_DRUM.g_seq,  MIDI_DRUM.g_port, DEFAULT_CHANNEL, DRUM_MIDI.yellow, 0);
+        notedown( MIDI_DRUM.g_seq,  MIDI_DRUM.g_port, DEFAULT_CHANNEL, DRUM_MIDI.yellow,  MIDI_DRUM.velocity);
         }
     //Blue pad and cymbal
     // Events:
     // Down
     if (blu && !drum_state[2]) {
-        noteup(g_seq, g_port, DEFAULT_CHANNEL, DRUM_MIDI.blue, 0);
-        notedown(g_seq, g_port, DEFAULT_CHANNEL, DRUM_MIDI.blue, velocity);
+        noteup( MIDI_DRUM.g_seq,  MIDI_DRUM.g_port, DEFAULT_CHANNEL, DRUM_MIDI.blue, 0);
+        notedown( MIDI_DRUM.g_seq,  MIDI_DRUM.g_port, DEFAULT_CHANNEL, DRUM_MIDI.blue,  MIDI_DRUM.velocity);
         }
     //Green pad and Cymbal
     // Events:
     // Down
     if (grn && !drum_state[3]) {
-        noteup(g_seq, g_port, DEFAULT_CHANNEL, DRUM_MIDI.green, 0);
-        notedown(g_seq, g_port, DEFAULT_CHANNEL, DRUM_MIDI.green, velocity);
+        noteup( MIDI_DRUM.g_seq,  MIDI_DRUM.g_port, DEFAULT_CHANNEL, DRUM_MIDI.green, 0);
+        notedown( MIDI_DRUM.g_seq,  MIDI_DRUM.g_port, DEFAULT_CHANNEL, DRUM_MIDI.green,  MIDI_DRUM.velocity);
         }
     // Pedal 1 (orange)
     if (bass && !drum_state[4]) {
@@ -389,11 +447,11 @@ static void cb_irq_rb1(struct libusb_transfer *transfer)
         // Events:
         // Down
         if (bass_down) {
-            notedown(g_seq, g_port, DEFAULT_CHANNEL, DRUM_MIDI.orange_bass, velocity);
+            notedown( MIDI_DRUM.g_seq,  MIDI_DRUM.g_port, DEFAULT_CHANNEL, DRUM_MIDI.orange_bass,  MIDI_DRUM.velocity);
             }
         // Up
         else {
-            noteup(g_seq, g_port, DEFAULT_CHANNEL, DRUM_MIDI.orange_bass, 0);
+            noteup( MIDI_DRUM.g_seq,  MIDI_DRUM.g_port, DEFAULT_CHANNEL, DRUM_MIDI.orange_bass, 0);
             }
         }
     //now that the time-critical stuff is done, lets do the assignments
@@ -461,56 +519,56 @@ static void cb_irq_gh(struct libusb_transfer *transfer)
         // Events:
         // Down
         if (red && !drum_state[0]) {
-            velocity = red * 2;
-            velocity = min(max(velocity, 0), 127);
-            noteup(g_seq, g_port, DEFAULT_CHANNEL, DRUM_MIDI.red, 0);
-            notedown(g_seq, g_port, DEFAULT_CHANNEL, DRUM_MIDI.red, velocity);
+             MIDI_DRUM.velocity = red * 2;
+             MIDI_DRUM.velocity = min(max( MIDI_DRUM.velocity, 0), 127);
+            noteup( MIDI_DRUM.g_seq,  MIDI_DRUM.g_port, DEFAULT_CHANNEL, DRUM_MIDI.red, 0);
+            notedown( MIDI_DRUM.g_seq,  MIDI_DRUM.g_port, DEFAULT_CHANNEL, DRUM_MIDI.red,  MIDI_DRUM.velocity);
             }
         //Yellow Cymabl
         // Events:
         // Down
         if (yel && !drum_state[1]) {
-            velocity = yel * 2;
-            velocity = min(max(velocity, 0), 127);
-            noteup(g_seq, g_port, DEFAULT_CHANNEL, DRUM_MIDI.yellow_cymbal, 0);
-            notedown(g_seq, g_port, DEFAULT_CHANNEL, DRUM_MIDI.yellow_cymbal, velocity);
+             MIDI_DRUM.velocity = yel * 2;
+             MIDI_DRUM.velocity = min(max( MIDI_DRUM.velocity, 0), 127);
+            noteup( MIDI_DRUM.g_seq,  MIDI_DRUM.g_port, DEFAULT_CHANNEL, DRUM_MIDI.yellow_cymbal, 0);
+            notedown( MIDI_DRUM.g_seq,  MIDI_DRUM.g_port, DEFAULT_CHANNEL, DRUM_MIDI.yellow_cymbal,  MIDI_DRUM.velocity);
             }
         // Blue pad
         // Events:
         // Down
         if (blu && !drum_state[2]) {
-            velocity = blu * 2;
-            velocity = min(max(velocity, 0), 127);
-            noteup(g_seq, g_port, DEFAULT_CHANNEL, DRUM_MIDI.blue, 0);
-            notedown(g_seq, g_port, DEFAULT_CHANNEL, DRUM_MIDI.blue, velocity);
+             MIDI_DRUM.velocity = blu * 2;
+             MIDI_DRUM.velocity = min(max( MIDI_DRUM.velocity, 0), 127);
+            noteup( MIDI_DRUM.g_seq,  MIDI_DRUM.g_port, DEFAULT_CHANNEL, DRUM_MIDI.blue, 0);
+            notedown( MIDI_DRUM.g_seq,  MIDI_DRUM.g_port, DEFAULT_CHANNEL, DRUM_MIDI.blue,  MIDI_DRUM.velocity);
             }
         // Orange Cymbal
         // Events:
         // Down
         if (orange && !drum_state[7]) {
-            velocity = orange * 2;
-            velocity = min(max(velocity, 0), 127);
-            noteup(g_seq, g_port, DEFAULT_CHANNEL, DRUM_MIDI.orange_cymbal, 0);
-            notedown(g_seq, g_port, DEFAULT_CHANNEL, DRUM_MIDI.orange_cymbal, velocity);
+             MIDI_DRUM.velocity = orange * 2;
+             MIDI_DRUM.velocity = min(max( MIDI_DRUM.velocity, 0), 127);
+            noteup( MIDI_DRUM.g_seq,  MIDI_DRUM.g_port, DEFAULT_CHANNEL, DRUM_MIDI.orange_cymbal, 0);
+            notedown( MIDI_DRUM.g_seq,  MIDI_DRUM.g_port, DEFAULT_CHANNEL, DRUM_MIDI.orange_cymbal,  MIDI_DRUM.velocity);
             }
         //Green pad
         // Events:
         // Down
         if (grn && !drum_state[3]) {
-            velocity = grn * 2;
-            velocity = min(max(velocity, 0), 127);
-            noteup(g_seq, g_port, DEFAULT_CHANNEL, DRUM_MIDI.green, 0);
-            notedown(g_seq, g_port, DEFAULT_CHANNEL, DRUM_MIDI.green, velocity);
+             MIDI_DRUM.velocity = grn * 2;
+             MIDI_DRUM.velocity = min(max( MIDI_DRUM.velocity, 0), 127);
+            noteup( MIDI_DRUM.g_seq,  MIDI_DRUM.g_port, DEFAULT_CHANNEL, DRUM_MIDI.green, 0);
+            notedown( MIDI_DRUM.g_seq,  MIDI_DRUM.g_port, DEFAULT_CHANNEL, DRUM_MIDI.green,  MIDI_DRUM.velocity);
             }
         //Pedal
         // Events:
         // Down
         if (bass && !drum_state[6]) {
             bass_down = 1;
-            velocity = bass * 2;
-            velocity = min(max(velocity, 0), 127);
-            noteup(g_seq, g_port, DEFAULT_CHANNEL, DRUM_MIDI.black_bass, 0);
-            notedown(g_seq, g_port, DEFAULT_CHANNEL, DRUM_MIDI.black_bass, velocity);
+             MIDI_DRUM.velocity = bass * 2;
+             MIDI_DRUM.velocity = min(max( MIDI_DRUM.velocity, 0), 127);
+            noteup( MIDI_DRUM.g_seq,  MIDI_DRUM.g_port, DEFAULT_CHANNEL, DRUM_MIDI.black_bass, 0);
+            notedown( MIDI_DRUM.g_seq,  MIDI_DRUM.g_port, DEFAULT_CHANNEL, DRUM_MIDI.black_bass,  MIDI_DRUM.velocity);
             }
         drum_state[0] = red;
         drum_state[1] = yel;
@@ -573,17 +631,17 @@ static int alloc_transfers(int type)
     /*libusb_fill_bulk_transfer(img_transfer, devh, EP_DATA, imgbuf,
         sizeof(imgbuf), cb_img, NULL, 0);*/
     if(type == ROCKBAND){
-        libusb_fill_interrupt_transfer(irq_transfer, devh, EP_INTR, irqbuf,
+        libusb_fill_interrupt_transfer(irq_transfer, MIDI_DRUM.devh, EP_INTR, irqbuf,
             sizeof(irqbuf), cb_irq_rb, NULL, 0);
         if(verbose)printf("Rock Band drum kit detected.\n");
     }
     else if(type == ROCKBAND1){
-        libusb_fill_interrupt_transfer(irq_transfer, devh, EP_INTR, irqbuf,
+        libusb_fill_interrupt_transfer(irq_transfer, MIDI_DRUM.devh, EP_INTR, irqbuf,
             sizeof(irqbuf), cb_irq_rb1, NULL, 0);
         if(verbose)printf("Rock Band 1 drum kit detected.\n");
     }
     else if(type == GUITARHERO){
-        libusb_fill_interrupt_transfer(irq_transfer, devh, EP_INTR, irqbuf,
+        libusb_fill_interrupt_transfer(irq_transfer, MIDI_DRUM.devh, EP_INTR, irqbuf,
             sizeof(irqbuf), cb_irq_gh, NULL, 0);
         if(verbose)printf("Guitar Hero World Tour drum kit detected.\n");
     }
@@ -930,12 +988,12 @@ int main(int argc, char **argv)
         r = find_rbdrum_device(i);
     if (r < 0) {
         fprintf(stderr, "Could not find/open device\n");
-        libusb_close(devh);
+        libusb_close(MIDI_DRUM.devh);
         libusb_exit(NULL);
         return -r;
     }
 
-    if (libusb_kernel_driver_active(devh, 0)) {
+    if (libusb_kernel_driver_active(MIDI_DRUM.devh, 0)) {
         /*char driver_name[100];
         driver_name[0] = 0;
         r = usb_get_driver_np(devh, 0, driver_name, 100);
@@ -943,15 +1001,15 @@ int main(int argc, char **argv)
             printf("did not get driver_name.\n");
             driver_name[0] = 0;
         }*/
-        r = libusb_detach_kernel_driver(devh, 0);
+        r = libusb_detach_kernel_driver(MIDI_DRUM.devh, 0);
         if (r < 0) {
             printf("did not detach.\n");
         }
     }
-    r = libusb_claim_interface(devh, 0);
+    r = libusb_claim_interface(MIDI_DRUM.devh, 0);
     if (r < 0) {
         fprintf(stderr, "usb_claim_interface error %d %d\n", r, LIBUSB_ERROR_BUSY);
-        libusb_close(devh);
+        libusb_close(MIDI_DRUM.devh);
         libusb_exit(NULL);
         return -r;
     }
@@ -964,7 +1022,7 @@ int main(int argc, char **argv)
 
     }
 
-    int ret = setup_alsa(&g_seq, &g_port);
+    int ret = setup_alsa(& MIDI_DRUM.g_seq, & MIDI_DRUM.g_port);
     // 0 is fail.
     if (ret == 0) {
         printf("Error: Alsa setup failed.\n");
@@ -983,10 +1041,10 @@ int main(int argc, char **argv)
     if (r < 0) {
         // Deinit & Release
         libusb_free_transfer(irq_transfer);
-        libusb_release_interface(devh, 0);
-        libusb_close(devh);
+        libusb_release_interface(MIDI_DRUM.devh, 0);
+        libusb_close(MIDI_DRUM.devh);
         libusb_exit(NULL);
-        snd_seq_close(g_seq);
+        snd_seq_close( MIDI_DRUM.g_seq);
         printf("do_init failed.\n");
         return -r;
     }
@@ -997,10 +1055,10 @@ int main(int argc, char **argv)
     if (r < 0) {
         // Deinit & Release
         libusb_free_transfer(irq_transfer);
-        libusb_release_interface(devh, 0);
-        libusb_close(devh);
+        libusb_release_interface(MIDI_DRUM.devh, 0);
+        libusb_close(MIDI_DRUM.devh);
         libusb_exit(NULL);
-        snd_seq_close(g_seq);
+        snd_seq_close( MIDI_DRUM.g_seq);
         printf("alloc_transfers failed.\n");
         return -r;
     }
@@ -1009,10 +1067,10 @@ int main(int argc, char **argv)
     if (r < 0) {
         // Deinit & Release
         libusb_free_transfer(irq_transfer);
-        libusb_release_interface(devh, 0);
-        libusb_close(devh);
+        libusb_release_interface(MIDI_DRUM.devh, 0);
+        libusb_close(MIDI_DRUM.devh);
         libusb_exit(NULL);
-        snd_seq_close(g_seq);
+        snd_seq_close( MIDI_DRUM.g_seq);
         printf("init_capture failed.\n");
         return -r;
     }
@@ -1047,10 +1105,10 @@ int main(int argc, char **argv)
         if (r < 0) {
             // Deinit & Release
             libusb_free_transfer(irq_transfer);
-            libusb_release_interface(devh, 0);
-            libusb_close(devh);
+            libusb_release_interface(MIDI_DRUM.devh, 0);
+            libusb_close(MIDI_DRUM.devh);
             libusb_exit(NULL);
-            snd_seq_close(g_seq);
+            snd_seq_close( MIDI_DRUM.g_seq);
             printf("libusb_cancel_transfer failed.\n");
             return -r;
         }
@@ -1072,7 +1130,7 @@ int main(int argc, char **argv)
         if (libusb_handle_events(NULL) < 0)
             break;
 
-    if (do_exit == 1)
+    if (MIDI_DRUM.do_exit == 1)
         r = 0;
     else
         r = 1;
@@ -1083,11 +1141,11 @@ int main(int argc, char **argv)
     /*set_mode(0);
     set_hwstat(0x80);*/
 //out_release:
-    libusb_release_interface(devh, 0);
+    libusb_release_interface(MIDI_DRUM.devh, 0);
 //out:
-    libusb_close(devh);
+    libusb_close(MIDI_DRUM.devh);
     libusb_exit(NULL);
-    snd_seq_close(g_seq);
+    snd_seq_close( MIDI_DRUM.g_seq);
     return 23;
     return r >= 0 ? r : -r;
 }
