@@ -92,7 +92,8 @@ enum drums{
 };
 
 enum kit_types{
-    PS_ROCKBAND = 0,
+    UNKNOWN = 0,
+    PS_ROCKBAND,
     XB_ROCKBAND,
     XB_ROCKBAND1,
     PS_ROCKBAND1,
@@ -101,7 +102,7 @@ enum kit_types{
 
 static struct drum_midi
 {
-    unsigned char kit_type;
+    unsigned char kit;
     unsigned char midi_note[10];
     unsigned char buf_indx[10];
     unsigned char buf_mask[10];
@@ -132,6 +133,8 @@ static struct drum_midi
     struct libusb_device_handle *devh;// = NULL;
 //    static struct libusb_transfer *img_transfer = NULL;
     struct libusb_transfer *irq_transfer;// = NULL;
+
+    void *calc_velocity(unsigned char);
 }MIDI_DRUM;
 
 
@@ -144,26 +147,31 @@ static int find_rbdrum_device(int i)
     // TODO: Currently the i argument is ignored.
     //PS3 RB kit
     MIDI_DRUM.devh = libusb_open_device_with_vid_pid(NULL, 0x12ba, 0x0210);
-    //xbox RB kit
-    if(!MIDI_DRUM.devh){
-        MIDI_DRUM.devh = libusb_open_device_with_vid_pid(NULL, 0x1bad, 0x0003);
-        }
-    //Wìì RB kit??
-    if(!MIDI_DRUM.devh){
-        MIDI_DRUM.devh = libusb_open_device_with_vid_pid(NULL, 0x1bad, 0x0005);
-        }
-
     if(MIDI_DRUM.devh){
-        kit=ROCKBAND;
-        }
-    //PS3 GH kit
-    if(!MIDI_DRUM.devh){
-        MIDI_DRUM.devh = libusb_open_device_with_vid_pid(NULL, 0x12ba, 0x0120);
+        MIDI_DRUM.kit=PS_ROCKBAND;
+        return MIDI_DRUM.devh;
+	}
 
-        if(MIDI_DRUM.devh){
-            kit=GUITARHERO;
-            }
-        }
+    //xbox RB kit
+    MIDI_DRUM.devh = libusb_open_device_with_vid_pid(NULL, 0x1bad, 0x0003);
+    if(MIDI_DRUM.devh){
+        MIDI_DRUM.kit=XB_ROCKBAND;
+        return MIDI_DRUM.devh;
+	}
+
+    //Wìì RB kit??
+    MIDI_DRUM.devh = libusb_open_device_with_vid_pid(NULL, 0x1bad, 0x0005);      
+    if(MIDI_DRUM.devh){
+        MIDI_DRUM.kit=WII_ROCKBAND;
+        return MIDI_DRUM.devh;
+	}
+
+    //PS3 GH kit
+    MIDI_DRUM.devh = libusb_open_device_with_vid_pid(NULL, 0x12ba, 0x0120);
+    if(MIDI_DRUM.devh){
+        MIDI_DRUM.kit=GUITARHERO;
+    }
+  
 
     return MIDI_DRUM.devh ? 0 : -EIO;
 }
@@ -205,31 +213,41 @@ static int sync_intr(unsigned char type)
 
 void get_state(unsigned char drum)
 {
-    MIDI_DRUM.drum_state[drum] = MIDI_DRUM.buf[MIDI_DRUM.buf_indx[drum]] & MIDI_DRUM.buf_mask[color];
+    MIDI_DRUM.drum_state[drum] = MIDI_DRUM.buf[MIDI_DRUM.buf_indx[drum]] & MIDI_DRUM.buf_mask[drum];
+}
+
+
+void calc_velocity_rb(unsigned char drum)
+{
+    MIDI_DRUM.velocity = min(max((280-MIDI_DRUM.drum_state[drum]) * 2, 0), 127);
+}
+
+void calc_velocity_rb1(unsigned char drum)
+{
+    MIDI_DRUM.velocity = 125;
 }
 
 void handle_drum_rb(unsigned char drum)
 {
    if (MIDI_DRUM.drum_state[drum] && !MIDI_DRUM.prev_state[drum]) {
-            MIDI_DRUM.velocity = (280-MIDI_DRUM.drum_state[drum]) * 2;
-            MIDI_DRUM.velocity = min(max(MIDI_DRUM.velocity, 0), 127);
-   noteup(MIDI_DRUM.g_seq, MIDI_DRUM.g_port, DEFAULT_CHANNEL, MIDI_DRUM.midi_note[drum], -1);
-   notedown( MIDI_DRUM.g_seq,  MIDI_DRUM.g_port, DEFAULT_CHANNEL, MIDI_DRUM.midi_note[drum], MIDI_DRUM.velocity);
+       MIDI_DRUM.calc_velocity(drum);
+       noteup(MIDI_DRUM.g_seq, MIDI_DRUM.g_port, DEFAULT_CHANNEL, MIDI_DRUM.midi_note[drum], -1);
+       notedown( MIDI_DRUM.g_seq,  MIDI_DRUM.g_port, DEFAULT_CHANNEL, MIDI_DRUM.midi_note[drum], MIDI_DRUM.velocity);
             }
 }
 
-void handle_bass_rb(unsigned char bass)
+void handle_bass_rb(unsigned char drum)
 {
-    if (MIDI_DRUM.drum_state[bass] != MIDI_DRUM.prev_state[bass]) {
-        if (MIDI_DRUM.drum_state[bass]) {
+    if (MIDI_DRUM.drum_state[drum] != MIDI_DRUM.prev_state[drum]) {
+        if (MIDI_DRUM.drum_state[drum]) {
             //bass_down = 1;
             MIDI_DRUM.velocity = 127;
             //MIDI_DRUM.velocity = min(max( MIDI_DRUM.velocity, 0), 127);
-            notedown( MIDI_DRUM.g_seq,  MIDI_DRUM.g_port, DEFAULT_CHANNEL, MIDI_DRUM.midi_note[bass],  MIDI_DRUM.velocity);
+            notedown( MIDI_DRUM.g_seq,  MIDI_DRUM.g_port, DEFAULT_CHANNEL, MIDI_DRUM.midi_note[drum],  MIDI_DRUM.velocity);
         }
         // Up
         else {
-            noteup( MIDI_DRUM.g_seq,  MIDI_DRUM.g_port, DEFAULT_CHANNEL, MIDI_DRUM.midi_note[bass], 0);
+            noteup( MIDI_DRUM.g_seq,  MIDI_DRUM.g_port, DEFAULT_CHANNEL, MIDI_DRUM.midi_note[drum], 0);
         }
     }
 }
@@ -239,35 +257,13 @@ static void cb_irq_rb(struct libusb_transfer *transfer)
 {
     if (transfer->status != LIBUSB_TRANSFER_COMPLETED) {
         fprintf(stderr, "irq transfer status %d? %d\n", transfer->status, LIBUSB_TRANSFER_ERROR);
-        do_exit = 2;
+        MIDI_DRUM.do_exit = 2;
         libusb_free_transfer(transfer);
-        irq_transfer = NULL;
+        MIDI_DRUM.irq_transfer = NULL;
         return;
     }
 
     //RockBand 3 Drumkit
-
-/*        yel     = RB_YELLOW; //Yellow
-        red     = RB_RED; //Red
-        grn     = RB_GREEN; //Green
-        blu     = RB_BLUE; //Blue
-        bass    = RB_ORANGE; //Orange Pedal
-        bass2   = RB_BLACK; //Black Pedal
-        bass_down = 0;
-
-	MIDI_DRUM.drum_state[YELLOW] = MIDI_DRUM.buf[MIDI_DRUM.buf_indx[YELLOW]] &MIDI_DRUM.buf_mask[YELLOW];
-	MIDI_DRUM.drum_state[RED] = MIDI_DRUM.buf[MIDI_DRUM.buf_indx[RED]] &MIDI_DRUM.buf_mask[RED];
-	MIDI_DRUM.drum_state[GREEN] = MIDI_DRUM.buf[MIDI_DRUM.buf_indx[GREEN]] &MIDI_DRUM.buf_mask[GREEN];
-	MIDI_DRUM.drum_state[BLUE] = MIDI_DRUM.buf[MIDI_DRUM.buf_indx[BLUE]] &MIDI_DRUM.buf_mask[BLUE];
-        // Events:
-        // Down
-        if (MIDI_DRUM.drum_state[RED] && !MIDI_DRUM.prev_state[RED]) {
-            MIDI_DRUM.velocity = (280-MIDI_DRUM.drum_state[RED]) * 2;
-            MIDI_DRUM.velocity = min(max(MIDI_DRUM.velocity, 0), 127);
-            noteup(MIDI_DRUM.g_seq, MIDI_DRUM.g_port, DEFAULT_CHANNEL, MIDI_DRUM.midi_note[RED], 0);
-            notedown( MIDI_DRUM.g_seq,  MIDI_DRUM.g_port, DEFAULT_CHANNEL, MIDI_DRUM.midi_note[RED], MIDI_DRUM.velocity);
-            }
-	    */
     get_state(RED);
     get_state(YELLOW);
     get_state(GREEN);
@@ -275,6 +271,7 @@ static void cb_irq_rb(struct libusb_transfer *transfer)
     get_state(YELLOW_CYMBAL);
     get_state(ORANGE_BASS);
     get_state(BLACK_BASS);
+
     handle_drum(RED);
     if(MIDI_DRUM.drum_state[YELLOW_CYMBAL]){//only 1 flag to indicate all cymbals
         handle_drum(YELLOW_CYMBAL);
@@ -286,111 +283,33 @@ static void cb_irq_rb(struct libusb_transfer *transfer)
         handle_drum(GREEN);
         handle_drum(BLUE);
     }
-    handle_drum(ORANGE_BASS);
-    handle_drum(BLACK_BASS);
-/*        //yellow pad and cymbal
-        // Events:
-        // Down
-//        if (yel && !drum_state[1]) {
-             MIDI_DRUM.velocity = (280-yel) * 2;
-             MIDI_DRUM.velocity = min(max( MIDI_DRUM.velocity, 0), 127);
-            if(RB_CYMBAL){
-                noteup( MIDI_DRUM.g_seq,  MIDI_DRUM.g_port, DEFAULT_CHANNEL, DRUM_MIDI.yellow_cymbal, 0);
-                notedown( MIDI_DRUM.g_seq,  MIDI_DRUM.g_port, DEFAULT_CHANNEL, DRUM_MIDI.yellow_cymbal,  MIDI_DRUM.velocity);
-                }
-            else{
-                noteup( MIDI_DRUM.g_seq,  MIDI_DRUM.g_port, DEFAULT_CHANNEL, DRUM_MIDI.yellow, 0);
-                notedown( MIDI_DRUM.g_seq,  MIDI_DRUM.g_port, DEFAULT_CHANNEL, DRUM_MIDI.yellow,  MIDI_DRUM.velocity);
-                }
-            }
-        //Blue pad and cymbal
-        // Events:
-        // Down
-        if (blu && !drum_state[2]) {
-             MIDI_DRUM.velocity = (280-blu) * 2;
-             MIDI_DRUM.velocity = min(max( MIDI_DRUM.velocity, 0), 127);
-            if(RB_CYMBAL){
-                noteup( MIDI_DRUM.g_seq,  MIDI_DRUM.g_port, DEFAULT_CHANNEL, DRUM_MIDI.blue_cymbal, 0);
-                notedown( MIDI_DRUM.g_seq,  MIDI_DRUM.g_port, DEFAULT_CHANNEL, DRUM_MIDI.blue_cymbal,  MIDI_DRUM.velocity);
-                }
-            else{
-                noteup( MIDI_DRUM.g_seq,  MIDI_DRUM.g_port, DEFAULT_CHANNEL, DRUM_MIDI.blue, 0);
-                notedown( MIDI_DRUM.g_seq,  MIDI_DRUM.g_port, DEFAULT_CHANNEL, DRUM_MIDI.blue,  MIDI_DRUM.velocity);
-                }
-            }
-        //Green pad and Cymbal
-        // Events:
-        // Down
-        if (grn && !drum_state[3]) {
-             MIDI_DRUM.velocity = (280-grn) * 2;
-             MIDI_DRUM.velocity = min(max( MIDI_DRUM.velocity, 0), 127);
-            if(RB_CYMBAL){
-                 MIDI_DRUM.velocity = (280-grn);
-                 MIDI_DRUM.velocity = min(max( MIDI_DRUM.velocity, 0), 127);
-                noteup( MIDI_DRUM.g_seq,  MIDI_DRUM.g_port, DEFAULT_CHANNEL, DRUM_MIDI.green_cymbal, 0);
-                notedown( MIDI_DRUM.g_seq,  MIDI_DRUM.g_port, DEFAULT_CHANNEL, DRUM_MIDI.green_cymbal,  MIDI_DRUM.velocity);
-                }
-            else{
-                noteup( MIDI_DRUM.g_seq,  MIDI_DRUM.g_port, DEFAULT_CHANNEL, DRUM_MIDI.green, 0);
-                notedown( MIDI_DRUM.g_seq,  MIDI_DRUM.g_port, DEFAULT_CHANNEL, DRUM_MIDI.green,  MIDI_DRUM.velocity);
-                }
-//            }
-        // Pedal 1 (orange)
-        if (bass != drum_state[4]) {
-            // Events:
-            // Down
-            if (bass) {
-                bass_down = 1;
-                 MIDI_DRUM.velocity = 127;
-                 MIDI_DRUM.velocity = min(max( MIDI_DRUM.velocity, 0), 127);
-                notedown( MIDI_DRUM.g_seq,  MIDI_DRUM.g_port, DEFAULT_CHANNEL, DRUM_MIDI.orange_bass,  MIDI_DRUM.velocity);
-                }
-            // Up
-            else{
-                noteup( MIDI_DRUM.g_seq,  MIDI_DRUM.g_port, DEFAULT_CHANNEL, DRUM_MIDI.orange_bass, 0);
-                }
-            }
-        // Pedal 2 (black)
-        if (bass2 != drum_state[5]) {
-            // Events:
-            // Down
-            if (bass2) {
-                bass_down = 1;
-                 MIDI_DRUM.velocity = 127;
-                 MIDI_DRUM.velocity = min(max( MIDI_DRUM.velocity, 0), 127);
-                notedown( MIDI_DRUM.g_seq,  MIDI_DRUM.g_port, DEFAULT_CHANNEL, DRUM_MIDI.black_bass,  MIDI_DRUM.velocity);
-                }
-            // Up
-            else {
-                noteup( MIDI_DRUM.g_seq,  MIDI_DRUM.g_port, DEFAULT_CHANNEL, DRUM_MIDI.black_bass, 0);
-                }
-            }*/
-        //now that the time-critical stuff is done, lets do the assignments
-        drum_state[0] = red;
-        drum_state[1] = yel;
-        drum_state[2] = blu;
-        drum_state[3] = grn;
-        drum_state[4] = bass;
-        drum_state[5] = bass2;
-        if (verbose && (red || yel || blu || grn || bass_down)) {
-            printf("%s %s %s %s %s %s \n", red>0?"VV":"  ", yel>0?"VV":"  ", blu>0?"VV":"  ", grn>0?"VV":"  ", bass>0?"VV":"  ", bass2>0?"VV":"  ");
-            printf("%02i %02i %02i %02i %02i %02i\n", red, yel, blu, grn, bass, bass2);
-            printf("%02x%02x%02x%02x %02x%02x%02x%02x %02x%02x%02x%02x %02x%02x%02x%02x %02x%02x%02x%02x %02x%02x%02x%02x %02x%02x%02x\n",
-            buf[0], buf[1], buf[2], buf[3], buf[4], buf[5], buf[6], buf[7], buf[8], buf[9],
-            buf[10], buf[11], buf[12], buf[13], buf[14], buf[15], buf[16], buf[17], buf[18], buf[19],
-            buf[20], buf[21], buf[22], buf[23], buf[24], buf[25], buf[26]);
+    handle_bass(ORANGE_BASS);
+    handle_bass(BLACK_BASS);
+        
+	//now that the time-critical stuff is done, lets do the assignments
+       MIDI_DRUM.prev_state[RED] = MIDI_DRUM.drum_state[RED];
+       MIDI_DRUM.prev_state[YELLOW] = MIDI_DRUM.drum_state[YELLOW];
+       MIDI_DRUM.prev_state[BLUE] = MIDI_DRUM.drum_state[BLUE];
+       MIDI_DRUM.prev_state[GREEN] = MIDI_DRUM.drum_state[GREEN];
+       MIDI_DRUM.prev_state[YELLOW_CYMBAL] = MIDI_DRUM.drum_state[YELLOW_CYMBAL];
+       MIDI_DRUM.prev_state[ORANGE_BASS] = MIDI_DRUM.drum_state[ORANGE_BASS];
+       MIDI_DRUM.prev_state[BLACK_BASS] = MIDI_DRUM.drum_state[ORANGE_BASS];
+                             
+        if ( MIDI_DRUM.verbose && ( MIDI_DRUM.drum_state[RED] ||  MIDI_DRUM.drum_state[YELLOW] || MIDI_DRUM.drum_state[BLUE] || MIDI_DRUM.drum_state[GREEN] || MIDI_DRUM.drum_state[ORANGE_BASS] || MIDI_DRUM.drum_state[BLACK_BASS]  )) {
+            printf("%s %s %s %s %s %s \n",  MIDI_DRUM.drum_state[RED]>0?"VV":"  ", MIDI_DRUM.drum_state[YELLOW]>0?"VV":"  ", MIDI_DRUM.drum_state[BLUE]>0?"VV":"  ", MIDI_DRUM.drum_state[GREEN]>0?"VV":"  ", MIDI_DRUM.drum_state[ORANGE_BASS]>0?"VV":"  ", MIDI_DRUM.drum_state[BLACK_BASS]>0?"VV":"  ");
+            printf("%02i %02i %02i %02i %02i %02i\n", MIDI_DRUM.drum_state[RED], MIDI_DRUM.drum_state[YELLOW], MIDI_DRUM.drum_state[BLUE], MIDI_DRUM.drum_state[GREEN], MIDI_DRUM.drum_state[ORANGE_BASS], MIDI_DRUM.drum_state[BLACK_BASS]);
         }
 
-    if (verbose && memcmp(oldbuf,buf,INTR_LENGTH))
+    if ( MIDI_DRUM.verbose && memcmp(MIDI_DRUM.oldbuf,MIDI_DRUM.buf,INTR_LENGTH))
     {
         printf("%02x%02x%02x%02x %02x%02x%02x%02x %02x%02x%02x%02x %02x%02x%02x%02x %02x%02x%02x%02x %02x%02x%02x%02x %02x%02x%02x kit type=%d\n",
-        buf[0], buf[1], buf[2], buf[3], buf[4], buf[5], buf[6], buf[7], buf[8], buf[9],
-        buf[10], buf[11], buf[12], buf[13], buf[14], buf[15], buf[16], buf[17], buf[18], buf[19],
-        buf[20], buf[21], buf[22], buf[23], buf[24], buf[25], buf[26],kit);
-	memcpy(oldbuf,buf,INTR_LENGTH);
+        MIDI_DRUM.buf[0], MIDI_DRUM.buf[1], MIDI_DRUM.buf[2], MIDI_DRUM.buf[3], MIDI_DRUM.buf[4], MIDI_DRUM.buf[5], MIDI_DRUM.buf[6], MIDI_DRUM.buf[7], MIDI_DRUM.buf[8], MIDI_DRUM.buf[9],
+        MIDI_DRUM.buf[10], MIDI_DRUM.buf[11], MIDI_DRUM.buf[12], MIDI_DRUM.buf[13], MIDI_DRUM.buf[14], MIDI_DRUM.buf[15], MIDI_DRUM.buf[16], MIDI_DRUM.buf[17], MIDI_DRUM.buf[18], MIDI_DRUM.buf[19],
+        MIDI_DRUM.buf[20], MIDI_DRUM.buf[21], MIDI_DRUM.buf[22], MIDI_DRUM.buf[23], MIDI_DRUM.buf[24], MIDI_DRUM.buf[25], MIDI_DRUM.buf[26],MIDI_DRUM.kit);
+	memcpy(MIDI_DRUM.oldbuf,MIDI_DRUM.buf,INTR_LENGTH);
     }
     if (libusb_submit_transfer(irq_transfer) < 0)
-        do_exit = 2;
+        MIDI_DRUM.do_exit = 2;
 }
 
 //irq for rockband 1 drumset with no velocity info
@@ -398,13 +317,13 @@ static void cb_irq_rb1(struct libusb_transfer *transfer)
 {
     if (transfer->status != LIBUSB_TRANSFER_COMPLETED) {
         fprintf(stderr, "irq transfer status %d? %d\n", transfer->status, LIBUSB_TRANSFER_ERROR);
-        do_exit = 2;
+        MIDI_DRUM.do_exit = 2;
         libusb_free_transfer(transfer);
         irq_transfer = NULL;
         return;
     }
 
-    unsigned char *buf = irqbuf;
+//    unsigned char *MIDI_DRUM.buf = irqbuf;
 
     yel     = RB1_YELLOW; //Yellow
     red     = RB1_RED; //Red
@@ -460,13 +379,13 @@ static void cb_irq_rb1(struct libusb_transfer *transfer)
     drum_state[2] = blu;
     drum_state[3] = grn;
     drum_state[4] = bass;
-     if (verbose && (red || yel || blu || grn || bass_down)) {
+     if ( MIDI_DRUM.verbose && (red || yel || blu || grn || bass_down)) {
         printf("%s %s %s %s %s %s \n", red>0?"VV":"  ", yel>0?"VV":"  ", blu>0?"VV":"  ", grn>0?"VV":"  ", bass>0?"VV":"  ", bass2>0?"VV":"  ");
         printf("%02i %02i %02i %02i %02i %02i\n", red, yel, blu, grn, bass, bass2);
         printf("%02x%02x%02x%02x %02x%02x%02x%02x %02x%02x%02x%02x %02x%02x%02x%02x %02x%02x%02x%02x %02x%02x%02x%02x %02x%02x%02x\n",
-        buf[0], buf[1], buf[2], buf[3], buf[4], buf[5], buf[6], buf[7], buf[8], buf[9],
-        buf[10], buf[11], buf[12], buf[13], buf[14], buf[15], buf[16], buf[17], buf[18], buf[19],
-        buf[20], buf[21], buf[22], buf[23], buf[24], buf[25], buf[26]);
+        MIDI_DRUM.buf[0], MIDI_DRUM.buf[1], MIDI_DRUM.buf[2], MIDI_DRUM.buf[3], MIDI_DRUM.buf[4], MIDI_DRUM.buf[5], MIDI_DRUM.buf[6], MIDI_DRUM.buf[7], MIDI_DRUM.buf[8], MIDI_DRUM.buf[9],
+        MIDI_DRUM.buf[10], MIDI_DRUM.buf[11], MIDI_DRUM.buf[12], MIDI_DRUM.buf[13], MIDI_DRUM.buf[14], MIDI_DRUM.buf[15], MIDI_DRUM.buf[16], MIDI_DRUM.buf[17], MIDI_DRUM.buf[18], MIDI_DRUM.buf[19],
+        MIDI_DRUM.buf[20], MIDI_DRUM.buf[21], MIDI_DRUM.buf[22], MIDI_DRUM.buf[23], MIDI_DRUM.buf[24], MIDI_DRUM.buf[25], MIDI_DRUM.buf[26]);
         }
 
 
@@ -476,7 +395,7 @@ static void cb_irq_rb1(struct libusb_transfer *transfer)
         buf[10], buf[11], buf[12], buf[13], buf[14], buf[15], buf[16], buf[17], buf[18], buf[19],
         buf[20], buf[21], buf[22], buf[23], buf[24], buf[25], buf[26],kit);
     }*/
-    if (verbose && memcmp(oldbuf,buf,INTR_LENGTH))/*
+    if ( MIDI_DRUM.verbose && memcmp(MIDI_DRUM.oldbuf,buf,INTR_LENGTH))/*
     	(buf[0] != oldbuf[0] || buf[1] != oldbuf[1] || buf[2] != oldbuf[2] ||
 	 buf[3] != oldbuf[3] || buf[4] != oldbuf[4] || buf[5] != oldbuf[5] ||
 	 buf[6] != oldbuf[6] || buf[7] != oldbuf[7] || buf[8] != oldbuf[8] ||
@@ -488,22 +407,22 @@ static void cb_irq_rb1(struct libusb_transfer *transfer)
  	 buf[24] != oldbuf[24] || buf[25] != oldbuf[25] || buf[26] != oldbuf[26]))*/
    {
         printf("%02x%02x%02x%02x %02x%02x%02x%02x %02x%02x%02x%02x %02x%02x%02x%02x %02x%02x%02x%02x %02x%02x%02x%02x %02x%02x%02x kit type=%d\n",
-        buf[0], buf[1], buf[2], buf[3], buf[4], buf[5], buf[6], buf[7], buf[8], buf[9],
-        buf[10], buf[11], buf[12], buf[13], buf[14], buf[15], buf[16], buf[17], buf[18], buf[19],
-        buf[20], buf[21], buf[22], buf[23], buf[24], buf[25], buf[26],kit);
-	memcpy(oldbuf,buf,INTR_LENGTH);
+        MIDI_DRUM.buf[0], MIDI_DRUM.buf[1], MIDI_DRUM.buf[2], MIDI_DRUM.buf[3], MIDI_DRUM.buf[4], MIDI_DRUM.buf[5], MIDI_DRUM.buf[6], MIDI_DRUM.buf[7], MIDI_DRUM.buf[8], MIDI_DRUM.buf[9],
+        MIDI_DRUM.buf[10], MIDI_DRUM.buf[11], MIDI_DRUM.buf[12], MIDI_DRUM.buf[13], MIDI_DRUM.buf[14], MIDI_DRUM.buf[15], MIDI_DRUM.buf[16], MIDI_DRUM.buf[17], MIDI_DRUM.buf[18], MIDI_DRUM.buf[19],
+        MIDI_DRUM.buf[20], MIDI_DRUM.buf[21], MIDI_DRUM.buf[22], MIDI_DRUM.buf[23], MIDI_DRUM.buf[24], MIDI_DRUM.buf[25], MIDI_DRUM.buf[26],MIDI_DRUM.kit);
+	memcpy(MIDI_DRUM.oldbuf,MIDI_DRUM.buf,INTR_LENGTH);
     }
 
 
     if (libusb_submit_transfer(irq_transfer) < 0)
-        do_exit = 2;
+        MIDI_DRUM.do_exit = 2;
 }
 
 static void cb_irq_gh(struct libusb_transfer *transfer)
 {
     if (transfer->status != LIBUSB_TRANSFER_COMPLETED) {
         fprintf(stderr, "irq transfer status %d? %d\n", transfer->status, LIBUSB_TRANSFER_ERROR);
-        do_exit = 2;
+        MIDI_DRUM.do_exit = 2;
         libusb_free_transfer(transfer);
         irq_transfer = NULL;
         return;
@@ -575,25 +494,25 @@ static void cb_irq_gh(struct libusb_transfer *transfer)
         drum_state[2] = blu;
         drum_state[3] = grn;
         drum_state[6] = bass;
-        if (verbose && (red || yel || blu || grn || bass_down || orange)) {
+        if ( MIDI_DRUM.verbose && (red || yel || blu || grn || bass_down || orange)) {
             printf("%s %s %s %s %s %s\n", red>0?"VV":"  ", yel>0?"VV":"  ", blu>0?"VV":"  ", grn>0?"VV":"  ", bass>0?"VV":"  ", orange>0?"VV":"  ");
             printf("%02i %02i %02i %02i %02i %02i\n", red, yel, blu, grn, bass, orange);
             printf("%02x%02x%02x%02x %02x%02x%02x%02x %02x%02x%02x%02x %02x%02x%02x%02x %02x%02x%02x%02x %02x%02x%02x%02x %02x%02x%02x\n",
-            buf[0], buf[1], buf[2], buf[3], buf[4], buf[5], buf[6], buf[7], buf[8], buf[9],
-            buf[10], buf[11], buf[12], buf[13], buf[14], buf[15], buf[16], buf[17], buf[18], buf[19],
-            buf[20], buf[21], buf[22], buf[23], buf[24], buf[25], buf[26]);
+            MIDI_DRUM.buf[0], MIDI_DRUM.buf[1], MIDI_DRUM.buf[2], MIDI_DRUM.buf[3], MIDI_DRUM.buf[4], MIDI_DRUM.buf[5], MIDI_DRUM.buf[6], MIDI_DRUM.buf[7], MIDI_DRUM.buf[8], MIDI_DRUM.buf[9],
+            MIDI_DRUM.buf[10], MIDI_DRUM.buf[11], MIDI_DRUM.buf[12], MIDI_DRUM.buf[13], MIDI_DRUM.buf[14], MIDI_DRUM.buf[15], MIDI_DRUM.buf[16], MIDI_DRUM.buf[17], MIDI_DRUM.buf[18], MIDI_DRUM.buf[19],
+            MIDI_DRUM.buf[20], MIDI_DRUM.buf[21], MIDI_DRUM.buf[22], MIDI_DRUM.buf[23], MIDI_DRUM.buf[24], MIDI_DRUM.buf[25], MIDI_DRUM.buf[26]);
             }
 
-    if (verbose && memcmp(oldbuf,buf,INTR_LENGTH))
+    if ( MIDI_DRUM.verbose && memcmp(MIDI_DRUM.oldbuf,MIDI_DRUM.buf,INTR_LENGTH))
     {
         printf("%02x%02x%02x%02x %02x%02x%02x%02x %02x%02x%02x%02x %02x%02x%02x%02x %02x%02x%02x%02x %02x%02x%02x%02x %02x%02x%02x kit type=%d\n",
-        buf[0], buf[1], buf[2], buf[3], buf[4], buf[5], buf[6], buf[7], buf[8], buf[9],
-        buf[10], buf[11], buf[12], buf[13], buf[14], buf[15], buf[16], buf[17], buf[18], buf[19],
-        buf[20], buf[21], buf[22], buf[23], buf[24], buf[25], buf[26],kit);
-	memcpy(oldbuf,buf,INTR_LENGTH);
+        MIDI_DRUM.buf[0], MIDI_DRUM.buf[1], MIDI_DRUM.buf[2], MIDI_DRUM.buf[3], MIDI_DRUM.buf[4], MIDI_DRUM.buf[5], MIDI_DRUM.buf[6], MIDI_DRUM.buf[7], MIDI_DRUM.buf[8], MIDI_DRUM.buf[9],
+        MIDI_DRUM.buf[10], MIDI_DRUM.buf[11], MIDI_DRUM.buf[12], MIDI_DRUM.buf[13], MIDI_DRUM.buf[14], MIDI_DRUM.buf[15], MIDI_DRUM.buf[16], MIDI_DRUM.buf[17], MIDI_DRUM.buf[18], MIDI_DRUM.buf[19],
+        MIDI_DRUM.buf[20], MIDI_DRUM.buf[21], MIDI_DRUM.buf[22], MIDI_DRUM.buf[23], MIDI_DRUM.buf[24], MIDI_DRUM.buf[25], MIDI_DRUM.buf[26],MIDI_DRUM.kit);
+	memcpy(MIDI_DRUM.oldbuf,MIDI_DRUM.buf,INTR_LENGTH);
     }
     if (libusb_submit_transfer(irq_transfer) < 0)
-        do_exit = 2;
+        MIDI_DRUM.do_exit = 2;
 }
 
 static int init_capture(void)
@@ -631,19 +550,19 @@ static int alloc_transfers(int type)
     /*libusb_fill_bulk_transfer(img_transfer, devh, EP_DATA, imgbuf,
         sizeof(imgbuf), cb_img, NULL, 0);*/
     if(type == ROCKBAND){
-        libusb_fill_interrupt_transfer(irq_transfer, MIDI_DRUM.devh, EP_INTR, irqbuf,
-            sizeof(irqbuf), cb_irq_rb, NULL, 0);
-        if(verbose)printf("Rock Band drum kit detected.\n");
+        libusb_fill_interrupt_transfer(irq_transfer, MIDI_DRUM.devh, EP_INTR, MIDI_DRUM.irqbuf,
+            sizeof(MIDI_DRUM.irqbuf), cb_irq_rb, NULL, 0);
+        if( MIDI_DRUM.verbose)printf("Rock Band drum kit detected.\n");
     }
     else if(type == ROCKBAND1){
-        libusb_fill_interrupt_transfer(irq_transfer, MIDI_DRUM.devh, EP_INTR, irqbuf,
-            sizeof(irqbuf), cb_irq_rb1, NULL, 0);
-        if(verbose)printf("Rock Band 1 drum kit detected.\n");
+        libusb_fill_interrupt_transfer(irq_transfer, MIDI_DRUM.devh, EP_INTR, MIDI_DRUM.irqbuf,
+            sizeof(MIDI_DRUM.irqbuf), cb_irq_rb1, NULL, 0);
+        if( MIDI_DRUM.verbose)printf("Rock Band 1 drum kit detected.\n");
     }
     else if(type == GUITARHERO){
-        libusb_fill_interrupt_transfer(irq_transfer, MIDI_DRUM.devh, EP_INTR, irqbuf,
-            sizeof(irqbuf), cb_irq_gh, NULL, 0);
-        if(verbose)printf("Guitar Hero World Tour drum kit detected.\n");
+        libusb_fill_interrupt_transfer(irq_transfer, MIDI_DRUM.devh, EP_INTR, MIDI_DRUM.irqbuf,
+            sizeof(MIDI_DRUM.irqbuf), cb_irq_gh, NULL, 0);
+        if( MIDI_DRUM.verbose)printf("Guitar Hero World Tour drum kit detected.\n");
     }
     else{
         //libusb_fill_interrupt_transfer(irq_transfer, devh, EP_INTR, irqbuf,
@@ -813,17 +732,17 @@ void noteup(snd_seq_t *seq, int port, int chan, int pitch, int vol)
 
 int setup_alsa(snd_seq_t **seq, int *port)
 {
-    if (verbose) printf("Setting up alsa\n");
+    if ( MIDI_DRUM.verbose) printf("Setting up alsa\n");
 
     *seq = open_client();
     if (*seq == NULL) {
-        if (verbose >= 0) printf("Error: open_client failed: %s\n", snd_strerror(seq));
+        if ( MIDI_DRUM.verbose >= 0) printf("Error: open_client failed: %s\n", snd_strerror(seq));
         return 0;
     }
 
     int my_client_id = snd_seq_client_id(*seq);
     *port = my_new_port(*seq);
-    if (verbose) printf("client:port = %i:%i\n", my_client_id, *port);
+    if ( MIDI_DRUM.verbose) printf("client:port = %i:%i\n", my_client_id, *port);
 
     program_change(*seq, *port, DEFAULT_CHANNEL, 0);
     // Subscribing to something else seems unnecssary until we figure out more.
@@ -845,7 +764,7 @@ int setup_alsa(snd_seq_t **seq, int *port)
     //schedule_event(seq, my_port_id, q);
     notedown(*seq, *port, DEFAULT_CHANNEL, 57, 55);
 
-    if (verbose) printf("Returning %i\n", ret);
+    if ( MIDI_DRUM.verbose) printf("Returning %i\n", ret);
     return ret;
 }
 
@@ -860,7 +779,7 @@ void testAlsa(snd_seq_t *seq, int port)
 
 static void sighandler(int signum)
 {
-    do_exit = 1;
+    MIDI_DRUM.do_exit = 1;
 }
 
 void useage()
@@ -897,7 +816,7 @@ int main(int argc, char **argv)
     struct sigaction sigact;
     int r = 1;
     int i = 0;
-    buf = irqbuf;
+    MIDI_DRUM.buf = MIDI_DRUM.irqbuf;
 
     //default midi values;
     DRUM_MIDI.red = YVK_SNARE;
@@ -911,17 +830,17 @@ int main(int argc, char **argv)
     DRUM_MIDI.orange_bass = YVK_KICK;
     DRUM_MIDI.black_bass = YVK_KICK;
 
-    memset(oldbuf,0,INTR_LENGTH);
+    memset(MIDI_DRUM.oldbuf,0,INTR_LENGTH);
 
     if (argc > 1) {
         for (i = 1;i<argc;i++)
         {
             if (strcmp(argv[i], "-v") == 0) {
-                verbose = 1;
+                 MIDI_DRUM.verbose = 1;
             }
             else if (strcmp(argv[i], "-rb1") == 0) {
                 //rockband 1 set, use different irq routine
-                kit = ROCKBAND1;
+                MIDI_DRUM.kit = ROCKBAND1;
             }
             else if (strcmp(argv[i], "-ocy") == 0) {
                 //orange cymbal
@@ -979,10 +898,10 @@ int main(int argc, char **argv)
         fprintf(stderr, "failed to initialise libusb\n");
         exit(1);
     }
-    if(kit==ROCKBAND1){
+    if(MIDI_DRUM.kit==ROCKBAND1){
         //no way of knowing if device is RB1 so reassign kit after claiming
         r = find_rbdrum_device(i);
-        kit = ROCKBAND1;
+        MIDI_DRUM.kit = ROCKBAND1;
     }
     else
         r = find_rbdrum_device(i);
@@ -1015,7 +934,7 @@ int main(int argc, char **argv)
     }
     printf("claimed interface\n");
 
-    if(kit!=ROCKBAND && DRUM_MIDI.yellow==YVK_HI_TOM)
+    if(MIDI_DRUM.kit!=ROCKBAND && DRUM_MIDI.yellow==YVK_HI_TOM)
     {
         //reassign yellow tom if not RB kit or user specified
         DRUM_MIDI.yellow = YVK_CLOSED_HAT;
@@ -1051,7 +970,7 @@ int main(int argc, char **argv)
 
     /* async from here onwards */
 
-    r = alloc_transfers(kit);
+    r = alloc_transfers(MIDI_DRUM.kit);
     if (r < 0) {
         // Deinit & Release
         libusb_free_transfer(irq_transfer);
@@ -1084,7 +1003,7 @@ int main(int argc, char **argv)
 
     // Drum state is all up.
     memset(drum_state, 0, 8);
-    while (!do_exit) {
+    while (!MIDI_DRUM.do_exit) {
         r = libusb_handle_events(NULL);
         if (r < 0) {
             /*printf("why?\n");
