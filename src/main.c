@@ -31,10 +31,6 @@
 
 
 #define EP_INTR			(1 | LIBUSB_ENDPOINT_IN)
-//#define EP_DATA			(2 | LIBUSB_ENDPOINT_IN)
-//#define CTRL_IN			(LIBUSB_REQUEST_TYPE_VENDOR | LIBUSB_ENDPOINT_IN)
-//#define CTRL_OUT		(LIBUSB_REQUEST_TYPE_VENDOR | LIBUSB_ENDPOINT_OUT)
-//#define USB_RQ			0x04
 #define INTR_LENGTH		27
 
 #define DEFAULT_CHANNEL 9
@@ -87,15 +83,15 @@ static struct drum_midi
     snd_seq_t *g_seq;
     int g_port;
 
-    int verbose;// = 0;
+    int verbose;
     unsigned char dbg;
-    int do_exit;// = 0;
-    unsigned char bass_down;// = 0;
+    int do_exit;
+    unsigned char bass_down;
     int velocity;
     unsigned char irqbuf[INTR_LENGTH];
     unsigned char oldbuf[INTR_LENGTH];
-    struct libusb_device_handle *devh;// = NULL; 
-    struct libusb_transfer *irq_transfer;// = NULL;
+    struct libusb_device_handle *devh;
+    struct libusb_transfer *irq_transfer;
 
 //function pointers
     void (*calc_velocity)(unsigned char);
@@ -461,7 +457,7 @@ static void cb_irq_rb(struct libusb_transfer *transfer)
         MIDI_DRUM.do_exit = 2;
 }
 
-//guitar hero callback
+//debug mode callback
 static void cb_irq_dbg(struct libusb_transfer *transfer)
 {
     if (transfer->status != LIBUSB_TRANSFER_COMPLETED) {
@@ -494,9 +490,7 @@ static int init_capture(void)
     if (r < 0)
         return r;
 
-    /* start state machine */
-    //state = 6; //STATE_AWAIT_IRQ_FINGER_REMOVED;
-    return 6;//state; //next_state();
+    return 6;
 }
 
 static int alloc_transfers(int type)
@@ -912,7 +906,6 @@ int main(int argc, char **argv)
     r = sigaction(SIGTERM, &sigact, NULL);
     r = sigaction(SIGQUIT, &sigact, NULL);
 
-    // Drum state is all up.  
     while (!MIDI_DRUM.do_exit) {
         r = libusb_handle_events(NULL);
         if (r < 0) {
@@ -947,11 +940,8 @@ int main(int argc, char **argv)
     else
         r = 1;
 
-//out_deinit:
-    //libusb_free_transfer(img_transfer);
-    libusb_free_transfer(MIDI_DRUM.irq_transfer);
-    /*set_mode(0);
-    set_hwstat(0x80);*/
+//out_deinit: 
+    libusb_free_transfer(MIDI_DRUM.irq_transfer); 
 //out_release:
     libusb_release_interface(MIDI_DRUM.devh, 0);
 //out:
