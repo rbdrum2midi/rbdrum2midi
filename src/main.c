@@ -50,11 +50,18 @@
 #define RB_BLACK    buf[0] & 0x20
 #define RB_CYMBAL   buf[1] & 0x08
 
-#define RB1_YELLOW  buf[3] & 0x80
-#define RB1_RED     buf[3] & 0x20
-#define RB1_GREEN   buf[3] & 0x10
-#define RB1_BLUE    buf[3] & 0x40
-#define RB1_ORANGE  buf[3] & 0x01
+#define RB1x_YELLOW  buf[3] & 0x80
+#define RB1x_RED     buf[3] & 0x20
+#define RB1x_GREEN   buf[3] & 0x10
+#define RB1x_BLUE    buf[3] & 0x40
+#define RB1x_ORANGE  buf[3] & 0x01
+
+#define RB1p_YELLOW  buf[0] & 0x80
+#define RB1p_RED     buf[0] & 0x40
+#define RB1p_GREEN   buf[0] & 0x20
+#define RB1p_BLUE    buf[0] & 0x01
+#define RB1p_ORANGE  buf[0] & 0x10
+
 
 #define GH_YELLOW   buf[11]
 #define GH_RED      buf[12]
@@ -64,8 +71,9 @@
 #define GH_PEDAL    buf[15]
 
 #define ROCKBAND    1
-#define ROCKBAND1   2
-#define GUITARHERO  3
+#define ROCKBAND1X  2
+#define ROCKBAND1P  3
+#define GUITARHERO  4
 
 #define YVK_KICK        36
 #define YVK_SNARE       37
@@ -470,8 +478,8 @@ static void cb_irq_rb(struct libusb_transfer *transfer)
         do_exit = 2;
 }
 
-//irq for rockband 1 drumset with no velocity info
-static void cb_irq_rb1(struct libusb_transfer *transfer)
+//irq for XBOX rockband 1 drumset with no velocity info
+static void cb_irq_rb1x(struct libusb_transfer *transfer)
 {
     if (transfer->status != LIBUSB_TRANSFER_COMPLETED) {
         fprintf(stderr, "irq transfer status %d? %d\n", transfer->status, LIBUSB_TRANSFER_ERROR);
@@ -483,11 +491,117 @@ static void cb_irq_rb1(struct libusb_transfer *transfer)
 
     unsigned char *buf = irqbuf;
 
-    yel     = RB1_YELLOW; //Yellow
-    red     = RB1_RED; //Red
-    grn     = RB1_GREEN; //Green
-    blu     = RB1_BLUE; //Blue
-    bass    = RB1_ORANGE; //Orange Pedal
+    yel     = RB1x_YELLOW; //Yellow
+    red     = RB1x_RED; //Red
+    grn     = RB1x_GREEN; //Green
+    blu     = RB1x_BLUE; //Blue
+    bass    = RB1x_ORANGE; //Orange Pedal
+    bass_down = 0;
+    velocity = 125;
+
+    // Events:
+    // Down
+    if (red && !drum_state[0]) {
+        noteup(g_seq, g_port, DEFAULT_CHANNEL, DRUM_MIDI.red, 0);
+        notedown(g_seq, g_port, DEFAULT_CHANNEL, DRUM_MIDI.red, velocity);
+        }
+    //yellow pad and cymbal
+    // Events:
+    // Down
+    if (yel && !drum_state[1]) {
+        noteup(g_seq, g_port, DEFAULT_CHANNEL, DRUM_MIDI.yellow, 0);
+        notedown(g_seq, g_port, DEFAULT_CHANNEL, DRUM_MIDI.yellow, velocity);
+        }
+    //Blue pad and cymbal
+    // Events:
+    // Down
+    if (blu && !drum_state[2]) {
+        noteup(g_seq, g_port, DEFAULT_CHANNEL, DRUM_MIDI.blue, 0);
+        notedown(g_seq, g_port, DEFAULT_CHANNEL, DRUM_MIDI.blue, velocity);
+        }
+    //Green pad and Cymbal
+    // Events:
+    // Down
+    if (grn && !drum_state[3]) {
+        noteup(g_seq, g_port, DEFAULT_CHANNEL, DRUM_MIDI.green, 0);
+        notedown(g_seq, g_port, DEFAULT_CHANNEL, DRUM_MIDI.green, velocity);
+        }
+    // Pedal 1 (orange)
+    if (bass && !drum_state[4]) {
+        bass_down = !bass_down;
+        // Events:
+        // Down
+        if (bass_down) {
+            notedown(g_seq, g_port, DEFAULT_CHANNEL, DRUM_MIDI.orange_bass, velocity);
+            }
+        // Up
+        else {
+            noteup(g_seq, g_port, DEFAULT_CHANNEL, DRUM_MIDI.orange_bass, 0);
+            }
+        }
+    //now that the time-critical stuff is done, lets do the assignments
+    drum_state[0] = red;
+    drum_state[1] = yel;
+    drum_state[2] = blu;
+    drum_state[3] = grn;
+    drum_state[4] = bass;
+     if (verbose && (red || yel || blu || grn || bass_down)) {
+        printf("%s %s %s %s %s %s \n", red>0?"VV":"  ", yel>0?"VV":"  ", blu>0?"VV":"  ", grn>0?"VV":"  ", bass>0?"VV":"  ", bass2>0?"VV":"  ");
+        printf("%02i %02i %02i %02i %02i %02i\n", red, yel, blu, grn, bass, bass2);
+        printf("%02x%02x%02x%02x %02x%02x%02x%02x %02x%02x%02x%02x %02x%02x%02x%02x %02x%02x%02x%02x %02x%02x%02x%02x %02x%02x%02x\n",
+        buf[0], buf[1], buf[2], buf[3], buf[4], buf[5], buf[6], buf[7], buf[8], buf[9],
+        buf[10], buf[11], buf[12], buf[13], buf[14], buf[15], buf[16], buf[17], buf[18], buf[19],
+        buf[20], buf[21], buf[22], buf[23], buf[24], buf[25], buf[26]);
+        }
+
+
+/*    if (verbose && (g_i++ % 200 == 199)) {
+        printf("%02x%02x%02x%02x %02x%02x%02x%02x %02x%02x%02x%02x %02x%02x%02x%02x %02x%02x%02x%02x %02x%02x%02x%02x %02x%02x%02x kit type=%d\n",
+        buf[0], buf[1], buf[2], buf[3], buf[4], buf[5], buf[6], buf[7], buf[8], buf[9],
+        buf[10], buf[11], buf[12], buf[13], buf[14], buf[15], buf[16], buf[17], buf[18], buf[19],
+        buf[20], buf[21], buf[22], buf[23], buf[24], buf[25], buf[26],kit);
+    }*/
+    if (verbose && memcmp(oldbuf,buf,INTR_LENGTH))/*
+    	(buf[0] != oldbuf[0] || buf[1] != oldbuf[1] || buf[2] != oldbuf[2] ||
+	 buf[3] != oldbuf[3] || buf[4] != oldbuf[4] || buf[5] != oldbuf[5] ||
+	 buf[6] != oldbuf[6] || buf[7] != oldbuf[7] || buf[8] != oldbuf[8] ||
+	 buf[9] != oldbuf[9] || buf[10] != oldbuf[10] || buf[11] != oldbuf[11] ||
+ 	 buf[12] != oldbuf[12] || buf[13] != oldbuf[13] || buf[14] != oldbuf[14] ||
+ 	 buf[15] != oldbuf[15] || buf[16] != oldbuf[16] || buf[17] != oldbuf[17] ||
+ 	 buf[18] != oldbuf[18] || buf[19] != oldbuf[19] || buf[20] != oldbuf[20] ||
+ 	 buf[21] != oldbuf[21] || buf[22] != oldbuf[22] || buf[23] != oldbuf[23] ||
+ 	 buf[24] != oldbuf[24] || buf[25] != oldbuf[25] || buf[26] != oldbuf[26]))*/
+   {
+        printf("%02x%02x%02x%02x %02x%02x%02x%02x %02x%02x%02x%02x %02x%02x%02x%02x %02x%02x%02x%02x %02x%02x%02x%02x %02x%02x%02x kit type=%d\n",
+        buf[0], buf[1], buf[2], buf[3], buf[4], buf[5], buf[6], buf[7], buf[8], buf[9],
+        buf[10], buf[11], buf[12], buf[13], buf[14], buf[15], buf[16], buf[17], buf[18], buf[19],
+        buf[20], buf[21], buf[22], buf[23], buf[24], buf[25], buf[26],kit);
+	memcpy(oldbuf,buf,INTR_LENGTH);
+    }
+
+
+    if (libusb_submit_transfer(irq_transfer) < 0)
+        do_exit = 2;
+}
+
+//irq for PS3 rockband 1 drumset with no velocity info
+static void cb_irq_rb1p(struct libusb_transfer *transfer)
+{
+    if (transfer->status != LIBUSB_TRANSFER_COMPLETED) {
+        fprintf(stderr, "irq transfer status %d? %d\n", transfer->status, LIBUSB_TRANSFER_ERROR);
+        do_exit = 2;
+        libusb_free_transfer(transfer);
+        irq_transfer = NULL;
+        return;
+    }
+
+    unsigned char *buf = irqbuf;
+
+    yel     = RB1p_YELLOW; //Yellow
+    red     = RB1p_RED; //Red
+    grn     = RB1p_GREEN; //Green
+    blu     = RB1p_BLUE; //Blue
+    bass    = RB1p_ORANGE; //Orange Pedal
     bass_down = 0;
     velocity = 125;
 
@@ -712,10 +826,15 @@ static int alloc_transfers(int type)
             sizeof(irqbuf), cb_irq_rb, NULL, 0);
         if(verbose)printf("Rock Band drum kit detected.\n");
     }
-    else if(type == ROCKBAND1){
+    else if(type == ROCKBAND1X){
         libusb_fill_interrupt_transfer(irq_transfer, devh, EP_INTR, irqbuf,
-            sizeof(irqbuf), cb_irq_rb1, NULL, 0);
-        if(verbose)printf("Rock Band 1 drum kit detected.\n");
+            sizeof(irqbuf), cb_irq_rb1x, NULL, 0);
+        if(verbose)printf("Xbox Rock Band 1 drum kit detected.\n");
+    }
+    else if(type == ROCKBAND1P){
+        libusb_fill_interrupt_transfer(irq_transfer, devh, EP_INTR, irqbuf,
+            sizeof(irqbuf), cb_irq_rb1p, NULL, 0);
+        if(verbose)printf("PS3 Rock Band 1 drum kit detected.\n");
     }
     else if(type == GUITARHERO){
         libusb_fill_interrupt_transfer(irq_transfer, devh, EP_INTR, irqbuf,
@@ -744,7 +863,7 @@ snd_seq_t *open_client()
     err = snd_seq_open(&handle, "default", SND_SEQ_OPEN_OUTPUT, 0);
     if (err < 0)
         return NULL;
-    snd_seq_set_client_name(handle, "PS3 Joystick Client");
+    snd_seq_set_client_name(handle, "USB rbdrum2midi port");
     return handle;
 }
 
@@ -953,7 +1072,8 @@ void useage()
     printf("    -r/y/b/g <value>            set midi value for -color of drum head\n");
     printf("    -ocy/ycy/bcy/gcy <value>    set midi values for -color of cymbal\n");
     printf("    -ob/bkb <value>             set midi values for -color bass pedal\n");
-    printf("    -rb1                        specify rockband 1 drumset\n");
+    printf("    -rb1x                       specify x-box rockband 1 drumset\n");
+    printf("    -rb1p                       specify PS3 rockband 1 drumset\n");
     printf("    -h                          show this message\n");
     printf("\n");
     printf("EXAMPLES:\n");
@@ -982,11 +1102,11 @@ int main(int argc, char **argv)
     DRUM_MIDI.blue = YVK_MID_TOM;
     DRUM_MIDI.green = YVK_LO_TOM;
     DRUM_MIDI.yellow_cymbal = YVK_CLOSED_HAT;
-    DRUM_MIDI.blue_cymbal = YVK_CRASH;
-    DRUM_MIDI.green_cymbal = YVK_RIDE;
+    DRUM_MIDI.blue_cymbal = YVK_RIDE;
+    DRUM_MIDI.green_cymbal = YVK_CRASH;
     DRUM_MIDI.orange_cymbal = YVK_CRASH;
     DRUM_MIDI.orange_bass = YVK_KICK;
-    DRUM_MIDI.black_bass = YVK_KICK;
+    DRUM_MIDI.black_bass = YVK_OPEN_HAT;
 
     memset(oldbuf,0,INTR_LENGTH);
 
@@ -996,9 +1116,13 @@ int main(int argc, char **argv)
             if (strcmp(argv[i], "-v") == 0) {
                 verbose = 1;
             }
-            else if (strcmp(argv[i], "-rb1") == 0) {
+            else if (strcmp(argv[i], "-rb1x") == 0) {
                 //rockband 1 set, use different irq routine
-                kit = ROCKBAND1;
+                kit = ROCKBAND1X;
+            }
+            else if (strcmp(argv[i], "-rb1p") == 0) {
+                //rockband 1 set, use different irq routine
+                kit = ROCKBAND1P;
             }
             else if (strcmp(argv[i], "-ocy") == 0) {
                 //orange cymbal
@@ -1056,10 +1180,15 @@ int main(int argc, char **argv)
         fprintf(stderr, "failed to initialise libusb\n");
         exit(1);
     }
-    if(kit==ROCKBAND1){
+    if(kit==ROCKBAND1X){
         //no way of knowing if device is RB1 so reassign kit after claiming
         r = find_rbdrum_device(i);
-        kit = ROCKBAND1;
+        kit = ROCKBAND1X;
+    }
+    if(kit==ROCKBAND1P){
+        //no way of knowing if device is RB1 so reassign kit after claiming
+        r = find_rbdrum_device(i);
+        kit = ROCKBAND1P;
     }
     else
         r = find_rbdrum_device(i);
