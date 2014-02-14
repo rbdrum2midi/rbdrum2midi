@@ -51,7 +51,6 @@
 #define YVK_OPEN_HAT    42
 #define YVK_RIDE        43
 #define YVK_CRASH       45
-//int drum_conn[10] = {36, 42, 37, 38, 41, 39, 43, 40, 45, 36};
 
 enum drums{
     RED = 0,
@@ -87,28 +86,15 @@ static struct drum_midi
     unsigned char prev_state[10];
     snd_seq_t *g_seq;
     int g_port;
-//    static int kit;
 
     int verbose;// = 0;
     unsigned char dbg;
-//static int g_i = 0;
-//    int state;// = 0;
-//    static int drum_state[8];
     int do_exit;// = 0;
-//    unsigned char *buf;
-//    unsigned char yel;
-//    unsigned char red;
-//    unsigned char grn;
-//    unsigned char blu;
-//    unsigned char orange;
-//    unsigned char bass;
-//    unsigned char bass2;
     unsigned char bass_down;// = 0;
     int velocity;
     unsigned char irqbuf[INTR_LENGTH];
     unsigned char oldbuf[INTR_LENGTH];
-    struct libusb_device_handle *devh;// = NULL;
-//    static struct libusb_transfer *img_transfer = NULL;
+    struct libusb_device_handle *devh;// = NULL; 
     struct libusb_transfer *irq_transfer;// = NULL;
 
 //function pointers
@@ -128,21 +114,21 @@ static int find_rbdrum_device(int i)
     MIDI_DRUM.devh = libusb_open_device_with_vid_pid(NULL, 0x12ba, 0x0210);
     if(MIDI_DRUM.devh){
         MIDI_DRUM.kit=PS_ROCKBAND;
-        return MIDI_DRUM.devh;
+        return 0;
 	}
 
     //xbox RB kit
     MIDI_DRUM.devh = libusb_open_device_with_vid_pid(NULL, 0x1bad, 0x0003);
     if(MIDI_DRUM.devh){
         MIDI_DRUM.kit=XB_ROCKBAND;
-        return MIDI_DRUM.devh;
+        return 0;
 	}
 
     //Wìì RB kit??
     MIDI_DRUM.devh = libusb_open_device_with_vid_pid(NULL, 0x1bad, 0x0005);      
     if(MIDI_DRUM.devh){
         MIDI_DRUM.kit=WII_ROCKBAND;
-        return MIDI_DRUM.devh;
+        return 0;
 	}
 
     //PS3 GH kit
@@ -524,8 +510,9 @@ static int alloc_transfers(int type)
             sizeof(MIDI_DRUM.irqbuf), cb_irq_dbg, NULL, 0);
         if( MIDI_DRUM.verbose)printf("Debug Mode Enabled..\n");
     }
-    else if(type == PS_ROCKBAND  || type == XB_ROCKBAND || type == WII_ROCKBAND ||
-            type == PS_ROCKBAND1 || type == XB_ROCKBAND){
+    else if(type == PS_ROCKBAND  || type == XB_ROCKBAND ||
+            type == WII_ROCKBAND || type == PS_ROCKBAND1 ||
+            type == XB_ROCKBAND1){
         libusb_fill_interrupt_transfer(MIDI_DRUM.irq_transfer, MIDI_DRUM.devh, EP_INTR, MIDI_DRUM.irqbuf,
             sizeof(MIDI_DRUM.irqbuf), cb_irq_rb, NULL, 0);
         if( MIDI_DRUM.verbose)printf("Rock Band drum kit detected.\n");
@@ -842,11 +829,11 @@ int main(int argc, char **argv)
 	{
 	    case PS_ROCKBAND:
 	    case WII_ROCKBAND:
-	     MIDI_DRUM.kit = PS_ROCKBAND1;
-	     break;
+  	        MIDI_DRUM.kit = PS_ROCKBAND1; 
+	        break;
 	    case XB_ROCKBAND:
-	     MIDI_DRUM.kit = XB_ROCKBAND1;
-	     break;
+	        MIDI_DRUM.kit = XB_ROCKBAND1; 
+	        break;
 	}
     }
     else
@@ -873,13 +860,6 @@ int main(int argc, char **argv)
         return -r;
     }
     printf("claimed interface\n");
-
-/*    if(MIDI_DRUM.kit==GUITAR_HERO && MIDI_DRUM.midi_note[YELLOW]==YVK_HI_TOM)
-    {
-        //reassign yellow tom if not RB kit or user specified
-        DRUM_MIDI.yellow = YVK_CLOSED_HAT;
-
-    } I don't think this is necessary now*/
 
     int ret = setup_alsa(& MIDI_DRUM.g_seq, & MIDI_DRUM.g_port);
     // 0 is fail.
@@ -932,8 +912,7 @@ int main(int argc, char **argv)
     r = sigaction(SIGTERM, &sigact, NULL);
     r = sigaction(SIGQUIT, &sigact, NULL);
 
-    // Drum state is all up.
-//    memset(drum_state, 0, 8);
+    // Drum state is all up.  
     while (!MIDI_DRUM.do_exit) {
         r = libusb_handle_events(NULL);
         if (r < 0) {
