@@ -304,8 +304,8 @@ void init_midi_drum()
 	    MIDI_DRUM.buf_mask[GREEN] = 0xff;
 	    MIDI_DRUM.buf_indx[ORANGE_CYMBAL] = 16;
 	    MIDI_DRUM.buf_mask[ORANGE_CYMBAL] = 0xff;
-	    MIDI_DRUM.buf_indx[BLACK_BASS] = 15;
-	    MIDI_DRUM.buf_mask[BLACK_BASS] = 0xff;
+	    MIDI_DRUM.buf_indx[ORANGE_BASS] = 15;
+	    MIDI_DRUM.buf_mask[ORANGE_BASS] = 0xff;
 	    break;
     }
 }
@@ -327,14 +327,14 @@ static void cb_irq_gh(struct libusb_transfer *transfer)
     get_state(GREEN);
     get_state(BLUE);
     get_state(ORANGE_CYMBAL);
-    get_state(BLACK_BASS);
+    get_state(ORANGE_BASS);
 
     handle_drum(RED);
     handle_drum(YELLOW_CYMBAL);
     handle_drum(GREEN);
     handle_drum(BLUE);
     handle_drum(ORANGE_CYMBAL); 
-    handle_drum(BLACK_BASS);
+    handle_drum(ORANGE_BASS);
         
 	//now that the time-critical stuff is done, lets do the assignments
        MIDI_DRUM.prev_state[RED] = MIDI_DRUM.drum_state[RED];
@@ -342,26 +342,26 @@ static void cb_irq_gh(struct libusb_transfer *transfer)
        MIDI_DRUM.prev_state[BLUE] = MIDI_DRUM.drum_state[BLUE];
        MIDI_DRUM.prev_state[GREEN] = MIDI_DRUM.drum_state[GREEN];
        MIDI_DRUM.prev_state[ORANGE_CYMBAL] = MIDI_DRUM.drum_state[ORANGE_CYMBAL]; 
-       MIDI_DRUM.prev_state[BLACK_BASS] = MIDI_DRUM.drum_state[BLACK_BASS];
+       MIDI_DRUM.prev_state[ORANGE_BASS] = MIDI_DRUM.drum_state[ORANGE_BASS];
                              
         if ( MIDI_DRUM.verbose && ( MIDI_DRUM.drum_state[RED] ||  
 	                            MIDI_DRUM.drum_state[YELLOW_CYMBAL] ||
 				    MIDI_DRUM.drum_state[BLUE] ||
 				    MIDI_DRUM.drum_state[GREEN] ||
 				    MIDI_DRUM.drum_state[ORANGE_CYMBAL] ||
-				    MIDI_DRUM.drum_state[BLACK_BASS]  )) {
+				    MIDI_DRUM.drum_state[ORANGE_BASS]  )) {
             printf("%s %s %s %s %s %s \n",  MIDI_DRUM.drum_state[RED]>0?"VV":"  ",
 	                                    MIDI_DRUM.drum_state[YELLOW_CYMBAL]>0?"VV":"  ",
 					    MIDI_DRUM.drum_state[BLUE]>0?"VV":"  ", 
 					    MIDI_DRUM.drum_state[GREEN]>0?"VV":"  ",
 					    MIDI_DRUM.drum_state[ORANGE_CYMBAL]>0?"VV":"  ", 
-					    MIDI_DRUM.drum_state[BLACK_BASS]>0?"VV":"  ");
+					    MIDI_DRUM.drum_state[ORANGE_BASS]>0?"VV":"  ");
             printf("%02i %02i %02i %02i %02i %02i\n", MIDI_DRUM.drum_state[RED],
 	                                              MIDI_DRUM.drum_state[YELLOW_CYMBAL], 
 						      MIDI_DRUM.drum_state[BLUE], 
 						      MIDI_DRUM.drum_state[GREEN], 
 						      MIDI_DRUM.drum_state[ORANGE_CYMBAL], 
-						      MIDI_DRUM.drum_state[BLACK_BASS]);
+						      MIDI_DRUM.drum_state[ORANGE_BASS]);
         }
 
     if ( MIDI_DRUM.verbose && memcmp(MIDI_DRUM.oldbuf,MIDI_DRUM.buf,INTR_LENGTH))
