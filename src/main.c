@@ -251,6 +251,10 @@ void init_midi_drum()
 	    MIDI_DRUM.buf_mask[GREEN] = 0xFF;
 	    MIDI_DRUM.buf_indx[YELLOW_CYMBAL] = 1;
 	    MIDI_DRUM.buf_mask[YELLOW_CYMBAL] = 0x08;
+	    MIDI_DRUM.buf_indx[BLUE_CYMBAL] = 1;
+	    MIDI_DRUM.buf_mask[BLUE_CYMBAL] = 0x08;
+	    MIDI_DRUM.buf_indx[GREEN_CYMBAL] = 1;
+	    MIDI_DRUM.buf_mask[GREEN_CYMBAL] = 0x08;
 	    MIDI_DRUM.buf_indx[ORANGE_BASS] = 0;
 	    MIDI_DRUM.buf_mask[ORANGE_BASS] = 0x10;
 	    MIDI_DRUM.buf_indx[BLACK_BASS] = 0;
@@ -396,20 +400,40 @@ static void cb_irq_rb(struct libusb_transfer *transfer)
     get_state(GREEN);
     get_state(BLUE);
     get_state(YELLOW_CYMBAL);
+    get_state(BLUE_CYMBAL);
+    get_state(GREEN_CYMBAL);
     get_state(ORANGE_BASS);
     get_state(BLACK_BASS);
 
     handle_drum(RED);
-    if(MIDI_DRUM.drum_state[YELLOW_CYMBAL]){//only 1 flag to indicate all cymbals
-        handle_drum(YELLOW_CYMBAL);
-        handle_drum(GREEN_CYMBAL);
-        handle_drum(BLUE_CYMBAL);
-    }
-    else{
-        handle_drum(YELLOW);
-        handle_drum(GREEN);
-        handle_drum(BLUE);
-    }
+   
+    if(MIDI_DRUM.drum_state[YELLOW]){
+    	if(MIDI_DRUM.drum_state[YELLOW_CYMBAL]){
+        	handle_drum(YELLOW_CYMBAL);
+        }
+        else{
+        	handle_drum(YELLOW);
+        }
+    }    
+    if(MIDI_DRUM.drum_state[BLUE]){
+    	if(MIDI_DRUM.drum_state[BLUE_CYMBAL]){
+        	handle_drum(BLUE_CYMBAL);
+        }
+        else{
+        	handle_drum(BLUE);
+        }
+    }   
+    if(MIDI_DRUM.drum_state[GREEN]){
+    	if(MIDI_DRUM.drum_state[GREEN_CYMBAL]){
+        	handle_drum(GREEN_CYMBAL);
+        }
+        else{
+        	handle_drum(GREEN);
+        }
+    }   
+
+
+
     MIDI_DRUM.handle_bass(ORANGE_BASS);
     MIDI_DRUM.handle_bass(BLACK_BASS);
         
@@ -739,8 +763,8 @@ int main(int argc, char **argv)
     MIDI_DRUM.midi_note[BLUE] = YVK_MID_TOM;
     MIDI_DRUM.midi_note[GREEN] = YVK_LO_TOM;
     MIDI_DRUM.midi_note[YELLOW_CYMBAL] = YVK_CLOSED_HAT;
-    MIDI_DRUM.midi_note[GREEN_CYMBAL] = YVK_RIDE;
-    MIDI_DRUM.midi_note[BLUE_CYMBAL] = YVK_CRASH;
+    MIDI_DRUM.midi_note[GREEN_CYMBAL] = YVK_CRASH;
+    MIDI_DRUM.midi_note[BLUE_CYMBAL] = YVK_RIDE;
     MIDI_DRUM.midi_note[ORANGE_CYMBAL] = YVK_CRASH;
     MIDI_DRUM.midi_note[ORANGE_BASS] = YVK_KICK;
     MIDI_DRUM.midi_note[BLACK_BASS] = YVK_OPEN_HAT;
