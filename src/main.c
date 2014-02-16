@@ -443,8 +443,10 @@ static void cb_irq_rb(struct libusb_transfer *transfer)
        MIDI_DRUM.prev_state[BLUE] = MIDI_DRUM.drum_state[BLUE];
        MIDI_DRUM.prev_state[GREEN] = MIDI_DRUM.drum_state[GREEN];
        MIDI_DRUM.prev_state[YELLOW_CYMBAL] = MIDI_DRUM.drum_state[YELLOW_CYMBAL];
+	   MIDI_DRUM.prev_state[BLUE_CYMBAL] = MIDI_DRUM.drum_state[BLUE_CYMBAL];
+       MIDI_DRUM.prev_state[GREEN_CYMBAL] = MIDI_DRUM.drum_state[GREEN_CYMBAL];
        MIDI_DRUM.prev_state[ORANGE_BASS] = MIDI_DRUM.drum_state[ORANGE_BASS];
-       MIDI_DRUM.prev_state[BLACK_BASS] = MIDI_DRUM.drum_state[ORANGE_BASS];
+       MIDI_DRUM.prev_state[BLACK_BASS] = MIDI_DRUM.drum_state[BLACK_BASS];
                              
         if ( MIDI_DRUM.verbose && ( MIDI_DRUM.drum_state[RED] ||  
 	                            MIDI_DRUM.drum_state[YELLOW] ||

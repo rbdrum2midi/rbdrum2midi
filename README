@@ -3,9 +3,12 @@ by Randommatt and ssj71
 
 Version 0.4
 
-Support for xbox and ps3 rockband drumkit has been added. 
-Problem with dynamic velocity detection for RB2 and RB3-pro kits is solved. 
-Command line options to assign any midi mapping is now implemented.
+Complete code rewrite for tidyness and modularity, for RB1 kits the option is now -rb1 for both xbox and ps3.
+
+for more usage instructions:
+
+rbdrum2midi -h 
+
 
 Since Ubuntu 12.04 and other "newer distros" regular cmmi may not work so please try the following:
 
@@ -30,6 +33,15 @@ and we'll do our best to accommodate you quickly.
 
 See previous versions for more detailed instructions.
 
+Version 0.3
+
+Support for rb1 drumkits has been added. 
+Usage:
+xbox rb1 kit
+rbdrum2midi -rb1x 
+PS3 rb1 kit
+rbdrum2midi -rb1p
+Problem with dynamic velocity detection for RB2 and RB3-pro kits is solved. 
 
 Version 0.2
 Added support for Guitar Hero: World Tour drumkit for the PS3, xbox and wii support is now possible for Rockband drumkits (in the sence that now they may actually work).
