@@ -293,8 +293,8 @@ void init_midi_drum()
 	    MIDI_DRUM.buf_mask[BLUE] = 0x40;
 	    MIDI_DRUM.buf_indx[GREEN] = 3;
 	    MIDI_DRUM.buf_mask[GREEN] = 0x10;
-	    MIDI_DRUM.buf_indx[YELLOW_CYMBAL] = 7;
-	    MIDI_DRUM.buf_mask[YELLOW_CYMBAL] = 0x00;
+	    MIDI_DRUM.buf_indx[CYMBAL_FLAG] = 7;
+	    MIDI_DRUM.buf_mask[CYMBAL_FLAG] = 0x00;
 	    MIDI_DRUM.buf_indx[ORANGE_BASS] = 3;
 	    MIDI_DRUM.buf_mask[ORANGE_BASS] = 0x01;
 	    MIDI_DRUM.buf_indx[BLACK_BASS] = 7;
@@ -496,6 +496,7 @@ static void cb_irq_dbg(struct libusb_transfer *transfer)
     if (libusb_submit_transfer(MIDI_DRUM.irq_transfer) < 0)
         MIDI_DRUM.do_exit = 2;
 }
+
 static int init_capture(void)
 {
     int r;
