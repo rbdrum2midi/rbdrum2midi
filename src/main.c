@@ -236,6 +236,9 @@ void handle_bass_rb1(unsigned char drum)
 
 void init_midi_drum()
 {
+    //initialize all values, just to be safe
+    memset(MIDI_DRUM.buf_indx,0,NUM_DRUMS);
+    memset(MIDI_DRUM.buf_mask,0,NUM_DRUMS);
     switch(MIDI_DRUM.kit)
     {
         case PS_ROCKBAND:
@@ -745,8 +748,8 @@ int main(int argc, char **argv)
     MIDI_DRUM.dbg = 0;
     MIDI_DRUM.kit = PS_ROCKBAND;
     memset(MIDI_DRUM.oldbuf,0,INTR_LENGTH);
-    memset(MIDI_DRUM.drum_state,0,10);
-    memset(MIDI_DRUM.prev_state,0,10);
+    memset(MIDI_DRUM.drum_state,0,NUM_DRUMS);
+    memset(MIDI_DRUM.prev_state,0,NUM_DRUMS);
     
     //default midi values;
     MIDI_DRUM.midi_note[RED] = YVK_SNARE; 
