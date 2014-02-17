@@ -32,6 +32,7 @@
 
 #define EP_INTR			(1 | LIBUSB_ENDPOINT_IN)
 #define INTR_LENGTH		27
+#define NUM_DRUMS		11
 
 #define DEFAULT_CHANNEL 9
 
@@ -58,7 +59,8 @@ enum drums{
     GREEN_CYMBAL,
     ORANGE_CYMBAL,
     ORANGE_BASS,
-    BLACK_BASS
+    BLACK_BASS,
+    CYMBAL_FLAG
 };
 
 enum kit_types{
@@ -74,12 +76,12 @@ enum kit_types{
 static struct drum_midi
 {
     unsigned char kit;
-    unsigned char midi_note[10];
-    unsigned char buf_indx[10];
-    unsigned char buf_mask[10];
+    unsigned char midi_note[NUM_DRUMS];
+    unsigned char buf_indx[NUM_DRUMS];
+    unsigned char buf_mask[NUM_DRUM];
     unsigned char *buf;
-    unsigned char drum_state[10];
-    unsigned char prev_state[10];
+    unsigned char drum_state[NUM_DRUM];
+    unsigned char prev_state[NUM_DRUM];
     snd_seq_t *g_seq;
     int g_port;
 
@@ -249,12 +251,14 @@ void init_midi_drum()
 	    MIDI_DRUM.buf_mask[BLUE] = 0xFF;
 	    MIDI_DRUM.buf_indx[GREEN] = 13;
 	    MIDI_DRUM.buf_mask[GREEN] = 0xFF;
-	    MIDI_DRUM.buf_indx[YELLOW_CYMBAL] = 1;
-	    MIDI_DRUM.buf_mask[YELLOW_CYMBAL] = 0x08;
-	    MIDI_DRUM.buf_indx[BLUE_CYMBAL] = 1;
-	    MIDI_DRUM.buf_mask[BLUE_CYMBAL] = 0x08;
-	    MIDI_DRUM.buf_indx[GREEN_CYMBAL] = 1;
-	    MIDI_DRUM.buf_mask[GREEN_CYMBAL] = 0x08;
+	    MIDI_DRUM.buf_indx[CYMBAL_FLAG] = 1;
+	    MIDI_DRUM.buf_mask[CYMBAL_FLAG] = 0x08;
+	    MIDI_DRUM.buf_indx[YELLOW_CYMBAL] = 11;
+	    MIDI_DRUM.buf_mask[YELLOW_CYMBAL] = 0xFF;
+	    MIDI_DRUM.buf_indx[BLUE_CYMBAL] = 14;
+	    MIDI_DRUM.buf_mask[BLUE_CYMBAL] = 0xFF;
+	    MIDI_DRUM.buf_indx[GREEN_CYMBAL] = 13;
+	    MIDI_DRUM.buf_mask[GREEN_CYMBAL] = 0xFF;
 	    MIDI_DRUM.buf_indx[ORANGE_BASS] = 0;
 	    MIDI_DRUM.buf_mask[ORANGE_BASS] = 0x10;
 	    MIDI_DRUM.buf_indx[BLACK_BASS] = 0;
@@ -271,8 +275,8 @@ void init_midi_drum()
 	    MIDI_DRUM.buf_mask[BLUE] = 0x01;
 	    MIDI_DRUM.buf_indx[GREEN] = 0;
 	    MIDI_DRUM.buf_mask[GREEN] = 0x02;
-	    MIDI_DRUM.buf_indx[YELLOW_CYMBAL] = 7;//this is a dummy value, always empty
-	    MIDI_DRUM.buf_mask[YELLOW_CYMBAL] = 0x00;
+	    MIDI_DRUM.buf_indx[CYMBAL_FLAG] = 7;//this is a dummy value, always empty
+	    MIDI_DRUM.buf_mask[CYMBAL_FLAG] = 0x00;
 	    MIDI_DRUM.buf_indx[ORANGE_BASS] = 0;
 	    MIDI_DRUM.buf_mask[ORANGE_BASS] = 0x10;
 	    MIDI_DRUM.buf_indx[BLACK_BASS] = 7;
@@ -399,41 +403,25 @@ static void cb_irq_rb(struct libusb_transfer *transfer)
     get_state(YELLOW);
     get_state(GREEN);
     get_state(BLUE);
+    get_state(CYMBAL_FLAG);
     get_state(YELLOW_CYMBAL);
     get_state(BLUE_CYMBAL);
     get_state(GREEN_CYMBAL);
     get_state(ORANGE_BASS);
     get_state(BLACK_BASS);
 
-    handle_drum(RED);
-   
-    if(MIDI_DRUM.drum_state[YELLOW]){
-    	if(MIDI_DRUM.drum_state[YELLOW_CYMBAL]){
-        	handle_drum(YELLOW_CYMBAL);
-        }
-        else{
-        	handle_drum(YELLOW);
-        }
+    handle_drum(RED); 
+    if(MIDI_DRUM.drum_state[CYMBAL_FLAG]){
+    
+       	handle_drum(YELLOW_CYMBAL); 
+       	handle_drum(BLUE_CYMBAL); 
+       	handle_drum(GREEN_CYMBAL); 
     }    
-    if(MIDI_DRUM.drum_state[BLUE]){
-    	if(MIDI_DRUM.drum_state[BLUE_CYMBAL]){
-        	handle_drum(BLUE_CYMBAL);
-        }
-        else{
-        	handle_drum(BLUE);
-        }
+    else{
+        handle_drum(YELLOW);
+       	handle_drum(BLUE);
+        handle_drum(GREEN);
     }   
-    if(MIDI_DRUM.drum_state[GREEN]){
-    	if(MIDI_DRUM.drum_state[GREEN_CYMBAL]){
-        	handle_drum(GREEN_CYMBAL);
-        }
-        else{
-        	handle_drum(GREEN);
-        }
-    }   
-
-
-
     MIDI_DRUM.handle_bass(ORANGE_BASS);
     MIDI_DRUM.handle_bass(BLACK_BASS);
         
