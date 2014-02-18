@@ -78,10 +78,10 @@ static struct drum_midi
     unsigned char kit;
     unsigned char midi_note[NUM_DRUMS];
     unsigned char buf_indx[NUM_DRUMS];
-    unsigned char buf_mask[NUM_DRUM];
+    unsigned char buf_mask[NUM_DRUMS];
     unsigned char *buf;
-    unsigned char drum_state[NUM_DRUM];
-    unsigned char prev_state[NUM_DRUM];
+    unsigned char drum_state[NUM_DRUMS];
+    unsigned char prev_state[NUM_DRUMS];
     snd_seq_t *g_seq;
     int g_port;
 
@@ -269,7 +269,7 @@ void init_midi_drum()
 	    break;
         case PS_ROCKBAND1:
             MIDI_DRUM.calc_velocity = &calc_velocity_rb1;
-	    MIDI_DRUM.handle_bass = &handle_bass_rb1;
+	    MIDI_DRUM.handle_bass = &handle_bass_rb;
 	    MIDI_DRUM.buf_indx[RED] = 0;
 	    MIDI_DRUM.buf_mask[RED] = 0x04;
 	    MIDI_DRUM.buf_indx[YELLOW] = 0;
@@ -287,7 +287,7 @@ void init_midi_drum()
 	    break;
 	case XB_ROCKBAND1:
             MIDI_DRUM.calc_velocity = &calc_velocity_rb1;
-	    MIDI_DRUM.handle_bass = &handle_bass_rb1;
+	    MIDI_DRUM.handle_bass = &handle_bass_rb;
 	    MIDI_DRUM.buf_indx[RED] = 3;
 	    MIDI_DRUM.buf_mask[RED] = 0x20;
 	    MIDI_DRUM.buf_indx[YELLOW] = 3;
