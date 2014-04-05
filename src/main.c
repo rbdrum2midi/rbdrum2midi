@@ -82,8 +82,9 @@ typedef struct drum_midi
     unsigned char *buf;
     unsigned char drum_state[NUM_DRUMS];
     unsigned char prev_state[NUM_DRUMS];
-    snd_seq_t *g_seq;
-    int g_port;
+    void* sequencer;
+//    snd_seq_t *g_seq;
+//    int g_port;
 
     int verbose;
     unsigned char dbg;
@@ -98,54 +99,60 @@ typedef struct drum_midi
 //function pointers
     void (*calc_velocity)(unsigned char);
     void (*handle_bass)(unsigned char);
+    void (*noteup)(void* seq, unsigned char note, unsigned char vel);
+    void (*notedown)(void* seq, unsigned char note, unsigned char vel);
 }MIDIDRUM;
 
+typedef struct alsa_midi_seq
+{
+    snd_seq_t *g_seq;
+    int g_port;
+}ALSA_MIDI_SEQ;
+//void notedown_alsa(snd_seq_t *seq, int port, int chan, int pitch, int vol);
+//void noteup_alsa(snd_seq_t *seq, int port, int chan, int pitch, int vol);
 
-void notedown(snd_seq_t *seq, int port, int chan, int pitch, int vol);
-void noteup(snd_seq_t *seq, int port, int chan, int pitch, int vol);
 
-
-static int find_rbdrum_device(MIDIDRUM* MIDI_DRUM->
+static int find_rbdrum_device(MIDIDRUM* MIDI_DRUM, struct libusb_device_handle *devh)
 {
     // TODO: Currently the i argument is ignored.
     //PS3 RB kit
-    MIDI_DRUM->devh = libusb_open_device_with_vid_pid(NULL, 0x12ba, 0x0210);
-    if(MIDI_DRUM->>devh){
+    devh = libusb_open_device_with_vid_pid(NULL, 0x12ba, 0x0210);
+    if(devh){
         MIDI_DRUM->kit=PS_ROCKBAND;
         return 0;
 	}
 
     //xbox RB kit
-    MIDI_DRUM->devh = libusb_open_device_with_vid_pid(NULL, 0x1bad, 0x0003);
-    if(MIDI_DRUM->devh){
+    devh = libusb_open_device_with_vid_pid(NULL, 0x1bad, 0x0003);
+    if(devh){
         MIDI_DRUM->kit=XB_ROCKBAND;
         return 0;
 	}
 
     //Wìì RB kit??
-    MIDI_DRUM->devh = libusb_open_device_with_vid_pid(NULL, 0x1bad, 0x0005);      
-    if(MIDI_DRUM->devh){
+    devh = libusb_open_device_with_vid_pid(NULL, 0x1bad, 0x0005);      
+    if(devh){
         MIDI_DRUM->kit=WII_ROCKBAND;
         return 0;
 	}
 
     //PS3 GH kit
-    MIDI_DRUM->devh = libusb_open_device_with_vid_pid(NULL, 0x12ba, 0x0120);
-    if(MIDI_DRUM->devh){
+    devh = libusb_open_device_with_vid_pid(NULL, 0x12ba, 0x0120);
+    if(devh){
         MIDI_DRUM->kit=GUITAR_HERO;
     }
   
 
-    return MIDI_DRUM->devh ? 0 : -EIO;
+    return devh ? 0 : -EIO;
 }
 
 
-static int do_sync_intr(unsigned char *data)
+static int do_sync_intr(unsigned char *data, struct libusb_device_handle *devh)
 {
     int r;
     int transferred;
 
-    r = libusb_interrupt_transfer(MIDI_DRUM->devh, EP_INTR, data, INTR_LENGTH,
+    r = libusb_interrupt_transfer(devh, EP_INTR, data, INTR_LENGTH,
         &transferred, 1000);
     if (r < 0) {
         fprintf(stderr, "intr error %d\n", r);
