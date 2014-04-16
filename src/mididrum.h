@@ -1,6 +1,20 @@
 //ssj71
 //mididrum.h
 
+#define EP_INTR			(1 | LIBUSB_ENDPOINT_IN)
+#define INTR_LENGTH		27
+
+#define DEFAULT_CHANNEL 9
+
+#define YVK_KICK        36
+#define YVK_SNARE       37
+#define YVK_LO_TOM      38
+#define YVK_MID_TOM     39
+#define YVK_HI_TOM      40
+#define YVK_CLOSED_HAT  41
+#define YVK_OPEN_HAT    42
+#define YVK_RIDE        43
+#define YVK_CRASH       45
 
 #define max(a, b) (((a) > (b)) ? (a) : (b))
 #define min(a, b) (((a) < (b)) ? (a) : (b))
@@ -61,3 +75,7 @@ typedef struct drum_midi
 //    void (*noteup)(void* seq, unsigned char note, unsigned char vel);
 //    void (*notedown)(void* seq, unsigned char note, unsigned char vel);
 }MIDIDRUM;
+
+inline void get_state(MIDIDRUM* MIDI_DRUM, unsigned char drum){MIDI_DRUM->drum_state[drum] = MIDI_DRUM->buf[MIDI_DRUM->buf_indx[drum]] & MIDI_DRUM->buf_mask[drum];}
+static void print_hits(MIDIDRUM* MIDI_DRUM);
+static void print_buf(MIDIDRUM* MIDI_DRUM);

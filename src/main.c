@@ -33,21 +33,6 @@
 #include <rb1drum.h>
 #include <ghdrum.h>
 
-#define EP_INTR			(1 | LIBUSB_ENDPOINT_IN)
-#define INTR_LENGTH		27
-
-#define DEFAULT_CHANNEL 9
-
-#define YVK_KICK        36
-#define YVK_SNARE       37
-#define YVK_LO_TOM      38
-#define YVK_MID_TOM     39
-#define YVK_HI_TOM      40
-#define YVK_CLOSED_HAT  41
-#define YVK_OPEN_HAT    42
-#define YVK_RIDE        43
-#define YVK_CRASH       45
-
 /*
 enum drivers{
     ALSA_DRIVER,
@@ -140,52 +125,10 @@ static int sync_intr(unsigned char type, struct libusb_device_handle *devh)
     }
 }
 
-static inline void get_state(MIDIDRUM* MIDI_DRUM, unsigned char drum)
-{
-    MIDI_DRUM->drum_state[drum] = MIDI_DRUM->buf[MIDI_DRUM->buf_indx[drum]] & MIDI_DRUM->buf_mask[drum];
-}
 
-//its pretty unlikely any of these will inline, but its worth a try.
 static inline void calc_velocity_gh(MIDIDRUM* MIDI_DRUM, unsigned char value)
 {
     MIDI_DRUM->velocity = min(max(value * 2, 0), 127);
-}
-
-static inline void calc_velocity_rb(MIDIDRUM* MIDI_DRUM, unsigned char value)
-{
-    MIDI_DRUM->velocity = min(max((280-value) * 2, 0), 127);
-}
-
-static inline void calc_velocity_rb1(MIDIDRUM* MIDI_DRUM, unsigned char value)
-{
-    MIDI_DRUM->velocity = 125;//TODO: allow velocity to be selected
-}
-
-static inline void handle_drum(MIDIDRUM* MIDI_DRUM, unsigned char drum)
-{
-   if (MIDI_DRUM->drum_state[drum] && !MIDI_DRUM->prev_state[drum]) {
-       MIDI_DRUM->calc_velocity(MIDI_DRUM->drum_state[drum]);
-       //noteup(MIDI_DRUM->g_seq, MIDI_DRUM->g_port, DEFAULT_CHANNEL, MIDI_DRUM->midi_note[drum], -1);
-       //notedown( MIDI_DRUM->g_seq,  MIDI_DRUM->g_port, DEFAULT_CHANNEL, MIDI_DRUM->midi_note[drum], MIDI_DRUM->velocity);
-       MIDI_DRUM->noteup(MIDI_DRUM->sequencer, MIDI_DRUM->midi_note[drum], -1);
-       MIDI_DRUM->notedown(MIDI_DRUM->sequencer, MIDI_DRUM->midi_note[drum], MIDI_DRUM->velocity);
-   }
-}
-
-static inline void handle_bass_rb(MIDIDRUM* MIDI_DRUM, unsigned char drum)
-{
-    if (MIDI_DRUM->drum_state[drum] != MIDI_DRUM->prev_state[drum]) {
-        if (MIDI_DRUM->drum_state[drum]) {
-            MIDI_DRUM->velocity = 125;
-            //notedown( MIDI_DRUM->g_seq,  MIDI_DRUM->g_port, DEFAULT_CHANNEL, MIDI_DRUM->midi_note[drum],  MIDI_DRUM->velocity);
-            MIDI_DRUM->notedown(MIDI_DRUM->sequencer, MIDI_DRUM->midi_note[drum], MIDI_DRUM->velocity);
-        }
-        // Up
-        else {
-            //noteup( MIDI_DRUM->g_seq,  MIDI_DRUM->g_port, DEFAULT_CHANNEL, MIDI_DRUM->midi_note[drum], 0);
-            MIDI_DRUM->noteup(MIDI_DRUM->sequencer, MIDI_DRUM->midi_note[drum], -1);
-        }
-    }
 }
 
 void init_midi_drum(MIDIDRUM* MIDI_DRUM)
@@ -198,64 +141,11 @@ void init_midi_drum(MIDIDRUM* MIDI_DRUM)
         case PS_ROCKBAND:
 	case XB_ROCKBAND:
 	case WII_ROCKBAND:
-            MIDI_DRUM->calc_velocity = &calc_velocity_rb;
-	    MIDI_DRUM->handle_bass = &handle_bass_rb;
-	    MIDI_DRUM->buf_indx[RED] = 12;
-	    MIDI_DRUM->buf_mask[RED] = 0xFF;
-	    MIDI_DRUM->buf_indx[YELLOW] = 11;
-	    MIDI_DRUM->buf_mask[YELLOW] = 0xFF;
-	    MIDI_DRUM->buf_indx[BLUE] = 14;
-	    MIDI_DRUM->buf_mask[BLUE] = 0xFF;
-	    MIDI_DRUM->buf_indx[GREEN] = 13;
-	    MIDI_DRUM->buf_mask[GREEN] = 0xFF;
-	    MIDI_DRUM->buf_indx[CYMBAL_FLAG] = 1;
-	    MIDI_DRUM->buf_mask[CYMBAL_FLAG] = 0x08;
-	    MIDI_DRUM->buf_indx[YELLOW_CYMBAL] = 11;
-	    MIDI_DRUM->buf_mask[YELLOW_CYMBAL] = 0xFF;
-	    MIDI_DRUM->buf_indx[BLUE_CYMBAL] = 14;
-	    MIDI_DRUM->buf_mask[BLUE_CYMBAL] = 0xFF;
-	    MIDI_DRUM->buf_indx[GREEN_CYMBAL] = 13;
-	    MIDI_DRUM->buf_mask[GREEN_CYMBAL] = 0xFF;
-	    MIDI_DRUM->buf_indx[ORANGE_BASS] = 0;
-	    MIDI_DRUM->buf_mask[ORANGE_BASS] = 0x10;
-	    MIDI_DRUM->buf_indx[BLACK_BASS] = 0;
-	    MIDI_DRUM->buf_mask[BLACK_BASS] = 0x20;
+        init_rb_kit(MIDI_DRUM);
 	    break;
         case PS_ROCKBAND1:
-            MIDI_DRUM->calc_velocity = &calc_velocity_rb1;
-	    MIDI_DRUM->handle_bass = &handle_bass_rb;
-	    MIDI_DRUM->buf_indx[RED] = 0;
-	    MIDI_DRUM->buf_mask[RED] = 0x04;
-	    MIDI_DRUM->buf_indx[YELLOW] = 0;
-	    MIDI_DRUM->buf_mask[YELLOW] = 0x08;
-	    MIDI_DRUM->buf_indx[BLUE] = 0;
-	    MIDI_DRUM->buf_mask[BLUE] = 0x01;
-	    MIDI_DRUM->buf_indx[GREEN] = 0;
-	    MIDI_DRUM->buf_mask[GREEN] = 0x02;
-	    MIDI_DRUM->buf_indx[CYMBAL_FLAG] = 7;//this is a dummy value, always empty
-	    MIDI_DRUM->buf_mask[CYMBAL_FLAG] = 0x00;
-	    MIDI_DRUM->buf_indx[ORANGE_BASS] = 0;
-	    MIDI_DRUM->buf_mask[ORANGE_BASS] = 0x10;
-	    MIDI_DRUM->buf_indx[BLACK_BASS] = 7;
-	    MIDI_DRUM->buf_mask[BLACK_BASS] = 0x00;
-	    break;
 	case XB_ROCKBAND1:
-            MIDI_DRUM->calc_velocity = &calc_velocity_rb1;
-	    MIDI_DRUM->handle_bass = &handle_bass_rb;
-	    MIDI_DRUM->buf_indx[RED] = 3;
-	    MIDI_DRUM->buf_mask[RED] = 0x20;
-	    MIDI_DRUM->buf_indx[YELLOW] = 3;
-	    MIDI_DRUM->buf_mask[YELLOW] = 0x80;
-	    MIDI_DRUM->buf_indx[BLUE] = 3;
-	    MIDI_DRUM->buf_mask[BLUE] = 0x40;
-	    MIDI_DRUM->buf_indx[GREEN] = 3;
-	    MIDI_DRUM->buf_mask[GREEN] = 0x10;
-	    MIDI_DRUM->buf_indx[CYMBAL_FLAG] = 7;
-	    MIDI_DRUM->buf_mask[CYMBAL_FLAG] = 0x00;
-	    MIDI_DRUM->buf_indx[ORANGE_BASS] = 3;
-	    MIDI_DRUM->buf_mask[ORANGE_BASS] = 0x01;
-	    MIDI_DRUM->buf_indx[BLACK_BASS] = 7;
-	    MIDI_DRUM->buf_mask[BLACK_BASS] = 0x00;
+        init_rb1_kit(MIDI_DRUM);
 	    break;
         case GUITAR_HERO:
 	    MIDI_DRUM->calc_velocity = &calc_velocity_gh;
@@ -275,7 +165,7 @@ void init_midi_drum(MIDIDRUM* MIDI_DRUM)
     }
 }
 
-static inline void print_hits(MIDIDRUM* MIDI_DRUM)
+static void print_hits(MIDIDRUM* MIDI_DRUM)
 {
     if ( MIDI_DRUM->drum_state[RED] ||  
          MIDI_DRUM->drum_state[YELLOW] ||
@@ -304,7 +194,7 @@ static inline void print_hits(MIDIDRUM* MIDI_DRUM)
     }
 }
 
-static inline void print_buf(MIDIDRUM* MIDI_DRUM)
+static void print_buf(MIDIDRUM* MIDI_DRUM)
 {
     if ( memcmp(MIDI_DRUM->oldbuf,MIDI_DRUM->buf,INTR_LENGTH))
     {
@@ -354,57 +244,6 @@ static void cb_irq_gh(struct libusb_transfer *transfer)
         print_hits(MIDI_DRUM);
 	print_buf(MIDI_DRUM);
     }
-    if (libusb_submit_transfer(transfer) < 0)
-        MIDI_DRUM->do_exit = 2;
-}
-
-//interrupt callback for RB1&3 drumkit
-static void cb_irq_rb(struct libusb_transfer *transfer)
-{
-    MIDIDRUM* MIDI_DRUM = (MIDIDRUM*)transfer->user_data; 
-    if (transfer->status != LIBUSB_TRANSFER_COMPLETED) {
-        fprintf(stderr, "irq transfer status %d? %d\n", transfer->status, LIBUSB_TRANSFER_ERROR);
-        MIDI_DRUM->do_exit = 2;
-        libusb_free_transfer(transfer);
-        transfer = NULL;
-        return;
-    }
-
-    //RockBand 3 Drumkit
-    get_state(RED);
-    get_state(YELLOW);
-    get_state(GREEN);
-    get_state(BLUE);
-    get_state(CYMBAL_FLAG);
-    get_state(YELLOW_CYMBAL);
-    get_state(BLUE_CYMBAL);
-    get_state(GREEN_CYMBAL);
-    get_state(ORANGE_BASS);
-    get_state(BLACK_BASS);
-
-    handle_drum(RED); 
-    if(MIDI_DRUM->drum_state[CYMBAL_FLAG]){
-    
-       	handle_drum(YELLOW_CYMBAL); 
-       	handle_drum(BLUE_CYMBAL); 
-       	handle_drum(GREEN_CYMBAL); 
-    }    
-    else{
-        handle_drum(YELLOW);
-       	handle_drum(BLUE);
-        handle_drum(GREEN);
-    }   
-    MIDI_DRUM->handle_bass(ORANGE_BASS);
-    MIDI_DRUM->handle_bass(BLACK_BASS);
-        
-    //now that the time-critical stuff is done, lets do the assignments 
-    memcpy(MIDI_DRUM->prev_state,MIDI_DRUM->drum_state,NUM_DRUMS);
-    
-    if (MIDI_DRUM->verbose)
-    {
-        print_hits(MIDI_DRUM);
-	print_buf(MIDI_DRUM);
-    } 
     if (libusb_submit_transfer(transfer) < 0)
         MIDI_DRUM->do_exit = 2;
 }
