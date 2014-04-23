@@ -19,12 +19,12 @@ void init_gh_kit(MIDIDRUM* MIDI_DRUM)
 	    MIDI_DRUM->buf_mask[ORANGE_BASS] = 0xff;
 }
 
-inline void calc_velocity(MIDIDRUM* MIDI_DRUM, unsigned char value)
+static inline void calc_velocity(MIDIDRUM* MIDI_DRUM, unsigned char value)
 {
     MIDI_DRUM->velocity = min(max(value * 2, 0), 127);
 }
 
-inline void handle_drum(MIDIDRUM* MIDI_DRUM, unsigned char drum)
+static inline void handle_drum(MIDIDRUM* MIDI_DRUM, unsigned char drum)
 {
    if (MIDI_DRUM->drum_state[drum] && !MIDI_DRUM->prev_state[drum]) {
        calc_velocity(MIDI_DRUM,MIDI_DRUM->drum_state[drum]);

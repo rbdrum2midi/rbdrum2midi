@@ -34,12 +34,12 @@ void init_rb1_kit(MIDIDRUM* MIDI_DRUM)
     }
 }
 
-inline void calc_velocity(MIDIDRUM* MIDI_DRUM)
+static inline void calc_velocity(MIDIDRUM* MIDI_DRUM)
 {
     MIDI_DRUM->velocity = 125;//TODO: allow velocity to be selected
 }
 
-inline void handle_drum(MIDIDRUM* MIDI_DRUM, unsigned char drum)
+static inline void handle_drum(MIDIDRUM* MIDI_DRUM, unsigned char drum)
 {
    if (MIDI_DRUM->drum_state[drum] && !MIDI_DRUM->prev_state[drum]) {
        calc_velocity(MIDI_DRUM);
@@ -48,7 +48,7 @@ inline void handle_drum(MIDIDRUM* MIDI_DRUM, unsigned char drum)
    }
 }
 
-inline void handle_bass(MIDIDRUM* MIDI_DRUM, unsigned char drum)
+static inline void handle_bass(MIDIDRUM* MIDI_DRUM, unsigned char drum)
 {
     if (MIDI_DRUM->drum_state[drum] != MIDI_DRUM->prev_state[drum]) {
         if (MIDI_DRUM->drum_state[drum]) {

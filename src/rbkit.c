@@ -27,12 +27,12 @@ void init_rb_kit(MIDIDRUM* MIDI_DRUM)
     MIDI_DRUM->buf_mask[BLACK_BASS] = 0x20;
 }
 
-inline void calc_velocity(MIDIDRUM* MIDI_DRUM, unsigned char value)
+static inline void calc_velocity(MIDIDRUM* MIDI_DRUM, unsigned char value)
 {
     MIDI_DRUM->velocity = min(max((280-value) * 2, 0), 127);
 }
 
-inline void handle_drum(MIDIDRUM* MIDI_DRUM, unsigned char drum)
+static inline void handle_drum(MIDIDRUM* MIDI_DRUM, unsigned char drum)
 {
    if (MIDI_DRUM->drum_state[drum] && !MIDI_DRUM->prev_state[drum]) {
        calc_velocity(MIDI_DRUM,MIDI_DRUM->drum_state[drum]);
@@ -41,7 +41,7 @@ inline void handle_drum(MIDIDRUM* MIDI_DRUM, unsigned char drum)
    }
 }
 
-inline void handle_bass(MIDIDRUM* MIDI_DRUM, unsigned char drum)
+static inline void handle_bass(MIDIDRUM* MIDI_DRUM, unsigned char drum)
 {
     if (MIDI_DRUM->drum_state[drum] != MIDI_DRUM->prev_state[drum]) {
         if (MIDI_DRUM->drum_state[drum]) {

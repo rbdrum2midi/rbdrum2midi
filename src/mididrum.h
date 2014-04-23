@@ -88,7 +88,7 @@ typedef struct drum_midi
 //    void (*notedown)(void* seq, unsigned char note, unsigned char vel);
 }MIDIDRUM;
 
-inline void get_state(MIDIDRUM* MIDI_DRUM, unsigned char drum){MIDI_DRUM->drum_state[drum] = MIDI_DRUM->buf[MIDI_DRUM->buf_indx[drum]] & MIDI_DRUM->buf_mask[drum];}
+static inline void get_state(MIDIDRUM* MIDI_DRUM, unsigned char drum){MIDI_DRUM->drum_state[drum] = MIDI_DRUM->buf[MIDI_DRUM->buf_indx[drum]] & MIDI_DRUM->buf_mask[drum];}
 inline void notedown(snd_seq_t *seq, int port, int chan, int pitch, int vol);
 inline void noteup(snd_seq_t *seq, int port, int chan, int pitch, int vol);
 void print_hits(MIDIDRUM* MIDI_DRUM);
