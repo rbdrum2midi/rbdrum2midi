@@ -1,5 +1,17 @@
 //ssj71
 //mididrum.h
+#ifndef MIDIDRUM_H
+#define MIDIDRUM_H
+
+#include <errno.h>
+#include <signal.h>
+#include <string.h>
+#include <stdio.h>
+#include <stdlib.h>
+
+#include <libusb-1.0/libusb.h>
+#include <alsa/asoundlib.h>
+#include <alsa/seq.h>
 
 #define EP_INTR			(1 | LIBUSB_ENDPOINT_IN)
 #define INTR_LENGTH		27
@@ -19,7 +31,7 @@
 #define max(a, b) (((a) > (b)) ? (a) : (b))
 #define min(a, b) (((a) < (b)) ? (a) : (b))
 
-enum drums{
+typedef enum {
     RED = 0,
     YELLOW,
     BLUE,
@@ -32,9 +44,9 @@ enum drums{
     BLACK_BASS,
     CYMBAL_FLAG,
     NUM_DRUMS
-};
+} drums;
 
-enum kit_types{
+typedef enum {
     UNKNOWN = 0,
     PS_ROCKBAND,
     XB_ROCKBAND,
@@ -42,7 +54,7 @@ enum kit_types{
     XB_ROCKBAND1,
     PS_ROCKBAND1,
     GUITAR_HERO
-};
+}kit_types;
 
 //primary object for the system
 typedef struct drum_midi
@@ -61,7 +73,7 @@ typedef struct drum_midi
 
     unsigned char verbose;
     unsigned char dbg;
-    int do_exit;
+//    int do_exit;
     unsigned char bass_down;
     int velocity;
     unsigned char irqbuf[INTR_LENGTH];
@@ -77,5 +89,11 @@ typedef struct drum_midi
 }MIDIDRUM;
 
 inline void get_state(MIDIDRUM* MIDI_DRUM, unsigned char drum){MIDI_DRUM->drum_state[drum] = MIDI_DRUM->buf[MIDI_DRUM->buf_indx[drum]] & MIDI_DRUM->buf_mask[drum];}
-static void print_hits(MIDIDRUM* MIDI_DRUM);
-static void print_buf(MIDIDRUM* MIDI_DRUM);
+inline void notedown(snd_seq_t *seq, int port, int chan, int pitch, int vol);
+inline void noteup(snd_seq_t *seq, int port, int chan, int pitch, int vol);
+void print_hits(MIDIDRUM* MIDI_DRUM);
+void print_buf(MIDIDRUM* MIDI_DRUM);
+
+//other globals
+int do_exit;
+#endif

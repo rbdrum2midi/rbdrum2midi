@@ -1,8 +1,9 @@
 //ssj71
 //rbkit.c
 #include "rbkit.h"
+//#include "constants.h"
 
-static void init_rb_kit(MIDIDRUM* MIDI_DRUM)
+void init_rb_kit(MIDIDRUM* MIDI_DRUM)
 {
     MIDI_DRUM->buf_indx[RED] = 12;
     MIDI_DRUM->buf_mask[RED] = 0xFF;
@@ -26,7 +27,7 @@ static void init_rb_kit(MIDIDRUM* MIDI_DRUM)
     MIDI_DRUM->buf_mask[BLACK_BASS] = 0x20;
 }
 
-static inline void calc_velocity(MIDIDRUM* MIDI_DRUM, unsigned char value)
+inline void calc_velocity(MIDIDRUM* MIDI_DRUM, unsigned char value)
 {
     MIDI_DRUM->velocity = min(max((280-value) * 2, 0), 127);
 }
@@ -34,13 +35,13 @@ static inline void calc_velocity(MIDIDRUM* MIDI_DRUM, unsigned char value)
 inline void handle_drum(MIDIDRUM* MIDI_DRUM, unsigned char drum)
 {
    if (MIDI_DRUM->drum_state[drum] && !MIDI_DRUM->prev_state[drum]) {
-       calc_velocity(MIDI_DRUM->drum_state[drum]);
+       calc_velocity(MIDI_DRUM,MIDI_DRUM->drum_state[drum]);
        noteup(MIDI_DRUM->g_seq, MIDI_DRUM->g_port, DEFAULT_CHANNEL, MIDI_DRUM->midi_note[drum], -1);
        notedown( MIDI_DRUM->g_seq,  MIDI_DRUM->g_port, DEFAULT_CHANNEL, MIDI_DRUM->midi_note[drum], MIDI_DRUM->velocity);
    }
 }
 
-static inline void handle_bass(MIDIDRUM* MIDI_DRUM, unsigned char drum)
+inline void handle_bass(MIDIDRUM* MIDI_DRUM, unsigned char drum)
 {
     if (MIDI_DRUM->drum_state[drum] != MIDI_DRUM->prev_state[drum]) {
         if (MIDI_DRUM->drum_state[drum]) {
@@ -55,43 +56,44 @@ static inline void handle_bass(MIDIDRUM* MIDI_DRUM, unsigned char drum)
 }
 
 //callback for rockband kit
-static void cb_irq_rb(struct libusb_transfer *transfer)
+void cb_irq_rb(struct libusb_transfer *transfer)
 {
     MIDIDRUM* MIDI_DRUM = (MIDIDRUM*)transfer->user_data; 
     if (transfer->status != LIBUSB_TRANSFER_COMPLETED) {
         fprintf(stderr, "irq transfer status %d? %d\n", transfer->status, LIBUSB_TRANSFER_ERROR);
-        MIDI_DRUM->do_exit = 2;
+        do_exit = 2;
         libusb_free_transfer(transfer);
         transfer = NULL;
         return;
     }
 
     //RockBand 3 Drumkit
-    get_state(RED);
-    get_state(YELLOW);
-    get_state(GREEN);
-    get_state(BLUE);
-    get_state(CYMBAL_FLAG);
-    get_state(YELLOW_CYMBAL);
-    get_state(BLUE_CYMBAL);
-    get_state(GREEN_CYMBAL);
-    get_state(ORANGE_BASS);
-    get_state(BLACK_BASS);
+    get_state(MIDI_DRUM,RED);
+    get_state(MIDI_DRUM,YELLOW);
+    get_state(MIDI_DRUM,GREEN);
+    get_state(MIDI_DRUM,BLUE);
+    get_state(MIDI_DRUM,CYMBAL_FLAG);
+    //cymbals are same data as pads
+    MIDI_DRUM->drum_state[YELLOW_CYMBAL] = MIDI_DRUM->drum_state[YELLOW];
+    MIDI_DRUM->drum_state[GREEN_CYMBAL] = MIDI_DRUM->drum_state[GREEN];
+    MIDI_DRUM->drum_state[BLUE_CYMBAL] = MIDI_DRUM->drum_state[BLUE];
+    get_state(MIDI_DRUM,ORANGE_BASS);
+    get_state(MIDI_DRUM,BLACK_BASS);
 
-    handle_drum(RED); 
+    handle_drum(MIDI_DRUM,RED); 
     if(MIDI_DRUM->drum_state[CYMBAL_FLAG]){
     
-       	handle_drum(YELLOW_CYMBAL); 
-       	handle_drum(BLUE_CYMBAL); 
-       	handle_drum(GREEN_CYMBAL); 
+       	handle_drum(MIDI_DRUM,YELLOW_CYMBAL); 
+       	handle_drum(MIDI_DRUM,BLUE_CYMBAL); 
+       	handle_drum(MIDI_DRUM,GREEN_CYMBAL); 
     }    
     else{
-        handle_drum(YELLOW);
-       	handle_drum(BLUE);
-        handle_drum(GREEN);
+        handle_drum(MIDI_DRUM,YELLOW);
+       	handle_drum(MIDI_DRUM,BLUE);
+        handle_drum(MIDI_DRUM,GREEN);
     }   
-    handle_bass(ORANGE_BASS);
-    handle_bass(BLACK_BASS);
+    handle_bass(MIDI_DRUM,ORANGE_BASS);
+    handle_bass(MIDI_DRUM,BLACK_BASS);
         
     //now that the time-critical stuff is done, lets do the assignments 
     memcpy(MIDI_DRUM->prev_state,MIDI_DRUM->drum_state,NUM_DRUMS);
@@ -102,5 +104,5 @@ static void cb_irq_rb(struct libusb_transfer *transfer)
 	print_buf(MIDI_DRUM);
     } 
     if (libusb_submit_transfer(transfer) < 0)
-        MIDI_DRUM->do_exit = 2;
+        do_exit = 2;
 }

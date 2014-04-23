@@ -18,7 +18,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
-#include <errno.h>
+/*#include <errno.h>
 #include <signal.h>
 #include <string.h>
 #include <stdio.h>
@@ -27,11 +27,37 @@
 #include <libusb-1.0/libusb.h>
 #include <alsa/asoundlib.h>
 #include <alsa/seq.h>
+*/
+#include "mididrum.h"
+//#include "constants.h"
+#include "rbkit.h"
+#include "rb1kit.h"
+#include "ghkit.h"
+/*
+enum drums{
+    RED = 0,
+    YELLOW,
+    BLUE,
+    GREEN,
+    YELLOW_CYMBAL,
+    BLUE_CYMBAL,
+    GREEN_CYMBAL,
+    ORANGE_CYMBAL,
+    ORANGE_BASS,
+    BLACK_BASS,
+    CYMBAL_FLAG,
+    NUM_DRUMS
+};
 
-#include <mididrum.h>
-#include <rbdrum.h>
-#include <rb1drum.h>
-#include <ghdrum.h>
+enum kit_types{
+    UNKNOWN = 0,
+    PS_ROCKBAND,
+    XB_ROCKBAND,
+    WII_ROCKBAND,
+    XB_ROCKBAND1,
+    PS_ROCKBAND1,
+    GUITAR_HERO
+};*/
 
 /*
 enum drivers{
@@ -90,7 +116,7 @@ static int find_rbdrum_device(MIDIDRUM* MIDI_DRUM, struct libusb_device_handle *
     return devh ? 0 : -EIO;
 }
 
-
+/*
 static int do_sync_intr(unsigned char *data, struct libusb_device_handle *devh)
 {
     int r;
@@ -124,12 +150,8 @@ static int sync_intr(unsigned char type, struct libusb_device_handle *devh)
             return 0;
     }
 }
+*/
 
-
-static inline void calc_velocity_gh(MIDIDRUM* MIDI_DRUM, unsigned char value)
-{
-    MIDI_DRUM->velocity = min(max(value * 2, 0), 127);
-}
 
 void init_midi_drum(MIDIDRUM* MIDI_DRUM)
 {
@@ -139,33 +161,21 @@ void init_midi_drum(MIDIDRUM* MIDI_DRUM)
     switch(MIDI_DRUM->kit)
     {
         case PS_ROCKBAND:
-	case XB_ROCKBAND:
-	case WII_ROCKBAND:
-        init_rb_kit(MIDI_DRUM);
-	    break;
+	    case XB_ROCKBAND:
+	    case WII_ROCKBAND:
+            init_rb_kit(MIDI_DRUM);
+	        break;
         case PS_ROCKBAND1:
-	case XB_ROCKBAND1:
-        init_rb1_kit(MIDI_DRUM);
-	    break;
+	    case XB_ROCKBAND1:
+            init_rb1_kit(MIDI_DRUM);
+	        break;
         case GUITAR_HERO:
-	    MIDI_DRUM->calc_velocity = &calc_velocity_gh;
-	    MIDI_DRUM->buf_indx[RED] = 12;
-	    MIDI_DRUM->buf_mask[RED] = 0xFF;	
-	    MIDI_DRUM->buf_indx[YELLOW_CYMBAL] = 11;
-	    MIDI_DRUM->buf_mask[YELLOW_CYMBAL] = 0xff;
-	    MIDI_DRUM->buf_indx[BLUE] = 14;
-	    MIDI_DRUM->buf_mask[BLUE] = 0xff;
-	    MIDI_DRUM->buf_indx[GREEN] = 13;
-	    MIDI_DRUM->buf_mask[GREEN] = 0xff;
-	    MIDI_DRUM->buf_indx[ORANGE_CYMBAL] = 16;
-	    MIDI_DRUM->buf_mask[ORANGE_CYMBAL] = 0xff;
-	    MIDI_DRUM->buf_indx[ORANGE_BASS] = 15;
-	    MIDI_DRUM->buf_mask[ORANGE_BASS] = 0xff;
-	    break;
+            init_gh_kit(MIDI_DRUM);
+	        break;
     }
 }
 
-static void print_hits(MIDIDRUM* MIDI_DRUM)
+void print_hits(MIDIDRUM* MIDI_DRUM)
 {
     if ( MIDI_DRUM->drum_state[RED] ||  
          MIDI_DRUM->drum_state[YELLOW] ||
@@ -181,9 +191,9 @@ static void print_hits(MIDIDRUM* MIDI_DRUM)
     				    MIDI_DRUM->drum_state[GREEN]>0?"VV":"  ",
     				    MIDI_DRUM->drum_state[ORANGE_CYMBAL]>0?"VV":"  ",
                                     MIDI_DRUM->drum_state[YELLOW_CYMBAL]>0?"VV":"  ",
-    				    MIDI_DRUM->drum_state[ORANGE_BASS]>0?"VV":"  "
+    				    MIDI_DRUM->drum_state[ORANGE_BASS]>0?"VV":"  ",
     				    MIDI_DRUM->drum_state[BLACK_BASS]>0?"VV":"  "); 
-        printf("%02i %02i %02i %02i %02i %02i\n", MIDI_DRUM->drum_state[RED],
+        printf("%02i %02i %02i %02i %02i %02i %02i %02i\n", MIDI_DRUM->drum_state[RED],
                                               MIDI_DRUM->drum_state[YELLOW],
     					      MIDI_DRUM->drum_state[BLUE], 
     					      MIDI_DRUM->drum_state[GREEN], 
@@ -194,7 +204,7 @@ static void print_hits(MIDIDRUM* MIDI_DRUM)
     }
 }
 
-static void print_buf(MIDIDRUM* MIDI_DRUM)
+void print_buf(MIDIDRUM* MIDI_DRUM)
 {
     if ( memcmp(MIDI_DRUM->oldbuf,MIDI_DRUM->buf,INTR_LENGTH))
     {
@@ -209,52 +219,13 @@ static void print_buf(MIDIDRUM* MIDI_DRUM)
     }
 }
 
-//guitar hero callback
-static void cb_irq_gh(struct libusb_transfer *transfer)
-{    
-    MIDIDRUM* MIDI_DRUM = (MIDIDRUM*)transfer->user_data; 
-    if (transfer->status != LIBUSB_TRANSFER_COMPLETED) {
-        fprintf(stderr, "irq transfer status %d? %d\n", transfer->status, LIBUSB_TRANSFER_ERROR);
-        MIDI_DRUM->do_exit = 2;
-        libusb_free_transfer(transfer);
-        transfer = NULL;
-        return;
-    }
-
-    //Guitar Hero Drumkit
-    get_state(MIDI_DRUM,RED);
-    get_state(MIDI_DRUM,YELLOW_CYMBAL);
-    get_state(MIDI_DRUM,GREEN);
-    get_state(MIDI_DRUM,BLUE);
-    get_state(MIDI_DRUM,ORANGE_CYMBAL);
-    get_state(MIDI_DRUM,ORANGE_BASS);
-
-    handle_drum(MIDI_DRUM,RED);
-    handle_drum(MIDI_DRUM,YELLOW_CYMBAL);
-    handle_drum(MIDI_DRUM,GREEN);
-    handle_drum(MIDI_DRUM,BLUE);
-    handle_drum(MIDI_DRUM,ORANGE_CYMBAL); 
-    handle_drum(MIDI_DRUM,ORANGE_BASS);
-        
-    //now that the time-critical stuff is done, lets do the assignments 
-    memcpy(MIDI_DRUM->prev_state,MIDI_DRUM->drum_state,NUM_DRUMS);
-                             
-    if (MIDI_DRUM->verbose)
-    {
-        print_hits(MIDI_DRUM);
-	print_buf(MIDI_DRUM);
-    }
-    if (libusb_submit_transfer(transfer) < 0)
-        MIDI_DRUM->do_exit = 2;
-}
-
 //debug mode callback
 static void cb_irq_dbg(struct libusb_transfer *transfer)
 {
     MIDIDRUM* MIDI_DRUM = (MIDIDRUM*)transfer->user_data; 
     if (transfer->status != LIBUSB_TRANSFER_COMPLETED) {
         fprintf(stderr, "irq transfer status %d? %d\n", transfer->status, LIBUSB_TRANSFER_ERROR);
-        MIDI_DRUM->do_exit = 2;
+        do_exit = 2;
         libusb_free_transfer(transfer);
         transfer = NULL;
         return;
@@ -262,10 +233,10 @@ static void cb_irq_dbg(struct libusb_transfer *transfer)
 
     print_buf(MIDI_DRUM);
     if (libusb_submit_transfer(transfer) < 0)
-        MIDI_DRUM->do_exit = 2;
+        do_exit = 2;
 }
 
-static int init_capture(libusb_transfer *irq_transfer)
+static int init_capture(struct libusb_transfer *irq_transfer)
 {
     int r;
 
@@ -276,7 +247,7 @@ static int init_capture(libusb_transfer *irq_transfer)
     return 6;
 }
 
-static int alloc_transfers(MIDIDRUM* MIDI_DRUM, libusb_device_handle *devh, libusb_transfer *irq_transfer)
+static int alloc_transfers(MIDIDRUM* MIDI_DRUM, libusb_device_handle *devh, struct libusb_transfer *irq_transfer)
 {
     irq_transfer = libusb_alloc_transfer(0);
     if (!irq_transfer)
@@ -287,20 +258,24 @@ static int alloc_transfers(MIDIDRUM* MIDI_DRUM, libusb_device_handle *devh, libu
             sizeof(MIDI_DRUM->irqbuf), cb_irq_dbg, (void*)MIDI_DRUM, 0);
         if( MIDI_DRUM->verbose)printf("Debug Mode Enabled..\n");
     }
-    else if(MIDI_DRUM->type == PS_ROCKBAND  || MIDI_DRUM->type == XB_ROCKBAND ||
-            MIDI_DRUM->type == WII_ROCKBAND || MIDI_DRUM->type == PS_ROCKBAND1 ||
-            MIDI_DRUM->type == XB_ROCKBAND1){
+    else if(MIDI_DRUM->kit == PS_ROCKBAND  || MIDI_DRUM->kit == XB_ROCKBAND ||
+            MIDI_DRUM->kit == WII_ROCKBAND){
         libusb_fill_interrupt_transfer(irq_transfer, devh, EP_INTR, MIDI_DRUM->irqbuf,
             sizeof(MIDI_DRUM->irqbuf), cb_irq_rb, (void*)MIDI_DRUM, 0);
         if( MIDI_DRUM->verbose)printf("Rock Band drum kit detected.\n");
     }
-    else if(MIDI_DRUM->type == GUITAR_HERO){
+    else if(MIDI_DRUM->kit == PS_ROCKBAND1 || MIDI_DRUM->kit == XB_ROCKBAND1){
+        libusb_fill_interrupt_transfer(irq_transfer, devh, EP_INTR, MIDI_DRUM->irqbuf,
+            sizeof(MIDI_DRUM->irqbuf), cb_irq_rb1, (void*)MIDI_DRUM, 0);
+        if( MIDI_DRUM->verbose)printf("Rock Band drum kit detected.\n");
+    }
+    else if(MIDI_DRUM->kit == GUITAR_HERO){
         libusb_fill_interrupt_transfer(irq_transfer, devh, EP_INTR, MIDI_DRUM->irqbuf,
             sizeof(MIDI_DRUM->irqbuf), cb_irq_gh, (void*)MIDI_DRUM, 0);
         if( MIDI_DRUM->verbose)printf("Guitar Hero World Tour drum kit detected.\n");
     }
     else{
-        printf("error in drum type! %i\n",type);
+        printf("error in drum type! %i\n",MIDI_DRUM->kit);
     }
 
     return 0;
@@ -398,7 +373,7 @@ void subscribe_output(snd_seq_t *seq, int client, int port)
 // From test/playmidi1.c from alsa-lib-1.0.3.
 
 // Direct delivery seems like what I'm doing..
-void notedown_alsa(snd_seq_t *seq, int port, int chan, int pitch, int vol)
+inline void notedown(snd_seq_t *seq, int port, int chan, int pitch, int vol)
 {
     snd_seq_event_t ev;
 
@@ -420,7 +395,7 @@ void notedown_alsa(snd_seq_t *seq, int port, int chan, int pitch, int vol)
 }
 
 // When the note up, note off.
-void noteup_alsa(snd_seq_t *seq, int port, int chan, int pitch, int vol)
+inline void noteup(snd_seq_t *seq, int port, int chan, int pitch, int vol)
 {
     snd_seq_event_t ev;
 
@@ -436,25 +411,25 @@ void noteup_alsa(snd_seq_t *seq, int port, int chan, int pitch, int vol)
     snd_seq_drain_output(seq);
 }
 
-int setup_alsa(snd_seq_t **seq, int *port)
+int setup_alsa(snd_seq_t **seq, int *port, unsigned char verbose)
 {
-    if ( MIDI_DRUM->verbose) printf("Setting up alsa\n");
+    if ( verbose) printf("Setting up alsa\n");
 
     *seq = open_client();
     if (*seq == NULL) {
-        if ( MIDI_DRUM->verbose >= 0) printf("Error: open_client failed: %s\n", snd_strerror(seq));
+        if ( verbose >= 0) printf("Error: open_client failed: %s\n", snd_strerror((int)seq));
         return 0;
     }
 
     int my_client_id = snd_seq_client_id(*seq);
     *port = my_new_port(*seq);
-    if ( MIDI_DRUM->verbose) printf("client:port = %i:%i\n", my_client_id, *port);
+    if ( verbose) printf("client:port = %i:%i\n", my_client_id, *port);
 
     program_change(*seq, *port, DEFAULT_CHANNEL, 0);
     int ret = 1;
     notedown(*seq, *port, DEFAULT_CHANNEL, 57, 55);
 
-    if ( MIDI_DRUM->verbose) printf("Returning %i\n", ret);
+    if ( verbose) printf("Returning %i\n", ret);
     return ret;
 }
 
@@ -469,7 +444,7 @@ void testAlsa(snd_seq_t *seq, int port)
 
 static void sighandler(int signum)
 {
-    MIDI_DRUM->do_exit = 1;
+    do_exit = 1;
 }
 
 void useage()
@@ -512,8 +487,8 @@ int main(int argc, char **argv)
     MIDIDRUM MIDI_DRUM_;
     MIDIDRUM* MIDI_DRUM = &MIDI_DRUM_;
 
-    ALSA_MIDI_SEQUENCER seq;//currently only alsa supported
-    MIDI_DRUM->sequencer = (void*)&seq;
+    //struct ALSA_MIDI_SEQUENCER seq;//currently only alsa supported
+    //MIDI_DRUM->sequencer = (void*)&seq;
     
     MIDI_DRUM->buf = MIDI_DRUM->irqbuf;
     MIDI_DRUM->bass_down = 0;
@@ -609,7 +584,7 @@ int main(int argc, char **argv)
     }
     if(MIDI_DRUM->kit==PS_ROCKBAND1){
         //no way of knowing if device is RB1 so reassign kit after claiming
-        r = find_rbdrum_device(MIDI_DRUM);
+        r = find_rbdrum_device(MIDI_DRUM,devh);
         switch(MIDI_DRUM->kit)
 	{
 	    case PS_ROCKBAND:
@@ -622,14 +597,14 @@ int main(int argc, char **argv)
 	}
     }
     else
-        r = find_rbdrum_device(MIDI_DRUM);
+        r = find_rbdrum_device(MIDI_DRUM,devh);
     if (r < 0) {
         fprintf(stderr, "Could not find/open device\n");
         libusb_close(devh);
         libusb_exit(NULL);
         return -r;
     }
-    init_midi_drum();
+    init_midi_drum(MIDI_DRUM);
 
     if (libusb_kernel_driver_active(devh, 0)) {
         r = libusb_detach_kernel_driver(devh, 0);
@@ -646,7 +621,7 @@ int main(int argc, char **argv)
     }
     printf("claimed interface\n");
 
-    int ret = setup_alsa(& MIDI_DRUM->g_seq, & MIDI_DRUM->g_port);
+    int ret = setup_alsa(& MIDI_DRUM->g_seq, & MIDI_DRUM->g_port, MIDI_DRUM->verbose);
     // 0 is fail.
     if (ret == 0) {
         printf("Error: Alsa setup failed.\n");
@@ -686,7 +661,7 @@ int main(int argc, char **argv)
     r = sigaction(SIGTERM, &sigact, NULL);
     r = sigaction(SIGQUIT, &sigact, NULL);
 
-    while (!MIDI_DRUM->do_exit) {
+    while (!do_exit) {
         r = libusb_handle_events(NULL);
         if (r < 0) {
             break;
@@ -715,7 +690,7 @@ int main(int argc, char **argv)
         if (libusb_handle_events(NULL) < 0)
             break;
 
-    if (MIDI_DRUM->do_exit == 1)
+    if (do_exit == 1)
         r = 0;
     else
         r = 1;

@@ -3,4 +3,4 @@ AM_LDFLAGS=-lusb-1.0 -lasound
 
 
 bin_PROGRAMS = rbdrum2midi
-rbdrum2midi_SOURCES = main.c
+rbdrum2midi_SOURCES = main.c rbkit.c rb1kit.c ghkit.c

@@ -3,5 +3,5 @@
 
 #include "mididrum.h"
 
-static void cb_irq_rb1(struct libusb_transfer *transfer);
-static void init_rb1_kit(MIDIDRUM* MIDI_DRUM);
+void cb_irq_rb1(struct libusb_transfer *transfer);
+void init_rb1_kit(MIDIDRUM* MIDI_DRUM);
