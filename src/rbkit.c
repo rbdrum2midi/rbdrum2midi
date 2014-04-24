@@ -45,7 +45,7 @@ static inline void handle_bass(MIDIDRUM* MIDI_DRUM, unsigned char drum)
 {
     if (MIDI_DRUM->drum_state[drum] != MIDI_DRUM->prev_state[drum]) {
         if (MIDI_DRUM->drum_state[drum]) {
-            MIDI_DRUM->velocity = 125;
+            MIDI_DRUM->velocity = MIDI_DRUM->default_velocity;
             notedown( MIDI_DRUM->g_seq,  MIDI_DRUM->g_port, DEFAULT_CHANNEL, MIDI_DRUM->midi_note[drum],  MIDI_DRUM->velocity);
         }
         // Up

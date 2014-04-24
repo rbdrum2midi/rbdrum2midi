@@ -430,7 +430,9 @@ int main(int argc, char **argv)
     //MIDI_DRUM->sequencer = (void*)&seq;
     
     MIDI_DRUM->buf = MIDI_DRUM->irqbuf;
+    //initial conditions, defaults
     MIDI_DRUM->bass_down = 0;
+    MIDI_DRUM->default_velocity = 125;
     MIDI_DRUM->verbose = 0;
     MIDI_DRUM->dbg = 0;
     MIDI_DRUM->kit = PS_ROCKBAND;
@@ -500,8 +502,8 @@ int main(int argc, char **argv)
                 //blue pad
                  MIDI_DRUM->midi_note[BLUE] = atoi(argv[++i]);
             }
-	    else if (srtcmp(argv[i], "-vel") == 0) {
-	         MIDI_DRUM->default_velocity = atoi(argv[++i]); 
+	    else if (strcmp(argv[i], "-vel") == 0) {
+	         MIDI_DRUM->default_velocity = min(max(atoi(argv[++i]),1),127); 
 	    }
             else if (strcmp(argv[i], "-dbg") == 0) {
                 //debug mode

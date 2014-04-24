@@ -36,7 +36,7 @@ void init_rb1_kit(MIDIDRUM* MIDI_DRUM)
 
 static inline void calc_velocity(MIDIDRUM* MIDI_DRUM)
 {
-    MIDI_DRUM->velocity = 125;//TODO: allow velocity to be selected
+    MIDI_DRUM->velocity = MIDI_DRUM->default_velocity;
 }
 
 static inline void handle_drum(MIDIDRUM* MIDI_DRUM, unsigned char drum)
@@ -52,7 +52,7 @@ static inline void handle_bass(MIDIDRUM* MIDI_DRUM, unsigned char drum)
 {
     if (MIDI_DRUM->drum_state[drum] != MIDI_DRUM->prev_state[drum]) {
         if (MIDI_DRUM->drum_state[drum]) {
-            MIDI_DRUM->velocity = 125;
+            MIDI_DRUM->velocity = MIDI_DRUM->default_velocity;
             notedown( MIDI_DRUM->g_seq,  MIDI_DRUM->g_port, DEFAULT_CHANNEL, MIDI_DRUM->midi_note[drum],  MIDI_DRUM->velocity);
         }
         // Up
