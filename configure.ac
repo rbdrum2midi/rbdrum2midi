@@ -1,26 +1,31 @@
 #                                               -*- Autoconf -*-
 # Process this file with autoconf to produce a configure script.
 
-AC_PREREQ([2.65])
-AC_INIT([rbdrum2midi], [0.2], [randomas@hotmail.com])
-AM_INIT_AUTOMAKE(rbdrum2midi, 0.2)
-AC_CONFIG_SRCDIR([src/main.c])
-#AC_CONFIG_HEADERS([config.h])
+AC_PREREQ([2.69])
+AC_INIT([FULL-PACKAGE-NAME], [VERSION], [BUG-REPORT-ADDRESS])
+AC_CONFIG_SRCDIR([src/constants.h])
+AC_CONFIG_HEADERS([config.h])
 
 # Checks for programs.
 AC_PROG_CC
+AC_PROG_AWK
+AC_PROG_INSTALL
+AC_PROG_CPP
+AC_PROG_MKDIR_P
 
 # Checks for libraries.
-PKG_CHECK_MODULES([DEPS], [libusb-1.0 >= 1.0.6 alsa >= 1.0.22])
+# FIXME: Replace `main' with a function in `-lasound':
+AC_CHECK_LIB([asound], [main])
+
 # Checks for header files.
 AC_CHECK_HEADERS([stdlib.h string.h])
 
 # Checks for typedefs, structures, and compiler characteristics.
-AC_TYPE_UINT16_T
+AC_C_INLINE
 
 # Checks for library functions.
 AC_CHECK_FUNCS([memset])
-AC_CONFIG_FILES([Makefile src/Makefile])
 
-
+AC_CONFIG_FILES([Makefile
+                 src/Makefile])
 AC_OUTPUT

@@ -33,31 +33,6 @@
 #include "rbkit.h"
 #include "rb1kit.h"
 #include "ghkit.h"
-/*
-enum drums{
-    RED = 0,
-    YELLOW,
-    BLUE,
-    GREEN,
-    YELLOW_CYMBAL,
-    BLUE_CYMBAL,
-    GREEN_CYMBAL,
-    ORANGE_CYMBAL,
-    ORANGE_BASS,
-    BLACK_BASS,
-    CYMBAL_FLAG,
-    NUM_DRUMS
-};
-
-enum kit_types{
-    UNKNOWN = 0,
-    PS_ROCKBAND,
-    XB_ROCKBAND,
-    WII_ROCKBAND,
-    XB_ROCKBAND1,
-    PS_ROCKBAND1,
-    GUITAR_HERO
-};*/
 
 /*
 enum drivers{
@@ -116,44 +91,7 @@ static int find_rbdrum_device(MIDIDRUM* MIDI_DRUM, struct libusb_device_handle *
     return devh ? 0 : -EIO;
 }
 
-/*
-static int do_sync_intr(unsigned char *data, struct libusb_device_handle *devh)
-{
-    int r;
-    int transferred;
-
-    r = libusb_interrupt_transfer(devh, EP_INTR, data, INTR_LENGTH,
-        &transferred, 1000);
-    if (r < 0) {
-        fprintf(stderr, "intr error %d\n", r);
-        return r;
-    }
-    if (transferred < INTR_LENGTH) {
-        fprintf(stderr, "short read (%d)\n", r);
-        return -1;
-    }
-
-    printf("recv interrupt %04x\n", *((uint16_t *) data));
-    return 0;
-}
-
-static int sync_intr(unsigned char type, struct libusb_device_handle *devh)
-{
-    int r;
-    unsigned char data[INTR_LENGTH];
-
-    while (1) {
-        r = do_sync_intr(data, devh);
-        if (r < 0)
-            return r;
-        if (data[0] == type)
-            return 0;
-    }
-}
-*/
-
-
-void init_midi_drum(MIDIDRUM* MIDI_DRUM)
+void init_kit(MIDIDRUM* MIDI_DRUM)
 {
     //initialize all values, just to be safe
     memset(MIDI_DRUM->buf_indx,0,NUM_DRUMS);
@@ -461,6 +399,7 @@ void useage()
     printf("    -ocy/ycy/bcy/gcy <value>    set midi values for -color of cymbal\n");
     printf("    -ob/bkb <value>             set midi values for -color bass pedal\n");
     printf("    -rb1                        specify rockband 1 drumset\n");
+    printf("    -vel <value>                set default note velocity (for rb1 or bass)\n");
     printf("    -dbg                        debug mode\n");
     printf("    -h                          show this message\n");
     printf("\n");
@@ -561,6 +500,9 @@ int main(int argc, char **argv)
                 //blue pad
                  MIDI_DRUM->midi_note[BLUE] = atoi(argv[++i]);
             }
+	    else if (srtcmp(argv[i], "-vel") == 0) {
+	         MIDI_DRUM->default_velocity = atoi(argv[++i]); 
+	    }
             else if (strcmp(argv[i], "-dbg") == 0) {
                 //debug mode
                 MIDI_DRUM->dbg = 1;
@@ -604,7 +546,7 @@ int main(int argc, char **argv)
         libusb_exit(NULL);
         return -r;
     }
-    init_midi_drum(MIDI_DRUM);
+    init_kit(MIDI_DRUM);
 
     if (libusb_kernel_driver_active(devh, 0)) {
         r = libusb_detach_kernel_driver(devh, 0);

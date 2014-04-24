@@ -76,6 +76,7 @@ typedef struct drum_midi
 //    int do_exit;
     unsigned char bass_down;
     int velocity;
+    unsigned char default_velocity;
     unsigned char irqbuf[INTR_LENGTH];
     unsigned char oldbuf[INTR_LENGTH];
 //    struct libusb_device_handle *devh;
