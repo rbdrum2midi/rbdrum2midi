@@ -57,38 +57,38 @@ typedef struct alsa_midi_seq
 //void noteup_alsa(snd_seq_t *seq, int port, int chan, int pitch, int vol);
 */
 
-static int find_rbdrum_device(MIDIDRUM* MIDI_DRUM, struct libusb_device_handle *devh)
+static int find_rbdrum_device(MIDIDRUM* MIDI_DRUM, struct libusb_device_handle **devh)
 {
     // TODO: Currently the i argument is ignored.
     //PS3 RB kit
-    devh = libusb_open_device_with_vid_pid(NULL, 0x12ba, 0x0210);
-    if(devh){
+    *devh = libusb_open_device_with_vid_pid(NULL, 0x12ba, 0x0210);
+    if(*devh){
         MIDI_DRUM->kit=PS_ROCKBAND;
         return 0;
 	}
 
     //xbox RB kit
-    devh = libusb_open_device_with_vid_pid(NULL, 0x1bad, 0x0003);
-    if(devh){
+    *devh = libusb_open_device_with_vid_pid(NULL, 0x1bad, 0x0003);
+    if(*devh){
         MIDI_DRUM->kit=XB_ROCKBAND;
         return 0;
 	}
 
     //Wìì RB kit??
-    devh = libusb_open_device_with_vid_pid(NULL, 0x1bad, 0x0005);      
-    if(devh){
+    *devh = libusb_open_device_with_vid_pid(NULL, 0x1bad, 0x0005);      
+    if(*devh){
         MIDI_DRUM->kit=WII_ROCKBAND;
         return 0;
 	}
 
     //PS3 GH kit
-    devh = libusb_open_device_with_vid_pid(NULL, 0x12ba, 0x0120);
-    if(devh){
+    *devh = libusb_open_device_with_vid_pid(NULL, 0x12ba, 0x0120);
+    if(*devh){
         MIDI_DRUM->kit=GUITAR_HERO;
     }
   
 
-    return devh ? 0 : -EIO;
+    return *devh ? 0 : -EIO;
 }
 
 void init_kit(MIDIDRUM* MIDI_DRUM)
@@ -538,7 +538,7 @@ int main(int argc, char **argv)
     }
     if(MIDI_DRUM->kit==PS_ROCKBAND1){
         //no way of knowing if device is RB1 so reassign kit after claiming
-        r = find_rbdrum_device(MIDI_DRUM,devh);
+        r = find_rbdrum_device(MIDI_DRUM,&devh);
         switch(MIDI_DRUM->kit)
 	{
 	    case PS_ROCKBAND:
@@ -551,7 +551,7 @@ int main(int argc, char **argv)
 	}
     }
     else
-        r = find_rbdrum_device(MIDI_DRUM,devh);
+        r = find_rbdrum_device(MIDI_DRUM,&devh);
     if (r < 0) {
         fprintf(stderr, "Could not find/open device\n");
         libusb_close(devh);
