@@ -185,30 +185,30 @@ static int init_capture(struct libusb_transfer *irq_transfer)
     return 6;
 }
 
-static int alloc_transfers(MIDIDRUM* MIDI_DRUM, libusb_device_handle *devh, struct libusb_transfer *irq_transfer)
+static int alloc_transfers(MIDIDRUM* MIDI_DRUM, libusb_device_handle *devh, struct libusb_transfer **irq_transfer)
 {
-    irq_transfer = libusb_alloc_transfer(0);
-    if (!irq_transfer)
+    *irq_transfer = libusb_alloc_transfer(0);
+    if (!*irq_transfer)
         return -ENOMEM;
 
     if(MIDI_DRUM->dbg){
-        libusb_fill_interrupt_transfer(irq_transfer, devh, EP_INTR, MIDI_DRUM->irqbuf,
+        libusb_fill_interrupt_transfer(*irq_transfer, devh, EP_INTR, MIDI_DRUM->irqbuf,
             sizeof(MIDI_DRUM->irqbuf), cb_irq_dbg, (void*)MIDI_DRUM, 0);
         if( MIDI_DRUM->verbose)printf("Debug Mode Enabled..\n");
     }
     else if(MIDI_DRUM->kit == PS_ROCKBAND  || MIDI_DRUM->kit == XB_ROCKBAND ||
             MIDI_DRUM->kit == WII_ROCKBAND){
-        libusb_fill_interrupt_transfer(irq_transfer, devh, EP_INTR, MIDI_DRUM->irqbuf,
+        libusb_fill_interrupt_transfer(*irq_transfer, devh, EP_INTR, MIDI_DRUM->irqbuf,
             sizeof(MIDI_DRUM->irqbuf), cb_irq_rb, (void*)MIDI_DRUM, 0);
         if( MIDI_DRUM->verbose)printf("Rock Band drum kit detected.\n");
     }
     else if(MIDI_DRUM->kit == PS_ROCKBAND1 || MIDI_DRUM->kit == XB_ROCKBAND1){
-        libusb_fill_interrupt_transfer(irq_transfer, devh, EP_INTR, MIDI_DRUM->irqbuf,
+        libusb_fill_interrupt_transfer(*irq_transfer, devh, EP_INTR, MIDI_DRUM->irqbuf,
             sizeof(MIDI_DRUM->irqbuf), cb_irq_rb1, (void*)MIDI_DRUM, 0);
         if( MIDI_DRUM->verbose)printf("Rock Band drum kit detected.\n");
     }
     else if(MIDI_DRUM->kit == GUITAR_HERO){
-        libusb_fill_interrupt_transfer(irq_transfer, devh, EP_INTR, MIDI_DRUM->irqbuf,
+        libusb_fill_interrupt_transfer(*irq_transfer, devh, EP_INTR, MIDI_DRUM->irqbuf,
             sizeof(MIDI_DRUM->irqbuf), cb_irq_gh, (void*)MIDI_DRUM, 0);
         if( MIDI_DRUM->verbose)printf("Guitar Hero World Tour drum kit detected.\n");
     }
@@ -584,7 +584,7 @@ int main(int argc, char **argv)
 
     /* async from here onwards */
 
-    r = alloc_transfers(MIDI_DRUM, devh, irq_transfer);
+    r = alloc_transfers(MIDI_DRUM, devh, &irq_transfer);
     if (r < 0) {
         // Deinit & Release
         libusb_free_transfer(irq_transfer);
