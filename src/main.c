@@ -400,10 +400,11 @@ void useage()
     printf("    -ob/bkb <value>             set midi values for -color bass pedal*\n");
     printf("    -rb1                        specify rockband 1 drumset\n");
     printf("    -vel <value>                set default note velocity (for rb1 or bass)\n");
+    printf("    -c <value>                  set midi channel to send notes on\n");
     printf("    -htdm <value>               set hihat color i.e, r/y.../bcy/gcy\n");
     printf("    -hto <value>                set open hihat value of hihat mode drum\n");
     printf("    -htc <value>                set closed hihat value of hihat mode drum\n");
-    printf("    -htp <value>                set pedal hihat value of hihat mode pedal\n");
+    printf("    -htp <value>                set pedal hihat value of hihat mode pedal\n"); 
     printf("    -dbg                        debug mode (no midi output)\n");
     printf("    -h                          show this message\n");
     printf("\n");
@@ -443,6 +444,7 @@ int main(int argc, char **argv)
     //initial conditions, defaults
     MIDI_DRUM->bass_down = 0;
     MIDI_DRUM->default_velocity = 125;
+    MIDI_DRUM->channel = DEFAULT_CHANNEL;
     MIDI_DRUM->verbose = 0;
     MIDI_DRUM->dbg = 0;
     MIDI_DRUM->kit = PS_ROCKBAND;
@@ -514,6 +516,9 @@ int main(int argc, char **argv)
             }
 	    else if (strcmp(argv[i], "-vel") == 0) {
 	         MIDI_DRUM->default_velocity = min(max(atoi(argv[++i]),1),127); 
+	    }
+	    else if (strcmp(argv[i], "-c") == 0) {
+	         MIDI_DRUM->channel = min(max(atoi(argv[++i]),0),15); 
 	    }
             else if (strcmp(argv[i], "-dbg") == 0) {
                 //debug mode
@@ -640,9 +645,9 @@ int main(int argc, char **argv)
 
 //leftover transfers are handled in callbacks
     // || img_transfer
-//    while (irq_transfer)
-//        if (libusb_handle_events(NULL) < 0)
-//            break;
+    while (do_exit!=2)//(irq_transfer)
+        if (libusb_handle_events(NULL) < 0)
+            break;
 
 
     if (do_exit == 1)

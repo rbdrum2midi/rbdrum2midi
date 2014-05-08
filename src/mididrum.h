@@ -17,6 +17,7 @@
 #define INTR_LENGTH		27
 
 #define DEFAULT_CHANNEL 9
+//#define JACK_MIDI
 
 #define YVK_KICK        36
 #define YVK_SNARE       37
