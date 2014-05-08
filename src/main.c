@@ -638,11 +638,12 @@ int main(int argc, char **argv)
         }
     }
 
-
+//leftover transfers are handled in callbacks
     // || img_transfer
-    while (irq_transfer)
-        if (libusb_handle_events(NULL) < 0)
-            break;
+//    while (irq_transfer)
+//        if (libusb_handle_events(NULL) < 0)
+//            break;
+
 
     if (do_exit == 1)
         r = 0;
@@ -650,7 +651,7 @@ int main(int argc, char **argv)
         r = 1;
 
 //out_deinit: 
-    libusb_free_transfer(irq_transfer); 
+//    libusb_free_transfer(irq_transfer); 
 //out_release:
     libusb_release_interface(devh, 0);
 //out:

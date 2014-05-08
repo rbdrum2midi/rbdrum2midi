@@ -69,7 +69,7 @@ void cb_irq_rb1(struct libusb_transfer *transfer)
     if (transfer->status != LIBUSB_TRANSFER_COMPLETED) {
         fprintf(stderr, "irq transfer status %d? %d\n", transfer->status, LIBUSB_TRANSFER_ERROR);
         do_exit = 2;
-        libusb_free_transfer(transfer);
+        libusb_free_transfer(transfer); 
         transfer = NULL;
         return;
     }
