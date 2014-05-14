@@ -44,6 +44,8 @@ typedef enum {
     ORANGE_BASS,
     BLACK_BASS,
     CYMBAL_FLAG,
+    OPEN_HAT,
+    CLOSED_HAT,
     NUM_DRUMS
 } drums;
 
@@ -75,6 +77,8 @@ typedef struct drum_midi
     unsigned char verbose;
     unsigned char dbg;
 //    int do_exit;
+    unsigned char hat_mode;
+    unsigned char hat;
     unsigned char bass_down;
     int velocity;
     unsigned char default_velocity;

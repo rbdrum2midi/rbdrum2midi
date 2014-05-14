@@ -18,44 +18,10 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
-/*#include <errno.h>
-#include <signal.h>
-#include <string.h>
-#include <stdio.h>
-#include <stdlib.h>
-
-#include <libusb-1.0/libusb.h>
-#include <alsa/asoundlib.h>
-#include <alsa/seq.h>
-*/
-#include "mididrum.h"
-//#include "constants.h"
+#include "mididrum.h" 
 #include "rbkit.h"
 #include "rb1kit.h"
 #include "ghkit.h"
-
-/*
-enum drivers{
-    ALSA_DRIVER,
-    JACK_DRIVER
-};
-
-struct generic_seq
-{
-    void (*init_sequencer)(void);
-    void (*close_sequencer)(void);
-    unsigned char type;
-}
-
-typedef struct alsa_midi_seq
-{
-    struct generic_seq;
-    snd_seq_t *g_seq;
-    int g_port;
-}ALSA_MIDI_SEQ;
-//void notedown_alsa(snd_seq_t *seq, int port, int chan, int pitch, int vol);
-//void noteup_alsa(snd_seq_t *seq, int port, int chan, int pitch, int vol);
-*/
 
 static int find_rbdrum_device(MIDIDRUM* MIDI_DRUM, struct libusb_device_handle **devh)
 {
@@ -87,7 +53,6 @@ static int find_rbdrum_device(MIDIDRUM* MIDI_DRUM, struct libusb_device_handle *
         MIDI_DRUM->kit=GUITAR_HERO;
     }
   
-
     return *devh ? 0 : -EIO;
 }
 
@@ -205,7 +170,7 @@ static int alloc_transfers(MIDIDRUM* MIDI_DRUM, libusb_device_handle *devh, stru
     else if(MIDI_DRUM->kit == PS_ROCKBAND1 || MIDI_DRUM->kit == XB_ROCKBAND1){
         libusb_fill_interrupt_transfer(*irq_transfer, devh, EP_INTR, MIDI_DRUM->irqbuf,
             sizeof(MIDI_DRUM->irqbuf), cb_irq_rb1, (void*)MIDI_DRUM, 0);
-        if( MIDI_DRUM->verbose)printf("Rock Band drum kit detected.\n");
+        if( MIDI_DRUM->verbose)printf("Rock Band 1 drum kit detected.\n");
     }
     else if(MIDI_DRUM->kit == GUITAR_HERO){
         libusb_fill_interrupt_transfer(*irq_transfer, devh, EP_INTR, MIDI_DRUM->irqbuf,
@@ -395,33 +360,33 @@ void useage()
     printf("\n");
     printf("OPTIONS:\n");
     printf("    -v                          verbose mode\n");
-    printf("    -r/y/b/g <value>            set midi value for -color of drum head\n");
-    printf("    -ocy/ycy/bcy/gcy <value>    set midi values for -color of cymbal\n");
-    printf("    -ob/bkb <value>             set midi values for -color bass pedal*\n");
+    printf("    -r/y/b/g <value>            set midi note for -color of drum head\n");
+    printf("    -ocy/ycy/bcy/gcy <value>    set midi note for -color of cymbal\n");
+    printf("    -ob/bkb <value>             set midi note for -color bass pedal\n");
     printf("    -rb1                        specify rockband 1 drumset\n");
     printf("    -vel <value>                set default note velocity (for rb1 or bass)\n");
     printf("    -c <value>                  set midi channel to send notes on\n");
     printf("    -htdm <value>               set hihat color i.e, r/y.../bcy/gcy\n");
-    printf("    -hto <value>                set open hihat value of hihat mode drum\n");
-    printf("    -htc <value>                set closed hihat value of hihat mode drum\n");
-    printf("    -htp <value>                set pedal hihat value of hihat mode pedal\n"); 
+    printf("    -htp <value>                set hihat pedal color i.e. ob/bkb*\n"); 
+    printf("    -hto <value>                set open hihat midi value of hihat mode drum\n");
+    printf("    -htc <value>                set closed hihat midi value of hihat mode drum\n");
     printf("    -dbg                        debug mode (no midi output)\n");
     printf("    -h                          show this message\n");
     printf("\n");
     printf("EXAMPLES:\n");
     printf("    rbdrum2midi -r 16 -bcy 64 -ob 32 -g 17 \n");
-    printf("    rbdrum2midi -bkb 0 -htdm ycy -hto 46 -htc 42\n");
+    printf("    rbdrum2midi -bkb 0 -htp bkb -htdm ycy -hto 46 -htc 42\n");
     printf("    rbdrum2midi -v -rb1\n");
     printf("\n");
     printf("NOTES:\n");
     printf("    r=red, o=orange, y=yellow, g=green, b=blue, bk=black\n");
     printf("    cy=cymbal, b=bass pedal, ht=hihat, otherwise drum pad\n");
     printf("    the default midi values are for the hydrogen yamaha vintage kit\n\n");
-    printf("    *0 midi value sets pedal in \"hihat mode\" which allows users to play\n");
-    printf("     different notes on drum specified by -htdm dependent on pedal state\n");
-    printf("     options -hto, -htdm, and -htp required in this mode\n");
+    printf("    *using -htp option sets pedal in \"hihat mode,\" allows users to play\n");
+    printf("     different notes on drum specified by -htdm dependent on pedal state\n"); 
+    printf("     default is hat mode on black bass, use -htp 0 to disable\n"); 
     printf("     hihat mode can also play a sound when the pedal is closed\n");
-    printf("     if you don't want the pedal sound, omit option -htp\n");
+    printf("     if you don't want the pedal sound, don't specify note for pedal\n");
     printf("\n");
 
     return;
@@ -448,6 +413,8 @@ int main(int argc, char **argv)
     MIDI_DRUM->verbose = 0;
     MIDI_DRUM->dbg = 0;
     MIDI_DRUM->kit = PS_ROCKBAND;
+    MIDI_DRUM->hat_mode = BLACK_BASS;
+    MIDI_DRUM->hat = YELLOW_CYMBAL;
     memset(MIDI_DRUM->oldbuf,0,INTR_LENGTH);
     memset(MIDI_DRUM->drum_state,0,NUM_DRUMS);
     memset(MIDI_DRUM->prev_state,0,NUM_DRUMS);
@@ -457,12 +424,14 @@ int main(int argc, char **argv)
     MIDI_DRUM->midi_note[YELLOW] = YVK_HI_TOM;
     MIDI_DRUM->midi_note[BLUE] = YVK_MID_TOM;
     MIDI_DRUM->midi_note[GREEN] = YVK_LO_TOM;
-    MIDI_DRUM->midi_note[YELLOW_CYMBAL] = YVK_CLOSED_HAT;
+    MIDI_DRUM->midi_note[YELLOW_CYMBAL] = YVK_OPEN_HAT;
     MIDI_DRUM->midi_note[GREEN_CYMBAL] = YVK_CRASH;
     MIDI_DRUM->midi_note[BLUE_CYMBAL] = YVK_RIDE;
     MIDI_DRUM->midi_note[ORANGE_CYMBAL] = YVK_CRASH;
     MIDI_DRUM->midi_note[ORANGE_BASS] = YVK_KICK;
-    MIDI_DRUM->midi_note[BLACK_BASS] = YVK_OPEN_HAT;
+    MIDI_DRUM->midi_note[BLACK_BASS] = 0;
+    MIDI_DRUM->midi_note[OPEN_HAT] = YVK_OPEN_HAT;
+    MIDI_DRUM->midi_note[CLOSED_HAT] = YVK_CLOSED_HAT;
 
     if (argc > 1) {
         for (i = 1;i<argc;i++)
@@ -520,7 +489,47 @@ int main(int argc, char **argv)
 	    else if (strcmp(argv[i], "-c") == 0) {
 	         MIDI_DRUM->channel = min(max(atoi(argv[++i]),0),15); 
 	    }
-            else if (strcmp(argv[i], "-dbg") == 0) {
+	    else if (strcmp(argv[i], "-htp") == 0){
+	         if (strcmp(argv[++i], "0" ) == 0)
+		     MIDI_DRUM->hat_mode = 0; 
+                 else if (strcmp(argv[i], "-ob") == 0) 
+		     MIDI_DRUM->hat_mode = ORANGE_BASS;
+                 else if (strcmp(argv[i], "-bkb") == 0) 
+		     MIDI_DRUM->hat_mode = BLACK_BASS;
+		 else {
+		     printf("ERROR! Unknown pedal for hi-hat! Using default black bass");
+		     MIDI_DRUM->hat_mode = BLACK_BASS; 
+		 }
+	    }
+	    else if (strcmp(argv[i], "-htdm") == 0){
+                 if (strcmp(argv[++i], "-ocy") == 0) 
+		     MIDI_DRUM->hat = ORANGE_CYMBAL;
+                 else if (strcmp(argv[i], "-ycy") == 0) 
+		     MIDI_DRUM->hat = YELLOW_CYMBAL;
+                 else if (strcmp(argv[i], "-gcy") == 0) 
+		     MIDI_DRUM->hat = GREEN_CYMBAL;
+                 else if (strcmp(argv[i], "-bcy") == 0) 
+		     MIDI_DRUM->hat = BLUE_CYMBAL;
+                 else if (strcmp(argv[i], "-r") == 0) 
+		     MIDI_DRUM->hat = RED;
+                 else if (strcmp(argv[i], "-y") == 0) 
+		     MIDI_DRUM->hat = YELLOW;
+                 else if (strcmp(argv[i], "-b") == 0) 
+		     MIDI_DRUM->hat = RED;
+                 else if (strcmp(argv[i], "-g") == 0) 
+		     MIDI_DRUM->hat = GREEN;
+		 else{
+		     printf("ERROR! Unknown drum for hi-hat! Using default yellow cymbal");
+                     MIDI_DRUM->hat = YELLOW_CYMBAL;
+		 }
+	    }
+	    else if (strcmp(argv[i], "-hto") == 0){
+	         MIDI_DRUM->midi_note[OPEN_HAT] = atoi(argv[++i]);
+	    }
+	    else if (strcmp(argv[i], "-htc") == 0){ 
+	         MIDI_DRUM->midi_note[CLOSED_HAT] = atoi(argv[++i]);
+            }
+	    else if (strcmp(argv[i], "-dbg") == 0) {
                 //debug mode
                 MIDI_DRUM->dbg = 1;
 		MIDI_DRUM->verbose = 1;
@@ -536,6 +545,7 @@ int main(int argc, char **argv)
             //i = atoi(argv[1]);
         }
     }
+
     r = libusb_init(NULL);
     if (r < 0) {
         fprintf(stderr, "failed to initialise libusb\n");
