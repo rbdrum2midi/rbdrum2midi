@@ -47,10 +47,18 @@ static inline void handle_bass(MIDIDRUM* MIDI_DRUM, unsigned char drum)
         if (MIDI_DRUM->drum_state[drum]) {
             MIDI_DRUM->velocity = MIDI_DRUM->default_velocity;
             notedown( MIDI_DRUM->g_seq,  MIDI_DRUM->g_port, MIDI_DRUM->channel, MIDI_DRUM->midi_note[drum],  MIDI_DRUM->velocity);
+	    if(MIDI_DRUM->hat_mode = drum)
+	    {
+		MIDI_DRUM->midi_note[MIDI_DRUM->hat] = MIDI_DRUM->midi_note[CLOSED_HAT];
+	    }
         }
         // Up
         else {
             noteup( MIDI_DRUM->g_seq,  MIDI_DRUM->g_port, MIDI_DRUM->channel, MIDI_DRUM->midi_note[drum], 0);
+	   if(MIDI_DRUM->hat_mode = drum)
+	   {
+	       MIDI_DRUM->midi_note[MIDI_DRUM->hat] = MIDI_DRUM->midi_note[OPEN_HAT];
+	   }
         }
     }
 }

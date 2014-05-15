@@ -33,6 +33,26 @@ static inline void handle_drum(MIDIDRUM* MIDI_DRUM, unsigned char drum)
    }
 }
 
+static inline void handle_bass(MIDIDRUM* MIDI_DRUM, unsigned char drum)
+{
+   if (MIDI_DRUM->drum_state[drum] && !MIDI_DRUM->prev_state[drum]) {
+       if(MIDI_DRUM->drum_state[drum]){
+           calc_velocity(MIDI_DRUM,MIDI_DRUM->drum_state[drum]); 
+           notedown( MIDI_DRUM->g_seq,  MIDI_DRUM->g_port, MIDI_DRUM->channel, MIDI_DRUM->midi_note[drum], MIDI_DRUM->velocity);
+	   if(MIDI_DRUM->hat_mode = drum)
+	   {
+	       MIDI_DRUM->midi_note[MIDI_DRUM->hat] = MIDI_DRUM->midi_note[CLOSED_HAT];
+	   }
+       }else{ 
+           noteup(MIDI_DRUM->g_seq, MIDI_DRUM->g_port, MIDI_DRUM->channel, MIDI_DRUM->midi_note[drum], -1); 
+	   if(MIDI_DRUM->hat_mode = drum)
+	   {
+	       MIDI_DRUM->midi_note[MIDI_DRUM->hat] = MIDI_DRUM->midi_note[OPEN_HAT];
+	   }
+       }
+   }
+}
+
 //callback for guitar hero kit
 void cb_irq_gh(struct libusb_transfer *transfer)
 {
@@ -58,7 +78,7 @@ void cb_irq_gh(struct libusb_transfer *transfer)
     handle_drum(MIDI_DRUM,GREEN);
     handle_drum(MIDI_DRUM,BLUE);
     handle_drum(MIDI_DRUM,ORANGE_CYMBAL); 
-    handle_drum(MIDI_DRUM,ORANGE_BASS);
+    handle_bass(MIDI_DRUM,ORANGE_BASS);
         
     //now that the time-critical stuff is done, lets do the assignments 
     memcpy(MIDI_DRUM->prev_state,MIDI_DRUM->drum_state,NUM_DRUMS);

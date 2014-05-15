@@ -545,7 +545,10 @@ int main(int argc, char **argv)
             //i = atoi(argv[1]);
         }
     }
-
+    if(MIDI_DRUM->hat_mode)
+    {
+        MIDI_DRUM->midi_note[MIDI_DRUM->hat] = MIDI_DRUM->midi_note[OPEN_HAT];
+    }
     r = libusb_init(NULL);
     if (r < 0) {
         fprintf(stderr, "failed to initialise libusb\n");
