@@ -23,6 +23,8 @@
 #include "rb1kit.h"
 #include "ghkit.h"
 
+//#define JACKMIDI
+
 static int find_rbdrum_device(MIDIDRUM* MIDI_DRUM, struct libusb_device_handle **devh)
 {
     // TODO: Currently the i argument is ignored.

@@ -10,8 +10,14 @@
 #include <stdlib.h>
 
 #include <libusb-1.0/libusb.h>
-#include <alsa/asoundlib.h>
-#include <alsa/seq.h>
+
+#ifdef JACKMIDI
+  #include <jackdriver.h>
+
+#else
+  #include <alsa/asoundlib.h>
+  #include <alsa/seq.h>
+#endif
 
 #define EP_INTR			(1 | LIBUSB_ENDPOINT_IN)
 #define INTR_LENGTH		27
