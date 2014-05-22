@@ -492,8 +492,11 @@ int main(int argc, char **argv)
 	    else if (strcmp(argv[i], "-htp") == 0){
 	         if (strcmp(argv[++i], "0" ) == 0)
 		     MIDI_DRUM->hat_mode = 0; 
-                 else if (strcmp(argv[i], "ob") == 0) 
+                 else if (strcmp(argv[i], "ob") == 0){
+                     if(MIDI_DRUM->midi_note[ORANGE_BASS] = YVK_KICK)
+                         MIDI_DRUM->midi_note[ORANGE_BASS] = 0;
 		     MIDI_DRUM->hat_mode = ORANGE_BASS;
+		 }
                  else if (strcmp(argv[i], "bkb") == 0) 
 		     MIDI_DRUM->hat_mode = BLACK_BASS;
 		 else {
