@@ -492,9 +492,9 @@ int main(int argc, char **argv)
 	    else if (strcmp(argv[i], "-htp") == 0){
 	         if (strcmp(argv[++i], "0" ) == 0)
 		     MIDI_DRUM->hat_mode = 0; 
-                 else if (strcmp(argv[i], "-ob") == 0) 
+                 else if (strcmp(argv[i], "ob") == 0) 
 		     MIDI_DRUM->hat_mode = ORANGE_BASS;
-                 else if (strcmp(argv[i], "-bkb") == 0) 
+                 else if (strcmp(argv[i], "bkb") == 0) 
 		     MIDI_DRUM->hat_mode = BLACK_BASS;
 		 else {
 		     printf("ERROR! Unknown pedal for hi-hat! Using default black bass");
@@ -502,21 +502,21 @@ int main(int argc, char **argv)
 		 }
 	    }
 	    else if (strcmp(argv[i], "-htdm") == 0){
-                 if (strcmp(argv[++i], "-ocy") == 0) 
+                 if (strcmp(argv[++i], "ocy") == 0) 
 		     MIDI_DRUM->hat = ORANGE_CYMBAL;
-                 else if (strcmp(argv[i], "-ycy") == 0) 
+                 else if (strcmp(argv[i], "ycy") == 0) 
 		     MIDI_DRUM->hat = YELLOW_CYMBAL;
-                 else if (strcmp(argv[i], "-gcy") == 0) 
+                 else if (strcmp(argv[i], "gcy") == 0) 
 		     MIDI_DRUM->hat = GREEN_CYMBAL;
-                 else if (strcmp(argv[i], "-bcy") == 0) 
+                 else if (strcmp(argv[i], "bcy") == 0) 
 		     MIDI_DRUM->hat = BLUE_CYMBAL;
-                 else if (strcmp(argv[i], "-r") == 0) 
+                 else if (strcmp(argv[i], "r") == 0) 
 		     MIDI_DRUM->hat = RED;
-                 else if (strcmp(argv[i], "-y") == 0) 
+                 else if (strcmp(argv[i], "y") == 0) 
 		     MIDI_DRUM->hat = YELLOW;
-                 else if (strcmp(argv[i], "-b") == 0) 
+                 else if (strcmp(argv[i], "b") == 0) 
 		     MIDI_DRUM->hat = RED;
-                 else if (strcmp(argv[i], "-g") == 0) 
+                 else if (strcmp(argv[i], "g") == 0) 
 		     MIDI_DRUM->hat = GREEN;
 		 else{
 		     printf("ERROR! Unknown drum for hi-hat! Using default yellow cymbal");
