@@ -4,7 +4,7 @@
 #include <alsa/asoundlib.h>
 #include <alsa/seq.h>
 
-typedef struct aseq{
+typedef struct _aseq{
     snd_seq_t *g_seq;
     int g_port;
 }ALSA_SEQ;

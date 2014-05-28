@@ -59,10 +59,7 @@
   */
 
 
-#ifdef HAVE_LASH
-#include <lash/lash.h>
-#endif
-
+/*
 #define VELOCITY_MAX		127
 #define VELOCITY_HIGH		100
 #define VELOCITY_NORMAL		64
@@ -113,6 +110,7 @@ jack_client_t	*jack_client = NULL;
 #define PROGRAM_MAX		127
 #define CHANNEL_MIN		1
 #define CHANNEL_MAX		16
+*/
 
 struct MidiMessage {
 	jack_nframes_t	time;
@@ -128,18 +126,18 @@ struct MidiMessage {
 /* Will emit a warning if execution of jack callback takes longer than this. */
 #define MAX_PROCESSING_TIME	0.01
 
-jack_ringbuffer_t *ringbuffer;
+//jack_ringbuffer_t *ringbuffer;
 
 /* Number of currently used program. */
-int		program = 0;
+//int		program = 0;
 
 /* Number of currently selected bank. */
-int		bank = 0;
+//int		bank = 0;
 
 /* Number of currently selected channel (0..15). */
-int		channel = 0;
+//int		channel = 0;
 
-void draw_note(int key);
+//void draw_note(int key);
 void queue_message(struct MidiMessage *ev);
 
 double 
@@ -295,7 +293,7 @@ process_callback(jack_nframes_t nframes, void *notused)
 }
 
 void
-queue_message(struct MidiMessage *ev)
+queue_message(jack_ringbuffer_t ringbuffer, struct MidiMessage *ev)
 {
 	int written;
 
@@ -307,16 +305,16 @@ queue_message(struct MidiMessage *ev)
 	written = jack_ringbuffer_write(ringbuffer, (char *)ev, sizeof(*ev));
 
 	if (written != sizeof(*ev))
-		g_warning("jack_ringbuffer_write failed, NOTE LOST.");
+        printf("jack_ringbuffer_write failed, NOTE LOST.");
 }
-
+/*
 void 
 queue_new_message(int b0, int b1, int b2)
 {
 	struct MidiMessage ev;
 
 	/* For MIDI messages that specify a channel number, filter the original
-	   channel number out and add our own. */
+       channel number out and add our own.
 	if (b0 >= 0x80 && b0 <= 0xEF) {
 		b0 &= 0xF0;
 		b0 += channel;
@@ -341,6 +339,32 @@ queue_new_message(int b0, int b1, int b2)
 	ev.time = jack_frame_time(jack_client);
 
 	queue_message(&ev);
+}*/
+
+void noteup_jack(void* seqq, unsigned char chan, unsigned char note, unsigned char vel)
+{
+    struct MidiMessage ev;
+    ev.len = 3;
+    ev.data[0] = 0x80 + chan;
+    ev.data[1] = note;
+    ev.data[2] = vel;
+
+    ev.time = jack_frame_time(jack_client);
+
+    queue_message(&ev);
+}
+
+void notedown_jack(void* seqq, unsigned char chan, unsigned char note, unsigned char vel)
+{
+    struct MidiMessage ev;
+    ev.len = 3;
+    ev.data[0] = 0x90 + chan;
+    ev.data[1] = note;
+    ev.data[2] = vel;
+
+    ev.time = jack_frame_time(jack_client);
+
+    queue_message(&ev);
 }
 
 //not using, but might later
