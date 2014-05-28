@@ -11,19 +11,14 @@
 
 #include <libusb-1.0/libusb.h>
 
-#ifdef JACKMIDI
-  #include <jackdriver.h>
+//#include <jackdriver.h>
+#include "alsadriver.h"
 
-#else
-  #include <alsa/asoundlib.h>
-  #include <alsa/seq.h>
-#endif
 
 #define EP_INTR			(1 | LIBUSB_ENDPOINT_IN)
 #define INTR_LENGTH		27
 
 #define DEFAULT_CHANNEL 9
-//#define JACK_MIDI
 
 #define YVK_KICK        36
 #define YVK_SNARE       37
@@ -76,9 +71,9 @@ typedef struct drum_midi
     unsigned char *buf;
     unsigned char drum_state[NUM_DRUMS];
     unsigned char prev_state[NUM_DRUMS];
-//    void* sequencer;//want to move to generic sequencer, but currently more worried about latency
-    snd_seq_t *g_seq;
-    int g_port;
+    void* sequencer;//want to move to generic sequencer, but currently more worried about latency
+//    snd_seq_t *g_seq;
+//    int g_port;
 
     unsigned char verbose;
     unsigned char dbg;
@@ -96,13 +91,13 @@ typedef struct drum_midi
 //function pointers //getting rid of these because they seem to introduce latency
 //    void (*calc_velocity)(unsigned char);
 //    void (*handle_bass)(unsigned char);
-//    void (*noteup)(void* seq, unsigned char note, unsigned char vel);
-//    void (*notedown)(void* seq, unsigned char note, unsigned char vel);
+    void (*noteup)(void* seq, unsigned char chan, unsigned char note, unsigned char vel);
+    void (*notedown)(void* seq, unsigned char chan, unsigned char note, unsigned char vel);
 }MIDIDRUM;
 
 static inline void get_state(MIDIDRUM* MIDI_DRUM, unsigned char drum){MIDI_DRUM->drum_state[drum] = MIDI_DRUM->buf[MIDI_DRUM->buf_indx[drum]] & MIDI_DRUM->buf_mask[drum];}
-inline void notedown(snd_seq_t *seq, int port, int chan, int pitch, int vol);
-inline void noteup(snd_seq_t *seq, int port, int chan, int pitch, int vol);
+//inline void notedown(snd_seq_t *seq, int port, int chan, int pitch, int vol);
+//inline void noteup(snd_seq_t *seq, int port, int chan, int pitch, int vol);
 void print_hits(MIDIDRUM* MIDI_DRUM);
 void print_buf(MIDIDRUM* MIDI_DRUM);
 

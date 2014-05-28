@@ -22,6 +22,7 @@
 #include "rbkit.h"
 #include "rb1kit.h"
 #include "ghkit.h"
+#include "alsadriver.h"
 
 //#define JACKMIDI
 
@@ -186,166 +187,7 @@ static int alloc_transfers(MIDIDRUM* MIDI_DRUM, libusb_device_handle *devh, stru
     return 0;
 }
 
-/*
-These functions are from the official alsa docs:
-http://www.alsa-project.org/alsa-doc/alsa-lib/seq.html
-*/
 
-// create a new client
-snd_seq_t *open_client()
-{
-    snd_seq_t *handle;
-    int err;
-    err = snd_seq_open(&handle, "default", SND_SEQ_OPEN_OUTPUT, 0);
-    if (err < 0)
-        return NULL;
-    snd_seq_set_client_name(handle, "Game Drumkit Client");
-    return handle;
-}
-
-// create a new port; return the port id
-// port will be writable and accept the write-subscription.
-int my_new_port(snd_seq_t *handle)
-{
-    // |SND_SEQ_PORT_CAP_WRITE||SND_SEQ_PORT_CAP_SUBS_WRITE
-    return snd_seq_create_simple_port(handle, "Game Drumkit port 2",
-        SND_SEQ_PORT_CAP_READ|SND_SEQ_PORT_CAP_SUBS_READ,
-        SND_SEQ_PORT_TYPE_MIDI_GENERIC | SND_SEQ_PORT_TYPE_APPLICATION);
-}
-
-// create a queue and return its id
-int my_queue(snd_seq_t *handle)
-{
-    return snd_seq_alloc_named_queue(handle, "Game Drumkit queue");
-}
-
-// set the tempo and pulse per quarter note
-void set_tempo(snd_seq_t *handle, int q)
-{
-    snd_seq_queue_tempo_t *tempo;
-    snd_seq_queue_tempo_alloca(&tempo);
-    perror("snd_seq_queue_tempo_alloca");
-    snd_seq_queue_tempo_set_tempo(tempo, 1000000); // 60 BPM
-    perror("snd_seq_queue_tempo_set_tempo");
-    snd_seq_queue_tempo_set_ppq(tempo, 48); // 48 PPQ
-    perror("snd_seq_queue_tempo_set_ppq");
-    snd_seq_set_queue_tempo(handle, q, tempo);
-    perror("snd_seq_set_queue_tempo");
-}
-
-// change the tempo on the fly
-int change_tempo(snd_seq_t *handle, int my_client_id, int my_port_id, int q, unsigned int tempo)
-{
-    snd_seq_event_t ev;
-    snd_seq_ev_clear(&ev);
-    ev.dest.client = SND_SEQ_CLIENT_SYSTEM;
-    ev.dest.port = SND_SEQ_PORT_SYSTEM_TIMER;
-    ev.source.client = my_client_id;
-    ev.source.port = my_port_id;
-    ev.queue = SND_SEQ_QUEUE_DIRECT; // no scheduling
-    ev.data.queue.queue = q;        // affected queue id
-    ev.data.queue.param.value = tempo;    // new tempo in microsec.
-    return snd_seq_event_output(handle, &ev);
-}
-
-static void program_change(snd_seq_t *seq, int port, int chan, int program)
-{
-    snd_seq_event_t ev;
-
-    snd_seq_ev_clear(&ev);
-    snd_seq_ev_set_source(&ev, port);
-    snd_seq_ev_set_subs(&ev);
-    snd_seq_ev_set_direct(&ev);
-    //... // set event type, data, so on..
-    //set_event_time(&ev, Mf_currtime);
-    //snd_seq_ev_schedule_tick(&ev, q, 0, Mf_currtime);
-
-    snd_seq_ev_set_pgmchange(&ev, chan, program);
-
-    int rc = snd_seq_event_output(seq, &ev);
-    if (rc < 0) {
-        printf("written = %i (%s)\n", rc, snd_strerror(rc));
-    }
-    snd_seq_drain_output(seq);
-}
-
-// A lot easier:
-void subscribe_output(snd_seq_t *seq, int client, int port)
-{
-    snd_seq_connect_to(seq, DEFAULT_CHANNEL, client, port);
-}
-
-// From test/playmidi1.c from alsa-lib-1.0.3.
-
-// Direct delivery seems like what I'm doing..
-inline void notedown(snd_seq_t *seq, int port, int chan, int pitch, int vol)
-{
-    snd_seq_event_t ev;
-
-    snd_seq_ev_clear(&ev);
-    snd_seq_ev_set_source(&ev, port);
-    snd_seq_ev_set_subs(&ev);
-    snd_seq_ev_set_direct(&ev);
-    //... // set event type, data, so on..
-    //set_event_time(&ev, Mf_currtime);
-    //snd_seq_ev_schedule_tick(&ev, q, 0, Mf_currtime);
-
-    snd_seq_ev_set_noteon(&ev, chan, pitch, vol);
-
-    int rc = snd_seq_event_output(seq, &ev);
-    if (rc < 0) {
-        printf("written = %i (%s)\n", rc, snd_strerror(rc));
-    }
-    snd_seq_drain_output(seq);
-}
-
-// When the note up, note off.
-inline void noteup(snd_seq_t *seq, int port, int chan, int pitch, int vol)
-{
-    snd_seq_event_t ev;
-
-    snd_seq_ev_clear(&ev);
-    snd_seq_ev_set_source(&ev, port);
-    snd_seq_ev_set_subs(&ev);
-    snd_seq_ev_set_direct(&ev);
-    //... // set event type, data, so on..
-
-    snd_seq_ev_set_noteoff(&ev, chan, pitch, vol);
-
-    snd_seq_event_output(seq, &ev);
-    snd_seq_drain_output(seq);
-}
-
-int setup_alsa(snd_seq_t **seq, int *port, unsigned char verbose)
-{
-    if ( verbose) printf("Setting up alsa\n");
-
-    *seq = open_client();
-    if (*seq == NULL) {
-        if ( verbose >= 0) printf("Error: open_client failed: %s\n", snd_strerror((int)seq));
-        return 0;
-    }
-
-    int my_client_id = snd_seq_client_id(*seq);
-    *port = my_new_port(*seq);
-    if ( verbose) printf("client:port = %i:%i\n", my_client_id, *port);
-
-    program_change(*seq, *port, DEFAULT_CHANNEL, 0);
-    int ret = 1;
-    notedown(*seq, *port, DEFAULT_CHANNEL, 57, 55);
-
-    if ( verbose) printf("Returning %i\n", ret);
-    return ret;
-}
-
-void testAlsa(snd_seq_t *seq, int port)
-{
-    notedown(seq, port, DEFAULT_CHANNEL, 57, 127);
-    usleep(1000000);
-    noteup(seq, port, DEFAULT_CHANNEL, 57, 0);
-    usleep(1000000);
-
-}
 
 static void sighandler(int signum)
 {
@@ -373,6 +215,8 @@ void useage()
     printf("    -hto <value>                set open hihat midi value of hihat mode drum\n");
     printf("    -htc <value>                set closed hihat midi value of hihat mode drum\n");
     printf("    -dbg                        debug mode (no midi output)\n");
+    printf("    -a                          use alsa sequencer for midi output\n");
+    printf("    -j                          use JACK midi output\n");
     printf("    -h                          show this message\n");
     printf("\n");
     printf("EXAMPLES:\n");
@@ -401,8 +245,12 @@ int main(int argc, char **argv)
     struct libusb_transfer *irq_transfer;
     int r = 1;
     int i = 0;
+    unsigned char seqtype = 0;
     MIDIDRUM MIDI_DRUM_;
     MIDIDRUM* MIDI_DRUM = &MIDI_DRUM_;
+    ALSA_SEQ aseqq;
+    //JACK_SEQ jseqq;
+
 
     //struct ALSA_MIDI_SEQUENCER seq;//currently only alsa supported
     //MIDI_DRUM->sequencer = (void*)&seq;
@@ -417,6 +265,7 @@ int main(int argc, char **argv)
     MIDI_DRUM->kit = PS_ROCKBAND;
     MIDI_DRUM->hat_mode = BLACK_BASS;
     MIDI_DRUM->hat = YELLOW_CYMBAL;
+    MIDI_DRUM->sequencer = 0;
     memset(MIDI_DRUM->oldbuf,0,INTR_LENGTH);
     memset(MIDI_DRUM->drum_state,0,NUM_DRUMS);
     memset(MIDI_DRUM->prev_state,0,NUM_DRUMS);
@@ -531,7 +380,15 @@ int main(int argc, char **argv)
 	    else if (strcmp(argv[i], "-htc") == 0){ 
 	         MIDI_DRUM->midi_note[CLOSED_HAT] = atoi(argv[++i]);
             }
-	    else if (strcmp(argv[i], "-dbg") == 0) {
+        else if (strcmp(argv[i], "-a") == 0) {
+                //ALSA midi
+                seqtype = 1;
+            }
+        else if (strcmp(argv[i], "-j") == 0) {
+                //JACK midi
+		seqtype = 2;
+            }
+        else if (strcmp(argv[i], "-dbg") == 0) {
                 //debug mode
                 MIDI_DRUM->dbg = 1;
 		MIDI_DRUM->verbose = 1;
@@ -595,9 +452,21 @@ int main(int argc, char **argv)
     }
     printf("claimed interface\n");
 
-    int ret = setup_alsa(& MIDI_DRUM->g_seq, & MIDI_DRUM->g_port, MIDI_DRUM->verbose);
+    if(seqtype >=2){
+        //jack
+	//init_alsa(&aseqq);
+        //MIDI_DRUM->sequencer = (void*)&aseqq;
+        //MIDI_DRUM->noteup = &noteup_alsa;
+        //MIDI_DRUM->notedown = notedown_alsa;
+    }
+    else{
+	r = init_alsa(&aseqq,MIDI_DRUM->verbose);
+        MIDI_DRUM->sequencer = (void*)&aseqq;
+        MIDI_DRUM->noteup = &noteup_alsa;
+        MIDI_DRUM->notedown = notedown_alsa;
+    }
     // 0 is fail.
-    if (ret == 0) {
+    if (r == 0) {
         printf("Error: Alsa setup failed.\n");
         return 1;
     }
@@ -611,7 +480,7 @@ int main(int argc, char **argv)
         libusb_release_interface(devh, 0);
         libusb_close(devh);
         libusb_exit(NULL);
-        snd_seq_close( MIDI_DRUM->g_seq);
+        snd_seq_close( aseqq.g_seq);
         printf("alloc_transfers failed.\n");
         return -r;
     }
@@ -623,7 +492,7 @@ int main(int argc, char **argv)
         libusb_release_interface(devh, 0);
         libusb_close(devh);
         libusb_exit(NULL);
-        snd_seq_close( MIDI_DRUM->g_seq);
+        snd_seq_close( aseqq.g_seq);
         printf("init_capture failed.\n");
         return -r;
     }
@@ -652,7 +521,7 @@ int main(int argc, char **argv)
             libusb_release_interface(devh, 0);
             libusb_close(devh);
             libusb_exit(NULL);
-            snd_seq_close( MIDI_DRUM->g_seq);
+            snd_seq_close( aseqq.g_seq);
             printf("libusb_cancel_transfer failed.\n");
             return -r;
         }
@@ -677,7 +546,7 @@ int main(int argc, char **argv)
 //out:
     libusb_close(devh);
     libusb_exit(NULL);
-    snd_seq_close( MIDI_DRUM->g_seq);
+    snd_seq_close( aseqq.g_seq);
     
     return r >= 0 ? r : -r;
 }

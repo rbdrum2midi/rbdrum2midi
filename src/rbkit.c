@@ -36,8 +36,8 @@ static inline void handle_drum(MIDIDRUM* MIDI_DRUM, unsigned char drum)
 {
    if (MIDI_DRUM->drum_state[drum] && !MIDI_DRUM->prev_state[drum]) {
        calc_velocity(MIDI_DRUM,MIDI_DRUM->drum_state[drum]);
-       noteup(MIDI_DRUM->g_seq, MIDI_DRUM->g_port, MIDI_DRUM->channel, MIDI_DRUM->midi_note[drum], -1);
-       notedown( MIDI_DRUM->g_seq,  MIDI_DRUM->g_port, MIDI_DRUM->channel, MIDI_DRUM->midi_note[drum], MIDI_DRUM->velocity);
+       MIDI_DRUM->noteup(MIDI_DRUM->sequencer, MIDI_DRUM->channel, MIDI_DRUM->midi_note[drum], 0);
+       MIDI_DRUM->notedown( MIDI_DRUM->sequencer, MIDI_DRUM->channel, MIDI_DRUM->midi_note[drum], MIDI_DRUM->velocity);
    }
 }
 
@@ -46,16 +46,16 @@ static inline void handle_bass(MIDIDRUM* MIDI_DRUM, unsigned char drum)
     if (MIDI_DRUM->drum_state[drum] != MIDI_DRUM->prev_state[drum]) {
         if (MIDI_DRUM->drum_state[drum]) {
             MIDI_DRUM->velocity = MIDI_DRUM->default_velocity;
-            notedown( MIDI_DRUM->g_seq,  MIDI_DRUM->g_port, MIDI_DRUM->channel, MIDI_DRUM->midi_note[drum],  MIDI_DRUM->velocity);
-	    if(MIDI_DRUM->hat_mode = drum)
+            MIDI_DRUM->notedown( MIDI_DRUM->sequencer, MIDI_DRUM->channel, MIDI_DRUM->midi_note[drum], MIDI_DRUM->velocity);
+        if(MIDI_DRUM->hat_mode = drum)
 	    {
 		MIDI_DRUM->midi_note[MIDI_DRUM->hat] = MIDI_DRUM->midi_note[CLOSED_HAT];
 	    }
         }
         // Up
         else {
-            noteup( MIDI_DRUM->g_seq,  MIDI_DRUM->g_port, MIDI_DRUM->channel, MIDI_DRUM->midi_note[drum], 0);
-	   if(MIDI_DRUM->hat_mode = drum)
+            MIDI_DRUM->noteup(MIDI_DRUM->sequencer, MIDI_DRUM->channel, MIDI_DRUM->midi_note[drum], 0);
+       if(MIDI_DRUM->hat_mode = drum)
 	   {
 	       MIDI_DRUM->midi_note[MIDI_DRUM->hat] = MIDI_DRUM->midi_note[OPEN_HAT];
 	   }
