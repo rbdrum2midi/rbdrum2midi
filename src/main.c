@@ -41,7 +41,7 @@ static int find_rbdrum_device(MIDIDRUM* MIDI_DRUM, struct libusb_device_handle *
 	}
 
     //Wìì RB kit??
-    *devh = libusb_open_device_with_vid_pid(NULL, 0x1bad, 0x0005);      
+    *devh = libusb_open_device_with_vid_pid(NULL, 0x1bad, 0x3110);      
     if(*devh){
         MIDI_DRUM->kit=WII_ROCKBAND;
         return 0;
