@@ -430,7 +430,7 @@ int main(int argc, char **argv)
     else
         r = find_rbdrum_device(MIDI_DRUM,&devh);
     if (r < 0) {
-        fprintf(stderr, "Could not find/open device\n");
+        fprintf(stderr, "Could not find/open device, try running as root?\n");
         libusb_close(devh);
         libusb_exit(NULL);
         return -r;

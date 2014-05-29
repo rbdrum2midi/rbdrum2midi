@@ -12,7 +12,7 @@ make install
 
 if autotools isn't working correctly on your system you can compile the binary explicitly: 
 cd src
-gcc main.c rbkit.c rb1kit.c ghkit.c -o rbdrum2midi -lasound -lusb-1.0 
+gcc main.c rbkit.c rb1kit.c ghkit.c alsadriver.c jackdriver.c -o rbdrum2midi -lasound -lusb-1.0 -ljack
 you will have to execute this locally (or copy the binary to /usr/bin) when using this method..
 
 

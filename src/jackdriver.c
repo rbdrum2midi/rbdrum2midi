@@ -44,7 +44,7 @@
 #include <jack/jack.h>
 #include <jack/midiport.h>
 #include <jack/ringbuffer.h>
-
+#include "jackdriver.h"
 
 /*
   In main:
@@ -118,7 +118,7 @@ struct MidiMessage {
 	unsigned char	data[3];
 };
 
-#define RINGBUFFER_SIZE		1024*sizeof(struct MidiMessage)
+#define RINGBUFFER_SIZE		256*sizeof(struct MidiMessage)
 
 /* Will emit a warning if time between jack callbacks is longer than this. */
 #define MAX_TIME_BETWEEN_CALLBACKS	0.1
@@ -138,7 +138,6 @@ struct MidiMessage {
 //int		channel = 0;
 
 //void draw_note(int key);
-void queue_message(struct MidiMessage *ev);
 
 double 
 get_time(void)
@@ -184,7 +183,7 @@ get_delta_time(void)
 
 
 double
-nframes_to_ms(jack_nframes_t nframes)
+nframes_to_ms(jack_client_t* jack_client,jack_nframes_t nframes)
 {
 	jack_nframes_t sr;
 
@@ -196,7 +195,7 @@ nframes_to_ms(jack_nframes_t nframes)
 }
 
 void
-process_midi_output(jack_nframes_t nframes)
+process_midi_output(JACK_SEQ* seq,jack_nframes_t nframes)
 {
 	int read, t, bytes_remaining;
 	unsigned char *buffer;
@@ -204,11 +203,11 @@ process_midi_output(jack_nframes_t nframes)
 	jack_nframes_t last_frame_time;
 	struct MidiMessage ev;
 
-	last_frame_time = jack_last_frame_time(jack_client);
+	last_frame_time = jack_last_frame_time(seq->jack_client);
 
-	port_buffer = jack_port_get_buffer(output_port, nframes);
+	port_buffer = jack_port_get_buffer(seq->output_port, nframes);
 	if (port_buffer == NULL) {
-		warn_from_jack_thread_context("jack_port_get_buffer failed, cannot send anything.");
+		printf("jack_port_get_buffer failed, cannot send anything.");
 		return;
 	}
 
@@ -219,23 +218,18 @@ process_midi_output(jack_nframes_t nframes)
 #endif
 
 	/* We may push at most one byte per 0.32ms to stay below 31.25 Kbaud limit. */
-	bytes_remaining = nframes_to_ms(nframes) * rate_limit;
+	//bytes_remaining = nframes_to_ms(seq->jack_client,nframes) * rate_limit;
 
-	while (jack_ringbuffer_read_space(ringbuffer)) {
-		read = jack_ringbuffer_peek(ringbuffer, (char *)&ev, sizeof(ev));
+	while (jack_ringbuffer_read_space(seq->ringbuffer)) {
+		read = jack_ringbuffer_peek(seq->ringbuffer, (char *)&ev, sizeof(ev));
 
 		if (read != sizeof(ev)) {
             //warn_from_jack_thread_context("Short read from the ringbuffer, possible note loss.");
-			jack_ringbuffer_read_advance(ringbuffer, read);
+			jack_ringbuffer_read_advance(seq->ringbuffer, read);
 			continue;
 		}
 
 		bytes_remaining -= ev.len;
-
-		if (rate_limit > 0.0 && bytes_remaining <= 0) {
-            //warn_from_jack_thread_context("Rate limiting in effect.");
-			break;
-		}
 
 		t = ev.time + nframes - last_frame_time;
 
@@ -248,10 +242,7 @@ process_midi_output(jack_nframes_t nframes)
 		if (t < 0)
 			t = 0;
 
-		if (time_offsets_are_zero)
-			t = 0;
-
-		jack_ringbuffer_read_advance(ringbuffer, sizeof(ev));
+		jack_ringbuffer_read_advance(seq->ringbuffer, sizeof(ev));
 
 #ifdef JACK_MIDI_NEEDS_NFRAMES
 		buffer = jack_midi_event_reserve(port_buffer, t, ev.len, nframes);
@@ -269,36 +260,32 @@ process_midi_output(jack_nframes_t nframes)
 }
 
 int 
-process_callback(jack_nframes_t nframes, void *notused)
+process_callback(jack_nframes_t nframes, void *seqq)
 {
+     JACK_SEQ* seq = (JACK_SEQ*)seqq;
 #ifdef MEASURE_TIME
 	if (get_delta_time() > MAX_TIME_BETWEEN_CALLBACKS)
-		warn_from_jack_thread_context("Had to wait too long for JACK callback; scheduling problem?");
+		printf("Had to wait too long for JACK callback; scheduling problem?");
 #endif
 
-	/* Check for impossible condition that actually happened to me, caused by some problem between jackd and OSS4. */
-	if (nframes <= 0) {
-        //warn_from_jack_thread_context("Process callback called with nframes = 0; bug in JACK?");
-		return 0;
-	}
-
-	process_midi_output(nframes);
+	process_midi_output( seq,nframes);
 
 #ifdef MEASURE_TIME
 	if (get_delta_time() > MAX_PROCESSING_TIME)
-		warn_from_jack_thread_context("Processing took too long; scheduling problem?");
+		printf("Processing took too long; scheduling problem?");
 #endif
 
 	return (0);
 }
 
+//these functions are executed in usb IRQ thread
 void
-queue_message(jack_ringbuffer_t ringbuffer, struct MidiMessage *ev)
+queue_message(jack_ringbuffer_t* ringbuffer, struct MidiMessage *ev)
 {
 	int written;
 
 	if (jack_ringbuffer_write_space(ringbuffer) < sizeof(*ev)) {
-		g_critical("Not enough space in the ringbuffer, NOTE LOST.");
+		printf("Not enough space in the ringbuffer, NOTE LOST.");
 		return;
 	}
 
@@ -307,149 +294,79 @@ queue_message(jack_ringbuffer_t ringbuffer, struct MidiMessage *ev)
 	if (written != sizeof(*ev))
         printf("jack_ringbuffer_write failed, NOTE LOST.");
 }
-/*
-void 
-queue_new_message(int b0, int b1, int b2)
-{
-	struct MidiMessage ev;
-
-	/* For MIDI messages that specify a channel number, filter the original
-       channel number out and add our own.
-	if (b0 >= 0x80 && b0 <= 0xEF) {
-		b0 &= 0xF0;
-		b0 += channel;
-	}
-
-	if (b1 == -1) {
-		ev.len = 1;
-		ev.data[0] = b0;
-
-	} else if (b2 == -1) {
-		ev.len = 2;
-		ev.data[0] = b0;
-		ev.data[1] = b1;
-
-	} else {
-		ev.len = 3;
-		ev.data[0] = b0;
-		ev.data[1] = b1;
-		ev.data[2] = b2;
-	}
-
-	ev.time = jack_frame_time(jack_client);
-
-	queue_message(&ev);
-}*/
 
 void noteup_jack(void* seqq, unsigned char chan, unsigned char note, unsigned char vel)
 {
     struct MidiMessage ev;
+    JACK_SEQ* seq = (JACK_SEQ*)seqq;
     ev.len = 3;
     ev.data[0] = 0x80 + chan;
     ev.data[1] = note;
     ev.data[2] = vel;
 
-    ev.time = jack_frame_time(jack_client);
+    ev.time = jack_frame_time(seq->jack_client);
 
-    queue_message(&ev);
+    queue_message(seq->ringbuffer,&ev);
 }
 
 void notedown_jack(void* seqq, unsigned char chan, unsigned char note, unsigned char vel)
 {
     struct MidiMessage ev;
+    JACK_SEQ* seq = (JACK_SEQ*)seqq;
     ev.len = 3;
     ev.data[0] = 0x90 + chan;
     ev.data[1] = note;
     ev.data[2] = vel;
 
-    ev.time = jack_frame_time(jack_client);
+    ev.time = jack_frame_time(seq->jack_client);
 
-    queue_message(&ev);
+    queue_message(seq->ringbuffer,&ev);
 }
 
-//not using, but might later
-void
-send_program_change(void)
-{
-	if (jack_port_connected(output_port) == 0)
-		return;
-
-	queue_new_message(MIDI_CONTROLLER, MIDI_BANK_SELECT_LSB, bank % 128);
-	queue_new_message(MIDI_CONTROLLER, MIDI_BANK_SELECT_MSB, bank / 128);
-	queue_new_message(MIDI_PROGRAM_CHANGE, program, -1);
-
-	program_change_was_sent = 1;
-}
-
-void 
-init_jack(void)
+//this is run in the main thread
+int 
+init_jack(JACK_SEQ* seq, unsigned char verbose)
 {
 	int err;
+    
+    if(verbose)printf("opening client...\n");
+    seq->jack_client = jack_client_open("Game Drumkit Client", JackNoStartServer, NULL);
 
-    jack_client = jack_client_open("Game Drumkit Client", JackNoStartServer, NULL);
-
-	if (jack_client == NULL) {
+	if (seq->jack_client == NULL) {
         printf("Could not connect to the JACK server; run jackd first?");
-        //exit(EX_UNAVAILABLE);
+	return 1;
 	}
 
-	ringbuffer = jack_ringbuffer_create(RINGBUFFER_SIZE);
+    if(verbose)printf("creating ringbuffer...\n");
+	seq->ringbuffer = jack_ringbuffer_create(RINGBUFFER_SIZE);
 
-	if (ringbuffer == NULL) {
+	if (seq->ringbuffer == NULL) {
         printf("Cannot create JACK ringbuffer.");
-        //exit(EX_SOFTWARE);
+	return 1;
 	}
 
-	jack_ringbuffer_mlock(ringbuffer);
+	jack_ringbuffer_mlock(seq->ringbuffer);
 
 
-	err = jack_set_process_callback(jack_client, process_callback, 0);
+    if(verbose)printf("assigning process callback...\n");
+	err = jack_set_process_callback(seq->jack_client, process_callback, (void*)seq);
 	if (err) {
         printf("Could not register JACK process callback.");
-        //exit(EX_UNAVAILABLE);
+	return 1; 
 	}
 
-	err = jack_set_graph_order_callback(jack_client, graph_order_callback, 0);
-	if (err) {
-        printf("Could not register JACK graph order callback.");
-        //exit(EX_UNAVAILABLE);
-	}
-
-	output_port = jack_port_register(jack_client, OUTPUT_PORT_NAME, JACK_DEFAULT_MIDI_TYPE,
+	seq->output_port = jack_port_register(seq->jack_client, "midi_out", JACK_DEFAULT_MIDI_TYPE,
 		JackPortIsOutput, 0);
 
-	if (output_port == NULL) {
+	if (seq->output_port == NULL) {
         printf("Could not register JACK output port.");
-        //exit(EX_UNAVAILABLE);
+	return 1;
 	}
 
-	if (jack_activate(jack_client)) {
+	if (jack_activate(seq->jack_client)) {
         printf("Cannot activate JACK client.");
-        //exit(EX_UNAVAILABLE);
+	return 1;
 	}
+	return 0;
 }
 
-void 
-panic(void)
-{
-	int i;
-
-	/*
-	 * These two have to be sent first, in case we have no room in the
-	 * ringbuffer for all these MIDI_NOTE_OFF messages sent five lines below.
-	 */
-	queue_new_message(MIDI_CONTROLLER, MIDI_ALL_NOTES_OFF, 0);
-	queue_new_message(MIDI_CONTROLLER, MIDI_ALL_SOUND_OFF, 0);
-
-	for (i = 0; i < NNOTES; i++) {
-		queue_new_message(MIDI_NOTE_OFF, i, 0);
-		piano_keyboard_set_note_off(keyboard, i);
-		usleep(100);
-	}
-
-	queue_new_message(MIDI_CONTROLLER, MIDI_HOLD_PEDAL, 0);
-	queue_new_message(MIDI_CONTROLLER, MIDI_ALL_MIDI_CONTROLLERS_OFF, 0);
-	queue_new_message(MIDI_CONTROLLER, MIDI_ALL_NOTES_OFF, 0);
-	queue_new_message(MIDI_CONTROLLER, MIDI_ALL_SOUND_OFF, 0);
-	queue_new_message(MIDI_RESET, -1, -1);
-}
