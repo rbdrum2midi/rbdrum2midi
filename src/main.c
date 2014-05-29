@@ -23,8 +23,7 @@
 #include "rb1kit.h"
 #include "ghkit.h"
 #include "alsadriver.h"
-
-//#define JACKMIDI
+#include "jackdriver.h"
 
 static int find_rbdrum_device(MIDIDRUM* MIDI_DRUM, struct libusb_device_handle **devh)
 {
@@ -187,7 +186,17 @@ static int alloc_transfers(MIDIDRUM* MIDI_DRUM, libusb_device_handle *devh, stru
     return 0;
 }
 
-
+void close_seq(ALSA_SEQ* aseq, JACK_SEQ* jseq, unsigned char seqtype)
+{
+    if(seqtype>=2){
+        //jack
+	close_jack(jseq);
+    }
+    else{
+        //alsa
+	close_alsa(aseq);
+    }
+}
 
 static void sighandler(int signum)
 {
@@ -249,7 +258,7 @@ int main(int argc, char **argv)
     MIDIDRUM MIDI_DRUM_;
     MIDIDRUM* MIDI_DRUM = &MIDI_DRUM_;
     ALSA_SEQ aseqq;
-    //JACK_SEQ jseqq;
+    JACK_SEQ jseqq;
 
 
     //struct ALSA_MIDI_SEQUENCER seq;//currently only alsa supported
@@ -454,10 +463,10 @@ int main(int argc, char **argv)
 
     if(seqtype >=2){
         //jack
-	//init_alsa(&aseqq);
-        //MIDI_DRUM->sequencer = (void*)&aseqq;
-        //MIDI_DRUM->noteup = &noteup_alsa;
-        //MIDI_DRUM->notedown = notedown_alsa;
+	init_jack(&jseqq,MIDI_DRUM->verbose);
+        MIDI_DRUM->sequencer = (void*)&jseqq;
+        MIDI_DRUM->noteup = &noteup_jack;
+        MIDI_DRUM->notedown = notedown_jack;
     }
     else{
 	r = init_alsa(&aseqq,MIDI_DRUM->verbose);
@@ -479,8 +488,8 @@ int main(int argc, char **argv)
         libusb_free_transfer(irq_transfer);
         libusb_release_interface(devh, 0);
         libusb_close(devh);
-        libusb_exit(NULL);
-        snd_seq_close( aseqq.g_seq);
+        libusb_exit(NULL); 
+        close_seq(&aseqq,&jseqq,seqtype);
         printf("alloc_transfers failed.\n");
         return -r;
     }
@@ -492,7 +501,7 @@ int main(int argc, char **argv)
         libusb_release_interface(devh, 0);
         libusb_close(devh);
         libusb_exit(NULL);
-        snd_seq_close( aseqq.g_seq);
+        close_seq(&aseqq,&jseqq,seqtype);
         printf("init_capture failed.\n");
         return -r;
     }
@@ -521,7 +530,7 @@ int main(int argc, char **argv)
             libusb_release_interface(devh, 0);
             libusb_close(devh);
             libusb_exit(NULL);
-            snd_seq_close( aseqq.g_seq);
+            close_seq(&aseqq,&jseqq,seqtype);
             printf("libusb_cancel_transfer failed.\n");
             return -r;
         }
@@ -546,7 +555,7 @@ int main(int argc, char **argv)
 //out:
     libusb_close(devh);
     libusb_exit(NULL);
-    snd_seq_close( aseqq.g_seq);
+    close_seq(&aseqq,&jseqq,seqtype); 
     
     return r >= 0 ? r : -r;
 }

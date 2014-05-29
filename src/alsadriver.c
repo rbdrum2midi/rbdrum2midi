@@ -167,3 +167,8 @@ void testAlsa(snd_seq_t *seq, int port)
     usleep(1000000);
 
 }*/
+
+void close_alsa(ALSA_SEQ* seq)
+{
+    snd_seq_close(seq->g_seq);
+}

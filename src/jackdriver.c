@@ -370,3 +370,7 @@ init_jack(JACK_SEQ* seq, unsigned char verbose)
 	return 0;
 }
 
+void close_jack(JACK_SEQ* seq)
+{
+    jack_ringbuffer_free(seq->ringbuffer);
+}
