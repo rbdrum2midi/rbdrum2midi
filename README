@@ -18,7 +18,7 @@ you will have to execute this locally (or copy the binary to /usr/bin) when usin
 
 Execution:
 either run the executable localy: 
-src/rbdrum2midi (you may have to run this as root if you do not have the correct usb permissions)
+src/rbdrum2midi (you may have to run this as root if you do not have the correct usb permissions; see notes below)
 or run from terminal:
 rbdrum2midi
 
@@ -94,6 +94,8 @@ SUBSYSTEM=="usb", ATTR{idVendor}=="1bad", ATTR{idProduct}=="0005", GROUP="audio"
 
 this will work if your linux distro has an "audio" group and your user is a member, otherwise substitute "audio" with "users". 
 Place this file in /etc/udev/rules.d/ and reload the udev deamon.
+
+If you are using the JACK driver, it is important that you get these permissions right. Running the program as super will not allow you to see the JACK dbus daemon unless you ran JACK as super.
 
 The original programs' copyrights, disclaimers and limitations still hold.
 

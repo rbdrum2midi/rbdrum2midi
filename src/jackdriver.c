@@ -334,7 +334,7 @@ init_jack(JACK_SEQ* seq, unsigned char verbose)
 
 	if (seq->jack_client == NULL) {
         printf("Could not connect to the JACK server; run jackd first?");
-	return 1;
+	return 0;
 	}
 
     if(verbose)printf("creating ringbuffer...\n");
@@ -342,7 +342,7 @@ init_jack(JACK_SEQ* seq, unsigned char verbose)
 
 	if (seq->ringbuffer == NULL) {
         printf("Cannot create JACK ringbuffer.");
-	return 1;
+	return 0;
 	}
 
 	jack_ringbuffer_mlock(seq->ringbuffer);
@@ -352,7 +352,7 @@ init_jack(JACK_SEQ* seq, unsigned char verbose)
 	err = jack_set_process_callback(seq->jack_client, process_callback, (void*)seq);
 	if (err) {
         printf("Could not register JACK process callback.");
-	return 1; 
+	return 0; 
 	}
 
 	seq->output_port = jack_port_register(seq->jack_client, "midi_out", JACK_DEFAULT_MIDI_TYPE,
@@ -360,14 +360,14 @@ init_jack(JACK_SEQ* seq, unsigned char verbose)
 
 	if (seq->output_port == NULL) {
         printf("Could not register JACK output port.");
-	return 1;
+	return 0;
 	}
 
 	if (jack_activate(seq->jack_client)) {
         printf("Cannot activate JACK client.");
-	return 1;
-	}
 	return 0;
+	}
+	return 1;
 }
 
 void close_jack(JACK_SEQ* seq)

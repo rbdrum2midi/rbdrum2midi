@@ -463,7 +463,7 @@ int main(int argc, char **argv)
 
     if(seqtype >=2){
         //jack
-	init_jack(&jseqq,MIDI_DRUM->verbose);
+	r = init_jack(&jseqq,MIDI_DRUM->verbose);
         MIDI_DRUM->sequencer = (void*)&jseqq;
         MIDI_DRUM->noteup = &noteup_jack;
         MIDI_DRUM->notedown = notedown_jack;
@@ -476,7 +476,7 @@ int main(int argc, char **argv)
     }
     // 0 is fail.
     if (r == 0) {
-        printf("Error: Alsa setup failed.\n");
+        printf("Error: MIDI driver setup failed.\n");
         return 1;
     }
 
