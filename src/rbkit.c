@@ -47,7 +47,7 @@ static inline void handle_bass(MIDIDRUM* MIDI_DRUM, unsigned char drum)
         if (MIDI_DRUM->drum_state[drum]) {
             MIDI_DRUM->velocity = MIDI_DRUM->default_velocity;
             MIDI_DRUM->notedown( MIDI_DRUM->sequencer, MIDI_DRUM->channel, MIDI_DRUM->midi_note[drum], MIDI_DRUM->velocity);
-        if(MIDI_DRUM->hat_mode = drum)
+        if(MIDI_DRUM->hat_mode == drum)
 	    {
 		MIDI_DRUM->midi_note[MIDI_DRUM->hat] = MIDI_DRUM->midi_note[CLOSED_HAT];
 	    }
@@ -55,7 +55,7 @@ static inline void handle_bass(MIDIDRUM* MIDI_DRUM, unsigned char drum)
         // Up
         else {
             MIDI_DRUM->noteup(MIDI_DRUM->sequencer, MIDI_DRUM->channel, MIDI_DRUM->midi_note[drum], 0);
-       if(MIDI_DRUM->hat_mode = drum)
+       if(MIDI_DRUM->hat_mode == drum)
 	   {
 	       MIDI_DRUM->midi_note[MIDI_DRUM->hat] = MIDI_DRUM->midi_note[OPEN_HAT];
 	   }

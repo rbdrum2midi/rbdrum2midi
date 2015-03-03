@@ -353,7 +353,7 @@ int main(int argc, char **argv)
 	         if (strcmp(argv[++i], "0" ) == 0)
 		     MIDI_DRUM->hat_mode = 0; 
                  else if (strcmp(argv[i], "ob") == 0){
-                     if(MIDI_DRUM->midi_note[ORANGE_BASS] = YVK_KICK)
+                     if(MIDI_DRUM->midi_note[ORANGE_BASS] == YVK_KICK)
                          MIDI_DRUM->midi_note[ORANGE_BASS] = 0;
 		     MIDI_DRUM->hat_mode = ORANGE_BASS;
 		 }
