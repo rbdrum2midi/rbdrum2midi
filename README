@@ -36,8 +36,8 @@ Hit each drum a few times and copy and paste the output to a discussion topic in
 
 Usage:
 connect rbdrumkit wireless dongle (PS3 works, Wii should, xbox probably won't), 
-start rbdrum2midi. This will create an ALSA midiport, start the jack audio server and Hydrogen,
-in the connection window under the alsa tab connect "Game Drumkit Client" to Hydrogen. You may also need the a2j bridge.
+start rbdrum2midi. This will create an ALSA midiport, start the jack audio server and Hydrogen (or your drum program of choice).
+If you are using qjackctl, under the alsa tab of the connection window, connect "Game Drumkit Client" to Hydrogen. You may also need the a2j bridge.
 
 run with the '-h' option to see the full useage.
 
