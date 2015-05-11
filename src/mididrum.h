@@ -57,7 +57,8 @@ typedef enum {
     WII_ROCKBAND,
     XB_ROCKBAND1,
     PS_ROCKBAND1,
-    GUITAR_HERO
+    GUITAR_HERO,
+    ION
 }kit_types;
 
 //primary object for the system
