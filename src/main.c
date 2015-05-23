@@ -213,6 +213,7 @@ void useage()
     printf("\n");
     printf("OPTIONS:\n");
     printf("    -v                          verbose mode\n");
+    printf("    -yvk                        note mapping for yamaha vintage kit in Hydrogen\n");
     printf("    -r/y/b/g <value>            set midi note for -color of drum head\n");
     printf("    -ocy/ycy/bcy/gcy <value>    set midi note for -color of cymbal\n");
     printf("    -ob/bkb <value>             set midi note for -color bass pedal\n");
@@ -236,7 +237,7 @@ void useage()
     printf("NOTES:\n");
     printf("    r=red, o=orange, y=yellow, g=green, b=blue, bk=black\n");
     printf("    cy=cymbal, b=bass pedal, ht=hihat, otherwise drum pad\n");
-    printf("    the default midi values are for the hydrogen yamaha vintage kit\n\n");
+    printf("    the default midi values are for general midi drums\n\n");
     printf("    *using -htp option sets pedal in \"hihat mode,\" allows users to play\n");
     printf("     different notes on drum specified by -htdm dependent on pedal state\n"); 
     printf("     default is hat mode on black bass, use -htp 0 to disable\n"); 
@@ -280,18 +281,18 @@ int main(int argc, char **argv)
     memset(MIDI_DRUM->prev_state,0,NUM_DRUMS);
     
     //default midi values;
-    MIDI_DRUM->midi_note[RED] = YVK_SNARE; 
-    MIDI_DRUM->midi_note[YELLOW] = YVK_HI_TOM;
-    MIDI_DRUM->midi_note[BLUE] = YVK_MID_TOM;
-    MIDI_DRUM->midi_note[GREEN] = YVK_LO_TOM;
-    MIDI_DRUM->midi_note[YELLOW_CYMBAL] = YVK_OPEN_HAT;
-    MIDI_DRUM->midi_note[GREEN_CYMBAL] = YVK_CRASH;
-    MIDI_DRUM->midi_note[BLUE_CYMBAL] = YVK_RIDE;
-    MIDI_DRUM->midi_note[ORANGE_CYMBAL] = YVK_CRASH;
-    MIDI_DRUM->midi_note[ORANGE_BASS] = YVK_KICK;
+    MIDI_DRUM->midi_note[RED] = GM_SNARE; 
+    MIDI_DRUM->midi_note[YELLOW] = GM_HI_TOM;
+    MIDI_DRUM->midi_note[BLUE] = GM_MID_TOM;
+    MIDI_DRUM->midi_note[GREEN] = GM_LO_TOM;
+    MIDI_DRUM->midi_note[YELLOW_CYMBAL] = GM_OPEN_HAT;
+    MIDI_DRUM->midi_note[GREEN_CYMBAL] = GM_CRASH;
+    MIDI_DRUM->midi_note[BLUE_CYMBAL] = GM_RIDE;
+    MIDI_DRUM->midi_note[ORANGE_CYMBAL] = GM_CRASH;
+    MIDI_DRUM->midi_note[ORANGE_BASS] = GM_KICK;
     MIDI_DRUM->midi_note[BLACK_BASS] = 0;
-    MIDI_DRUM->midi_note[OPEN_HAT] = YVK_OPEN_HAT;
-    MIDI_DRUM->midi_note[CLOSED_HAT] = YVK_CLOSED_HAT;
+    MIDI_DRUM->midi_note[OPEN_HAT] = GM_OPEN_HAT;
+    MIDI_DRUM->midi_note[CLOSED_HAT] = GM_CLOSED_HAT;
 
     if (argc > 1) {
         for (i = 1;i<argc;i++)
@@ -302,6 +303,10 @@ int main(int argc, char **argv)
             else if (strcmp(argv[i], "-rb1") == 0) {
                 //rockband 1 set, use different irq routine
                 MIDI_DRUM->kit = PS_ROCKBAND1;
+                //and different mapping
+                MIDI_DRUM->midi_note[YELLOW] = GM_CLOSED_HAT;
+                MIDI_DRUM->midi_note[BLUE] = GM_CRASH;
+                MIDI_DRUM->midi_note[GREEN] = GM_LO_TOM; 
             }
             else if (strcmp(argv[i], "-ocy") == 0) {
                 //orange cymbal
@@ -353,7 +358,7 @@ int main(int argc, char **argv)
 	         if (strcmp(argv[++i], "0" ) == 0)
 		     MIDI_DRUM->hat_mode = 0; 
                  else if (strcmp(argv[i], "ob") == 0){
-                     if(MIDI_DRUM->midi_note[ORANGE_BASS] == YVK_KICK)
+                     if(MIDI_DRUM->midi_note[ORANGE_BASS] == GM_KICK)
                          MIDI_DRUM->midi_note[ORANGE_BASS] = 0;
 		     MIDI_DRUM->hat_mode = ORANGE_BASS;
 		 }
@@ -400,6 +405,20 @@ int main(int argc, char **argv)
                 //JACK midi
 		seqtype = 2;
             }
+        else if (strcmp(argv[i], "-yvk") == 0) {
+                MIDI_DRUM->midi_note[RED] = YVK_SNARE; 
+                MIDI_DRUM->midi_note[YELLOW] = YVK_HI_TOM;
+                MIDI_DRUM->midi_note[BLUE] = YVK_MID_TOM;
+                MIDI_DRUM->midi_note[GREEN] = YVK_LO_TOM;
+                MIDI_DRUM->midi_note[YELLOW_CYMBAL] = YVK_OPEN_HAT;
+                MIDI_DRUM->midi_note[GREEN_CYMBAL] = YVK_CRASH;
+                MIDI_DRUM->midi_note[BLUE_CYMBAL] = YVK_RIDE;
+                MIDI_DRUM->midi_note[ORANGE_CYMBAL] = YVK_CRASH;
+                MIDI_DRUM->midi_note[ORANGE_BASS] = YVK_KICK;
+                MIDI_DRUM->midi_note[BLACK_BASS] = 0;
+                MIDI_DRUM->midi_note[OPEN_HAT] = YVK_OPEN_HAT;
+                MIDI_DRUM->midi_note[CLOSED_HAT] = YVK_CLOSED_HAT;
+            }
         else if (strcmp(argv[i], "-dbg") == 0) {
                 //debug mode
                 MIDI_DRUM->dbg = 1;
@@ -429,7 +448,7 @@ int main(int argc, char **argv)
         //no way of knowing if device is RB1 so reassign kit after claiming
         r = find_rbdrum_device(MIDI_DRUM,&devh);
         switch(MIDI_DRUM->kit)
-	{
+	    {
 	    case PS_ROCKBAND:
 	    case WII_ROCKBAND:
   	        MIDI_DRUM->kit = PS_ROCKBAND1; 
@@ -437,7 +456,7 @@ int main(int argc, char **argv)
 	    case XB_ROCKBAND:
 	        MIDI_DRUM->kit = XB_ROCKBAND1; 
 	        break;
-	}
+	    }
     }
     else
         r = find_rbdrum_device(MIDI_DRUM,&devh);
@@ -466,13 +485,13 @@ int main(int argc, char **argv)
 
     if(seqtype >=2){
         //jack
-	r = init_jack(&jseqq,MIDI_DRUM->verbose);
+    	r = init_jack(&jseqq,MIDI_DRUM->verbose);
         MIDI_DRUM->sequencer = (void*)&jseqq;
         MIDI_DRUM->noteup = &noteup_jack;
         MIDI_DRUM->notedown = notedown_jack;
     }
     else{
-	r = init_alsa(&aseqq,MIDI_DRUM->verbose);
+    	r = init_alsa(&aseqq,MIDI_DRUM->verbose);
         MIDI_DRUM->sequencer = (void*)&aseqq;
         MIDI_DRUM->noteup = &noteup_alsa;
         MIDI_DRUM->notedown = notedown_alsa;

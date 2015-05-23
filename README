@@ -1,18 +1,19 @@
-Rockband 3 ProDrum Midi Driver
+Rockband Drum Midi Driver
 by Randommatt and ssj71
 
 Version 0.5
 
 Installation:
-Requires libusb and libasound2 dev packages to compile and runtime libraries to run
-It follows the ussual cmmi:
-./configure
-make 
-make install
+Requires libusb-1.0, libjack, and libasound2 dev packages to compile and runtime libraries to run
+This project now uses cmake, so to install do:
+mkdir build
+cd build
+cmake ..
+sudo make install
 
-if autotools isn't working correctly on your system you can compile the binary explicitly: 
+or if you prefer to compile manually:
 cd src
-gcc main.c rbkit.c rb1kit.c ghkit.c alsadriver.c jackdriver.c -o rbdrum2midi -lasound -lusb-1.0 -ljack
+gcc *.c -o rbdrum2midi -lasound -lusb-1.0 -ljack
 you will have to execute this locally (or copy the binary to /usr/bin) when using this method..
 
 

@@ -32,6 +32,6 @@ target_link_libraries(rbdrum2midi ${JACK_LIBRARIES} ${ALSA_LIBRARIES} ${LIBUSB_1
 
 # config install
 install(TARGETS rbdrum2midi
-  DESTINATION /usr/local/bin
+  DESTINATION bin
 )
 

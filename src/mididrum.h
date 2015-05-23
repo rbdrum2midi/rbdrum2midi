@@ -11,24 +11,34 @@
 
 #include <libusb-1.0/libusb.h>
 
-//#include <jackdriver.h>
-#include "alsadriver.h"
-
-
 #define EP_INTR			(1 | LIBUSB_ENDPOINT_IN)
 #define INTR_LENGTH		27
 
 #define DEFAULT_CHANNEL 9
 
-#define YVK_KICK        36
-#define YVK_SNARE       37
-#define YVK_LO_TOM      38
-#define YVK_MID_TOM     39
-#define YVK_HI_TOM      40
-#define YVK_CLOSED_HAT  41
-#define YVK_OPEN_HAT    42
-#define YVK_RIDE        43
-#define YVK_CRASH       45
+enum YVK{
+    YVK_KICK = 36,
+    YVK_SNARE,
+    YVK_LO_TOM,
+    YVK_MID_TOM,
+    YVK_HI_TOM,
+    YVK_CLOSED_HAT,
+    YVK_OPEN_HAT,
+    YVK_RIDE,
+    YVK_CRASH 
+};
+
+enum GM{
+    GM_KICK = 36,
+    GM_SNARE = 38,
+    GM_LO_TOM = 41,
+    GM_MID_TOM = 45,
+    GM_HI_TOM = 50,
+    GM_CLOSED_HAT = 42,
+    GM_OPEN_HAT = 46,
+    GM_RIDE = 59,
+    GM_CRASH = 49 
+};
 
 #define max(a, b) (((a) > (b)) ? (a) : (b))
 #define min(a, b) (((a) < (b)) ? (a) : (b))
