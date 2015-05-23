@@ -5,17 +5,15 @@ Version 0.5
 
 Installation:
 Requires libusb and libasound2 dev packages to compile and runtime libraries to run
-It now uses cmake to build:
-mkdir build
-cd build
-cmake ..
-make
-sudo make install
+It follows the ussual cmmi:
+./configure
+make 
+make install
 
-if you don't like cmake you can compile the binary explicitly: 
+if autotools isn't working correctly on your system you can compile the binary explicitly: 
 cd src
 gcc main.c rbkit.c rb1kit.c ghkit.c alsadriver.c jackdriver.c -o rbdrum2midi -lasound -lusb-1.0 -ljack
-you will have to execute this locally (or copy the binary to /usr/bin) when using this method.
+you will have to execute this locally (or copy the binary to /usr/bin) when using this method..
 
 
 Execution:
@@ -32,7 +30,7 @@ Tested Drumkits:
 -XBox 360 Rockband 1 drumkit
 If your kit isn't listed theres a chance it will still work. If it is a rockband kit try the option '-rb1'.If it doesn't we will happily add support for your kit if you can build and run the commands:
 lsusb
-./rbdrumkit -dbg
+/rbdrumkit -dbg
 Hit each drum a few times and copy and paste the output to a discussion topic in our sourceforge project page at http://sourceforge.net/projects/rbdrum2midi/
 
 

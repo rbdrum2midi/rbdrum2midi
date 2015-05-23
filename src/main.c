@@ -54,12 +54,6 @@ static int find_rbdrum_device(MIDIDRUM* MIDI_DRUM, struct libusb_device_handle *
     if(*devh){
         MIDI_DRUM->kit=GUITAR_HERO;
     }
-
-    //ION Redline kit
-    *devh = libusb_open_device_with_vid_pid(NULL, 0x15e4, 0x017a);
-    if(*devh){
-        MIDI_DRUM->kit=ION;
-    }
   
     return *devh ? 0 : -EIO;
 }
