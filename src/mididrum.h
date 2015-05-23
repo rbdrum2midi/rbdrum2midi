@@ -31,12 +31,12 @@ enum YVK{
 enum GM{
     GM_KICK = 36,
     GM_SNARE = 38,
-    GM_LO_TOM = 41,
-    GM_MID_TOM = 45,
+    GM_LO_TOM = 43,
+    GM_MID_TOM = 47,
     GM_HI_TOM = 50,
     GM_CLOSED_HAT = 42,
     GM_OPEN_HAT = 46,
-    GM_RIDE = 59,
+    GM_RIDE = 51,
     GM_CRASH = 49 
 };
 

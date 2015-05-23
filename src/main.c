@@ -304,9 +304,8 @@ int main(int argc, char **argv)
                 //rockband 1 set, use different irq routine
                 MIDI_DRUM->kit = PS_ROCKBAND1;
                 //and different mapping
-                MIDI_DRUM->midi_note[YELLOW] = GM_CLOSED_HAT;
-                MIDI_DRUM->midi_note[BLUE] = GM_CRASH;
-                MIDI_DRUM->midi_note[GREEN] = GM_LO_TOM; 
+                MIDI_DRUM->midi_note[YELLOW] = MIDI_DRUM->midi_note[CLOSED_HAT];
+                MIDI_DRUM->midi_note[BLUE] = MIDI_DRUM->midi_note[ORANGE_CYMBAL];
             }
             else if (strcmp(argv[i], "-ocy") == 0) {
                 //orange cymbal
