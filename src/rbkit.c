@@ -5,31 +5,23 @@
 
 void init_rb_kit(MIDIDRUM* MIDI_DRUM)
 {
-    MIDI_DRUM->buf_indx[RED] = 12;
-    MIDI_DRUM->buf_mask[RED] = 0xFF;
-    MIDI_DRUM->buf_indx[YELLOW] = 11;
-    MIDI_DRUM->buf_mask[YELLOW] = 0xFF;
-    MIDI_DRUM->buf_indx[BLUE] = 14;
-    MIDI_DRUM->buf_mask[BLUE] = 0xFF;
-    MIDI_DRUM->buf_indx[GREEN] = 13;
-    MIDI_DRUM->buf_mask[GREEN] = 0xFF;
-    MIDI_DRUM->buf_indx[CYMBAL_FLAG] = 1;
-    MIDI_DRUM->buf_mask[CYMBAL_FLAG] = 0x08;
-    MIDI_DRUM->buf_indx[YELLOW_CYMBAL] = 11;
-    MIDI_DRUM->buf_mask[YELLOW_CYMBAL] = 0xFF;
-    MIDI_DRUM->buf_indx[BLUE_CYMBAL] = 14;
-    MIDI_DRUM->buf_mask[BLUE_CYMBAL] = 0xFF;
-    MIDI_DRUM->buf_indx[GREEN_CYMBAL] = 13;
-    MIDI_DRUM->buf_mask[GREEN_CYMBAL] = 0xFF;
-    MIDI_DRUM->buf_indx[ORANGE_BASS] = 0;
-    MIDI_DRUM->buf_mask[ORANGE_BASS] = 0x10;
-    MIDI_DRUM->buf_indx[BLACK_BASS] = 0;
-    MIDI_DRUM->buf_mask[BLACK_BASS] = 0x20;
+    MIDI_DRUM->buf_indx[GREEN] = 3;
+    MIDI_DRUM->buf_mask[GREEN] = 0x10;
+    MIDI_DRUM->buf_indx[RED] = 3;
+    MIDI_DRUM->buf_mask[RED] = 0x20;
+    MIDI_DRUM->buf_indx[YELLOW] = 3;
+    MIDI_DRUM->buf_mask[YELLOW] = 0x80;
+    MIDI_DRUM->buf_indx[BLUE] = 3;
+    MIDI_DRUM->buf_mask[BLUE] = 0x40;
+    MIDI_DRUM->buf_indx[ORANGE] = 3;
+    MIDI_DRUM->buf_mask[ORANGE] = 0x01;
+    MIDI_DRUM->buf_indx[ORANGE] = 2;
+    MIDI_DRUM->buf_mask[ORANGE] = 0x03;
 }
 
 static inline void calc_velocity(MIDIDRUM* MIDI_DRUM, unsigned char value)
 {
-    MIDI_DRUM->velocity = min(max((280-value) * 2, 0), 127);
+    MIDI_DRUM->velocity = MIDI_DRUM->default_velocity;
 }
 
 static inline void handle_drum(MIDIDRUM* MIDI_DRUM, unsigned char drum)
@@ -76,11 +68,11 @@ void cb_irq_rb(struct libusb_transfer *transfer)
     }
 
     //RockBand 3 Drumkit
-    get_state(MIDI_DRUM,RED);
+    get_pick(MIDI_DRUM,RED);
     get_state(MIDI_DRUM,YELLOW);
     get_state(MIDI_DRUM,GREEN);
     get_state(MIDI_DRUM,BLUE);
-    get_state(MIDI_DRUM,CYMBAL_FLAG);
+    get_state(MIDI_DRUM,ORANGE);
     //cymbals are same data as pads
     MIDI_DRUM->drum_state[YELLOW_CYMBAL] = MIDI_DRUM->drum_state[YELLOW];
     MIDI_DRUM->drum_state[GREEN_CYMBAL] = MIDI_DRUM->drum_state[GREEN];

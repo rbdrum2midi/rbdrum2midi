@@ -36,7 +36,7 @@ static int find_rbdrum_device(MIDIDRUM* MIDI_DRUM, struct libusb_device_handle *
 	}
 
     //xbox RB kit
-    *devh = libusb_open_device_with_vid_pid(NULL, 0x1bad, 0x0003);
+    *devh = libusb_open_device_with_vid_pid(NULL, 0x1bad, 0x0002);
     if(*devh){
         MIDI_DRUM->kit=XB_ROCKBAND;
         return 0;

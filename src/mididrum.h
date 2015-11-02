@@ -44,10 +44,12 @@ enum GM{
 #define min(a, b) (((a) < (b)) ? (a) : (b))
 
 typedef enum {
-    RED = 0,
+    GREEN = 0,
+    RED,
     YELLOW,
     BLUE,
-    GREEN,
+    ORANGE,
+    PICK,
     YELLOW_CYMBAL,
     BLUE_CYMBAL,
     GREEN_CYMBAL,

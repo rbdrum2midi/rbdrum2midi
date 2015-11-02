@@ -1,0 +1,36 @@
+         VV 5 way selector
+00140000 XX000000 00000080 00000000 00000000 cd79b71a 000000
+e5 - bridge
+b2 - bridge mid
+7f - mid
+4c - mid neck
+19 - neck
+
+      VV buttons
+001400XX b2000000 00000080 00000000 00000000 cd79b71a 000000
+
+10 - green
+20 - red
+80 - yellow
+40 - blue
+01 - orange
+
+    V upper buttons
+001440XX b2000000 00000080 00000000 00000000 cd79b71a 000000
+
+     V strum 1 up, 2 down, 0 none (also Dbutton 4 lft 8 rt)
+00140X00 b2000000 00000080 00000000 00000000 cd79b71a 000000
+
+       V xbox button
+00140004 b2000000 00000080 00000000 00000000 cd79b71a 000000
+
+    V 1 start, 2 back
+00140000 b2000000 00000080 00000000 00000000 cd79b71a 000000
+
+                      VVVV wammy (vibrato)
+00140000 b2000000 00000080 00000000 00000000 cd79b71a 000000
+
+0080 - open
+  ^ - seems to be the msb
+ff7f - max
+ ^ seems to only change at max
