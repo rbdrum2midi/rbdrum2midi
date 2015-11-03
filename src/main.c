@@ -285,14 +285,12 @@ int main(int argc, char **argv)
     MIDI_DRUM->midi_note[YELLOW] = GM_HI_TOM;
     MIDI_DRUM->midi_note[BLUE] = GM_MID_TOM;
     MIDI_DRUM->midi_note[GREEN] = GM_LO_TOM;
-    MIDI_DRUM->midi_note[YELLOW_CYMBAL] = GM_OPEN_HAT;
-    MIDI_DRUM->midi_note[GREEN_CYMBAL] = GM_CRASH;
-    MIDI_DRUM->midi_note[BLUE_CYMBAL] = GM_RIDE;
-    MIDI_DRUM->midi_note[ORANGE_CYMBAL] = GM_CRASH;
-    MIDI_DRUM->midi_note[ORANGE_BASS] = GM_KICK;
-    MIDI_DRUM->midi_note[BLACK_BASS] = 0;
-    MIDI_DRUM->midi_note[OPEN_HAT] = GM_OPEN_HAT;
-    MIDI_DRUM->midi_note[CLOSED_HAT] = GM_CLOSED_HAT;
+    MIDI_DRUM->midi_note[ORANGE] = GM_LO_TOM;
+    MIDI_DRUM->midi_note[HI_RED] = MIDI_DRUM->midi_note[RED]+12;
+    MIDI_DRUM->midi_note[HI_YELLOW] = MIDI_DRUM->midi_note[YELLOW]+12;
+    MIDI_DRUM->midi_note[HI_GREEN] = MIDI_DRUM->midi_note[GREEN]+12;
+    MIDI_DRUM->midi_note[HI_BLUE] = MIDI_DRUM->midi_note[BLUE]+12;
+    MIDI_DRUM->midi_note[HI_ORANGE] = MIDI_DRUM->midi_note[ORANGE]+12;
 
     if (argc > 1) {
         for (i = 1;i<argc;i++)
@@ -334,18 +332,27 @@ int main(int argc, char **argv)
             else if (strcmp(argv[i], "-r") == 0) {
                 //red pad
                 MIDI_DRUM->midi_note[RED] = atoi(argv[++i]);
+                MIDI_DRUM->midi_note[HI_RED] = MIDI_DRUM->midi_note[RED]+12;
             }
             else if (strcmp(argv[i], "-y") == 0) {
                 //yellow pad
                 MIDI_DRUM->midi_note[YELLOW] = atoi(argv[++i]);
+                MIDI_DRUM->midi_note[HI_YELLOW] = MIDI_DRUM->midi_note[YELLOW]+12;
             }
             else if (strcmp(argv[i], "-g") == 0) {
                 //green pad
                 MIDI_DRUM->midi_note[GREEN] = atoi(argv[++i]);
+                MIDI_DRUM->midi_note[HI_GREEN] = MIDI_DRUM->midi_note[GREEN]+12;
             }
             else if (strcmp(argv[i], "-b") == 0) {
                 //blue pad
-                 MIDI_DRUM->midi_note[BLUE] = atoi(argv[++i]);
+                MIDI_DRUM->midi_note[BLUE] = atoi(argv[++i]);
+                MIDI_DRUM->midi_note[HI_BLUE] = MIDI_DRUM->midi_note[BLUE]+12;
+            }
+            else if (strcmp(argv[i], "-o") == 0) {
+                //blue pad
+                MIDI_DRUM->midi_note[ORANGE] = atoi(argv[++i]);
+                MIDI_DRUM->midi_note[HI_ORANGE] = MIDI_DRUM->midi_note[ORANGE]+12;
             }
 	    else if (strcmp(argv[i], "-vel") == 0) {
 	         MIDI_DRUM->default_velocity = min(max(atoi(argv[++i]),1),127); 

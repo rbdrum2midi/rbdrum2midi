@@ -15,8 +15,12 @@ void init_rb_kit(MIDIDRUM* MIDI_DRUM)
     MIDI_DRUM->buf_mask[BLUE] = 0x40;
     MIDI_DRUM->buf_indx[ORANGE] = 3;
     MIDI_DRUM->buf_mask[ORANGE] = 0x01;
-    MIDI_DRUM->buf_indx[ORANGE] = 2;
-    MIDI_DRUM->buf_mask[ORANGE] = 0x03;
+
+    MIDI_DRUM->buf_indx[PICK] = 2;
+    MIDI_DRUM->buf_mask[PICK] = 0x03;
+    MIDI_DRUM->buf_indx[HINOTE] = 2;
+    MIDI_DRUM->buf_mask[HINOTE] = 0x40;
+
 }
 
 static inline void calc_velocity(MIDIDRUM* MIDI_DRUM, unsigned char value)
@@ -68,11 +72,13 @@ void cb_irq_rb(struct libusb_transfer *transfer)
     }
 
     //RockBand 3 Drumkit
-    get_pick(MIDI_DRUM,RED);
+    get_state(MIDI_DRUM,RED);
     get_state(MIDI_DRUM,YELLOW);
     get_state(MIDI_DRUM,GREEN);
     get_state(MIDI_DRUM,BLUE);
     get_state(MIDI_DRUM,ORANGE);
+    get_state(MIDI_DRUM,PICK);
+    get_state(MIDI_DRUM,HINOTE);
     //cymbals are same data as pads
     MIDI_DRUM->drum_state[YELLOW_CYMBAL] = MIDI_DRUM->drum_state[YELLOW];
     MIDI_DRUM->drum_state[GREEN_CYMBAL] = MIDI_DRUM->drum_state[GREEN];
