@@ -57,7 +57,7 @@ void cb_irq_rb(struct libusb_transfer *transfer)
         transfer = NULL;
         return;
     }
-    int j;
+    int i,j,k;
 
     //RockBand 3 Drumkit
     get_state(MIDI_DRUM,RED);
@@ -68,24 +68,23 @@ void cb_irq_rb(struct libusb_transfer *transfer)
     get_state(MIDI_DRUM,PICK);
     get_state(MIDI_DRUM,HINOTE);
 
-    if(MIDI_DRUM.drum_state[PICK] && !MIDI_DRUM.prev_state[PICK])
+    if(MIDI_DRUM->drum_state[PICK] && !MIDI_DRUM->prev_state[PICK])
     {
         //new notes
-        int i = RED:
-        int k;
+        i = RED;
         //first kill all old ones
         old_off(MIDI_DRUM); 
         //then send the new notes
-        if(MIDI_DRUM.drum_state[HINOTE])
+        if(MIDI_DRUM->drum_state[HINOTE])
             i = HI_GREEN;
         for(j=0;j<5;j++)
-            if(MIDI_DRUM.drum_state[j])
+            if(MIDI_DRUM->drum_state[j])
             {
                 MIDI_DRUM->notedown( MIDI_DRUM->sequencer, MIDI_DRUM->channel, MIDI_DRUM->midi_note[j+i], MIDI_DRUM->velocity);
                 //swap the 2 so low notes and high notes are correct
-                k = MIDI_DRUM.drum_state[i+j];
-                MIDI_DRUM.drum_state[i+j] = MIDI_DRUM.drum_state[j];
-                MIDI_DRUM.drum_state[j] = k;
+                k = MIDI_DRUM->drum_state[i+j];
+                MIDI_DRUM->drum_state[i+j] = MIDI_DRUM->drum_state[j];
+                MIDI_DRUM->drum_state[j] = k;
                 
             }
     }
@@ -93,7 +92,7 @@ void cb_irq_rb(struct libusb_transfer *transfer)
     {
         //stop any notes that are let go
         for(j=0;j<PICK;j++)
-            if(!MIDI_DRUM.drum_state[j] && MIDI_DRUM.prev_state[j]) 
+            if(!MIDI_DRUM->drum_state[j] && MIDI_DRUM->prev_state[j]) 
                 MIDI_DRUM->noteup(MIDI_DRUM->sequencer, MIDI_DRUM->channel, MIDI_DRUM->midi_note[j], 0);
         
     }
