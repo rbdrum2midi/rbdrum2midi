@@ -84,28 +84,28 @@ void print_hits(MIDIDRUM* MIDI_DRUM)
 {
     if ( MIDI_DRUM->drum_state[RED] ||  
          MIDI_DRUM->drum_state[YELLOW] ||
-  	 MIDI_DRUM->drum_state[BLUE] ||
-    	 MIDI_DRUM->drum_state[GREEN] ||
-    	 MIDI_DRUM->drum_state[ORANGE_CYMBAL] || 
-	 MIDI_DRUM->drum_state[YELLOW_CYMBAL] ||  
-	 MIDI_DRUM->drum_state[ORANGE_BASS]   ||
-	 MIDI_DRUM->drum_state[BLACK_BASS] ) {
-        printf("%s %s %s %s %s %s %s %s\n",  MIDI_DRUM->drum_state[RED]>0?"VV":"  ",
-                                    MIDI_DRUM->drum_state[YELLOW]>0?"VV":"  ", 
-    				    MIDI_DRUM->drum_state[BLUE]>0?"VV":"  ", 
-    				    MIDI_DRUM->drum_state[GREEN]>0?"VV":"  ",
-    				    MIDI_DRUM->drum_state[ORANGE_CYMBAL]>0?"VV":"  ",
-                                    MIDI_DRUM->drum_state[YELLOW_CYMBAL]>0?"VV":"  ",
-    				    MIDI_DRUM->drum_state[ORANGE_BASS]>0?"VV":"  ",
-    				    MIDI_DRUM->drum_state[BLACK_BASS]>0?"VV":"  "); 
+         MIDI_DRUM->drum_state[BLUE] ||
+         MIDI_DRUM->drum_state[GREEN] ||
+         MIDI_DRUM->drum_state[ORANGE_CYMBAL] || 
+         MIDI_DRUM->drum_state[YELLOW_CYMBAL] ||  
+         MIDI_DRUM->drum_state[ORANGE_BASS]   ||
+         MIDI_DRUM->drum_state[BLACK_BASS] ) {
+         printf("%s %s %s %s %s %s %s %s\n",  MIDI_DRUM->drum_state[RED]>0?"VV":"  ",
+                MIDI_DRUM->drum_state[YELLOW]>0?"VV":"  ", 
+                MIDI_DRUM->drum_state[BLUE]>0?"VV":"  ", 
+                MIDI_DRUM->drum_state[GREEN]>0?"VV":"  ",
+                MIDI_DRUM->drum_state[ORANGE_CYMBAL]>0?"VV":"  ",
+                MIDI_DRUM->drum_state[YELLOW_CYMBAL]>0?"VV":"  ",
+                MIDI_DRUM->drum_state[ORANGE_BASS]>0?"VV":"  ",
+                MIDI_DRUM->drum_state[BLACK_BASS]>0?"VV":"  "); 
         printf("%02i %02i %02i %02i %02i %02i %02i %02i\n", MIDI_DRUM->drum_state[RED],
-                                              MIDI_DRUM->drum_state[YELLOW],
-    					      MIDI_DRUM->drum_state[BLUE], 
-    					      MIDI_DRUM->drum_state[GREEN], 
-    					      MIDI_DRUM->drum_state[ORANGE_CYMBAL],
-                                              MIDI_DRUM->drum_state[YELLOW_CYMBAL], 
-    					      MIDI_DRUM->drum_state[ORANGE_BASS],
-					      MIDI_DRUM->drum_state[BLACK_BASS]);
+              MIDI_DRUM->drum_state[YELLOW],
+              MIDI_DRUM->drum_state[BLUE], 
+              MIDI_DRUM->drum_state[GREEN], 
+              MIDI_DRUM->drum_state[ORANGE_CYMBAL],
+              MIDI_DRUM->drum_state[YELLOW_CYMBAL], 
+              MIDI_DRUM->drum_state[ORANGE_BASS],
+              MIDI_DRUM->drum_state[BLACK_BASS]);
     }
 }
 

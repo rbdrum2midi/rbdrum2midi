@@ -37,26 +37,13 @@ static inline void handle_drum(MIDIDRUM* MIDI_DRUM, unsigned char drum)
    }
 }
 
-static inline void handle_bass(MIDIDRUM* MIDI_DRUM, unsigned char drum)
+static inline void old_off(MIDIDRUM* MIDI_DRUM)
 {
-    if (MIDI_DRUM->drum_state[drum] != MIDI_DRUM->prev_state[drum]) {
-        if (MIDI_DRUM->drum_state[drum]) {
-            MIDI_DRUM->velocity = MIDI_DRUM->default_velocity;
-            MIDI_DRUM->notedown( MIDI_DRUM->sequencer, MIDI_DRUM->channel, MIDI_DRUM->midi_note[drum], MIDI_DRUM->velocity);
-        if(MIDI_DRUM->hat_mode == drum)
-	    {
-		MIDI_DRUM->midi_note[MIDI_DRUM->hat] = MIDI_DRUM->midi_note[CLOSED_HAT];
-	    }
-        }
-        // Up
-        else {
-            MIDI_DRUM->noteup(MIDI_DRUM->sequencer, MIDI_DRUM->channel, MIDI_DRUM->midi_note[drum], 0);
-       if(MIDI_DRUM->hat_mode == drum)
-	   {
-	       MIDI_DRUM->midi_note[MIDI_DRUM->hat] = MIDI_DRUM->midi_note[OPEN_HAT];
-	   }
-        }
-    }
+    int i;
+    MIDI_DRUM->velocity = MIDI_DRUM->default_velocity;
+    for(i=0;i<PICK;i++)
+        if (MIDI_DRUM->prev_state[i])
+            MIDI_DRUM->noteup(MIDI_DRUM->sequencer, MIDI_DRUM->channel, MIDI_DRUM->midi_note[i], 0);
 }
 
 //callback for rockband kit
@@ -70,6 +57,7 @@ void cb_irq_rb(struct libusb_transfer *transfer)
         transfer = NULL;
         return;
     }
+    int j;
 
     //RockBand 3 Drumkit
     get_state(MIDI_DRUM,RED);
@@ -79,27 +67,36 @@ void cb_irq_rb(struct libusb_transfer *transfer)
     get_state(MIDI_DRUM,ORANGE);
     get_state(MIDI_DRUM,PICK);
     get_state(MIDI_DRUM,HINOTE);
-    //cymbals are same data as pads
-    MIDI_DRUM->drum_state[YELLOW_CYMBAL] = MIDI_DRUM->drum_state[YELLOW];
-    MIDI_DRUM->drum_state[GREEN_CYMBAL] = MIDI_DRUM->drum_state[GREEN];
-    MIDI_DRUM->drum_state[BLUE_CYMBAL] = MIDI_DRUM->drum_state[BLUE];
-    get_state(MIDI_DRUM,ORANGE_BASS);
-    get_state(MIDI_DRUM,BLACK_BASS);
 
-    handle_drum(MIDI_DRUM,RED); 
-    if(MIDI_DRUM->drum_state[CYMBAL_FLAG]){
-    
-       	handle_drum(MIDI_DRUM,YELLOW_CYMBAL); 
-       	handle_drum(MIDI_DRUM,BLUE_CYMBAL); 
-       	handle_drum(MIDI_DRUM,GREEN_CYMBAL); 
-    }    
-    else{
-        handle_drum(MIDI_DRUM,YELLOW);
-       	handle_drum(MIDI_DRUM,BLUE);
-        handle_drum(MIDI_DRUM,GREEN);
-    }   
-    handle_bass(MIDI_DRUM,ORANGE_BASS);
-    handle_bass(MIDI_DRUM,BLACK_BASS);
+    if(MIDI_DRUM.drum_state[PICK] && !MIDI_DRUM.prev_state[PICK])
+    {
+        //new notes
+        int i = RED:
+        int k;
+        //first kill all old ones
+        old_off(MIDI_DRUM); 
+        //then send the new notes
+        if(MIDI_DRUM.drum_state[HINOTE])
+            i = HI_GREEN;
+        for(j=0;j<5;j++)
+            if(MIDI_DRUM.drum_state[j])
+            {
+                MIDI_DRUM->notedown( MIDI_DRUM->sequencer, MIDI_DRUM->channel, MIDI_DRUM->midi_note[j+i], MIDI_DRUM->velocity);
+                //swap the 2 so low notes and high notes are correct
+                k = MIDI_DRUM.drum_state[i+j];
+                MIDI_DRUM.drum_state[i+j] = MIDI_DRUM.drum_state[j];
+                MIDI_DRUM.drum_state[j] = k;
+                
+            }
+    }
+    else
+    {
+        //stop any notes that are let go
+        for(j=0;j<PICK;j++)
+            if(!MIDI_DRUM.drum_state[j] && MIDI_DRUM.prev_state[j]) 
+                MIDI_DRUM->noteup(MIDI_DRUM->sequencer, MIDI_DRUM->channel, MIDI_DRUM->midi_note[j], 0);
+        
+    }
         
     //now that the time-critical stuff is done, lets do the assignments 
     memcpy(MIDI_DRUM->prev_state,MIDI_DRUM->drum_state,NUM_DRUMS);
@@ -107,7 +104,7 @@ void cb_irq_rb(struct libusb_transfer *transfer)
     if (MIDI_DRUM->verbose)
     {
         print_hits(MIDI_DRUM);
-	print_buf(MIDI_DRUM);
+    	print_buf(MIDI_DRUM);
     } 
     if (libusb_submit_transfer(transfer) < 0)
         do_exit = 2;
