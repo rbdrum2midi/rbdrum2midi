@@ -281,11 +281,11 @@ int main(int argc, char **argv)
     memset(MIDI_DRUM->prev_state,0,NUM_DRUMS);
     
     //default midi values;
-    MIDI_DRUM->midi_note[RED] = GM_SNARE; 
-    MIDI_DRUM->midi_note[YELLOW] = GM_HI_TOM;
-    MIDI_DRUM->midi_note[BLUE] = GM_MID_TOM;
-    MIDI_DRUM->midi_note[GREEN] = GM_LO_TOM;
-    MIDI_DRUM->midi_note[ORANGE] = GM_LO_TOM;
+    MIDI_DRUM->midi_note[GREEN] = 41;//F
+    MIDI_DRUM->midi_note[RED] = 43; //G
+    MIDI_DRUM->midi_note[YELLOW] = 48; //C
+    MIDI_DRUM->midi_note[BLUE] = 50;//D
+    MIDI_DRUM->midi_note[ORANGE] = 57;//A
     MIDI_DRUM->midi_note[HI_RED] = MIDI_DRUM->midi_note[RED]+12;
     MIDI_DRUM->midi_note[HI_YELLOW] = MIDI_DRUM->midi_note[YELLOW]+12;
     MIDI_DRUM->midi_note[HI_GREEN] = MIDI_DRUM->midi_note[GREEN]+12;
