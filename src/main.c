@@ -22,6 +22,7 @@
 #include "rbkit.h"
 #include "rb1kit.h"
 #include "ghkit.h"
+#include "rb3keyboard.h"
 #include "alsadriver.h"
 #include "jackdriver.h"
 
@@ -48,6 +49,13 @@ static int find_rbdrum_device(MIDIDRUM* MIDI_DRUM, struct libusb_device_handle *
         MIDI_DRUM->kit=WII_ROCKBAND;
         return 0;
 	}
+
+    //Wìì RB3 Keyboard
+    *devh = libusb_open_device_with_vid_pid(NULL, 0x1bad, 0x3330);
+    if(*devh){
+        MIDI_DRUM->kit=WII_ROCKBAND3_KEYBOARD;
+        return 0;
+        }
 
     //PS3 GH kit
     *devh = libusb_open_device_with_vid_pid(NULL, 0x12ba, 0x0120);
@@ -77,6 +85,9 @@ void init_kit(MIDIDRUM* MIDI_DRUM)
         case GUITAR_HERO:
             init_gh_kit(MIDI_DRUM);
 	        break;
+	case WII_ROCKBAND3_KEYBOARD:
+	    init_rb3_keyboard(MIDI_DRUM);
+		break;
     }
 }
 
@@ -107,6 +118,12 @@ void print_hits(MIDIDRUM* MIDI_DRUM)
     					      MIDI_DRUM->drum_state[ORANGE_BASS],
 					      MIDI_DRUM->drum_state[BLACK_BASS]);
     }
+}
+
+void print_keys(MIDIDRUM* MIDI_DRUM)
+{
+    if (MIDI_DRUM->key_state!=MIDI_DRUM->prev_keystate)
+	printf("%08x %02x\n",MIDI_DRUM->key_state,MIDI_DRUM->velocity);
 }
 
 void print_buf(MIDIDRUM* MIDI_DRUM)
@@ -178,6 +195,11 @@ static int alloc_transfers(MIDIDRUM* MIDI_DRUM, libusb_device_handle *devh, stru
         libusb_fill_interrupt_transfer(*irq_transfer, devh, EP_INTR, MIDI_DRUM->irqbuf,
             sizeof(MIDI_DRUM->irqbuf), cb_irq_gh, (void*)MIDI_DRUM, 0);
         if( MIDI_DRUM->verbose)printf("Guitar Hero World Tour drum kit detected.\n");
+    }
+    else if(MIDI_DRUM->kit == WII_ROCKBAND3_KEYBOARD){
+        libusb_fill_interrupt_transfer(*irq_transfer, devh, EP_INTR, MIDI_DRUM->irqbuf,
+            sizeof(MIDI_DRUM->irqbuf), cb_irq_rb3_keyboard, (void*)MIDI_DRUM, 0);
+        if( MIDI_DRUM->verbose)printf("Wii Rock Band 3 Wireless keyboard detected.\n");
     }
     else{
         printf("error in drum type! %i\n",MIDI_DRUM->kit);

@@ -67,7 +67,8 @@ typedef enum {
     WII_ROCKBAND,
     XB_ROCKBAND1,
     PS_ROCKBAND1,
-    GUITAR_HERO
+    GUITAR_HERO,
+    WII_ROCKBAND3_KEYBOARD
 }kit_types;
 
 //primary object for the system
@@ -81,6 +82,8 @@ typedef struct drum_midi
     unsigned char *buf;
     unsigned char drum_state[NUM_DRUMS];
     unsigned char prev_state[NUM_DRUMS];
+    unsigned int key_state;
+    unsigned int prev_keystate;
     void* sequencer;//want to move to generic sequencer, but currently more worried about latency
 //    snd_seq_t *g_seq;
 //    int g_port;
@@ -110,6 +113,7 @@ static inline void get_state(MIDIDRUM* MIDI_DRUM, unsigned char drum){MIDI_DRUM-
 //inline void noteup(snd_seq_t *seq, int port, int chan, int pitch, int vol);
 void print_hits(MIDIDRUM* MIDI_DRUM);
 void print_buf(MIDIDRUM* MIDI_DRUM);
+void print_keys(MIDIDRUM* MIDI_DRUM);
 
 //other globals
 int do_exit;
