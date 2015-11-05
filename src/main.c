@@ -348,10 +348,12 @@ int main(int argc, char **argv)
                  MIDI_DRUM->midi_note[BLUE] = atoi(argv[++i]);
             }
 	    else if (strcmp(argv[i], "-vel") == 0) {
-	         MIDI_DRUM->default_velocity = min(max(atoi(argv[++i]),1),127); 
+             r = atoi(argv[++i]);
+	         MIDI_DRUM->default_velocity = min(max(r,1),127); 
 	    }
 	    else if (strcmp(argv[i], "-c") == 0) {
-	         MIDI_DRUM->channel = min(max(atoi(argv[++i]),0),15); 
+             r = atoi(argv[++i]);
+	         MIDI_DRUM->channel = min(max(r,0),15); 
 	    }
 	    else if (strcmp(argv[i], "-htp") == 0){
 	         if (strcmp(argv[++i], "0" ) == 0)
