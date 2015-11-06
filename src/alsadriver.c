@@ -137,6 +137,22 @@ void noteup_alsa(void* seqq, unsigned char chan, unsigned char note, unsigned ch
     snd_seq_drain_output(seq->g_seq);
 }
 
+void pitch_alsa(void* seqq, unsigned char chan, short val)
+{
+    ALSA_SEQ* seq = (ALSA_SEQ*)seqq;
+    snd_seq_event_t ev;
+
+    snd_seq_ev_clear(&ev);
+    snd_seq_ev_set_source(&ev, seq->g_port);
+    snd_seq_ev_set_subs(&ev);
+    snd_seq_ev_set_direct(&ev);
+
+    snd_seq_ev_set_pitchbend(&ev, chan, val);
+
+    snd_seq_event_output(seq->g_seq, &ev);
+    snd_seq_drain_output(seq->g_seq);
+}
+
 int init_alsa(ALSA_SEQ* seq, unsigned char verbose)
 {
     if ( verbose) printf("Setting up alsa\n");

@@ -13,5 +13,6 @@ int init_jack(JACK_SEQ* seq, unsigned char verbose);
 void close_jack(JACK_SEQ* seq);
 void noteup_jack(void* seqq, unsigned char chan, unsigned char note, unsigned char vel);
 void notedown_jack(void* seqq, unsigned char chan, unsigned char note, unsigned char vel);
+void pitch_jack(void* seqq, unsigned char chan, short val);
 
 #endif

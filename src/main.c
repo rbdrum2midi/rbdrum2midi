@@ -281,11 +281,11 @@ int main(int argc, char **argv)
     memset(MIDI_DRUM->prev_state,0,NUM_DRUMS);
     
     //default midi values;
-    MIDI_DRUM->midi_note[GREEN] = 41;//F
-    MIDI_DRUM->midi_note[RED] = 43; //G
-    MIDI_DRUM->midi_note[YELLOW] = 48; //C
-    MIDI_DRUM->midi_note[BLUE] = 50;//D
-    MIDI_DRUM->midi_note[ORANGE] = 57;//A
+    MIDI_DRUM->midi_note[GREEN] = 53;//F
+    MIDI_DRUM->midi_note[RED] = 55; //G
+    MIDI_DRUM->midi_note[YELLOW] = 60; //C
+    MIDI_DRUM->midi_note[BLUE] = 62;//D
+    MIDI_DRUM->midi_note[ORANGE] = 69;//A
     MIDI_DRUM->midi_note[HI_RED] = MIDI_DRUM->midi_note[RED]+12;
     MIDI_DRUM->midi_note[HI_YELLOW] = MIDI_DRUM->midi_note[YELLOW]+12;
     MIDI_DRUM->midi_note[HI_GREEN] = MIDI_DRUM->midi_note[GREEN]+12;
@@ -445,7 +445,7 @@ int main(int argc, char **argv)
     }
     if(MIDI_DRUM->hat_mode)
     {
-        MIDI_DRUM->midi_note[MIDI_DRUM->hat] = MIDI_DRUM->midi_note[OPEN_HAT];
+        //MIDI_DRUM->midi_note[MIDI_DRUM->hat] = MIDI_DRUM->midi_note[OPEN_HAT];
     }
     r = libusb_init(NULL);
     if (r < 0) {
@@ -497,12 +497,14 @@ int main(int argc, char **argv)
         MIDI_DRUM->sequencer = (void*)&jseqq;
         MIDI_DRUM->noteup = &noteup_jack;
         MIDI_DRUM->notedown = notedown_jack;
+        MIDI_DRUM->pitchbend = pitch_jack;
     }
     else{
     	r = init_alsa(&aseqq,MIDI_DRUM->verbose);
         MIDI_DRUM->sequencer = (void*)&aseqq;
         MIDI_DRUM->noteup = &noteup_alsa;
         MIDI_DRUM->notedown = notedown_alsa;
+        MIDI_DRUM->pitchbend = pitch_alsa;
     }
     // 0 is fail.
     if (r == 0) {

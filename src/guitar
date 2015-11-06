@@ -34,3 +34,5 @@ b2 - bridge mid
   ^ - seems to be the msb
 ff7f - max
  ^ seems to only change at max
+
+ so it rolls over, going up from 8000 to 0000 to 7fff

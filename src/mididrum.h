@@ -49,14 +49,17 @@ typedef enum {
     YELLOW,
     BLUE,
     ORANGE,
+    PICK,//5 //warning, don't mess with the order here, it affects guitar logic
+    HINOTE,
     HI_GREEN,
     HI_RED,
     HI_YELLOW,
     HI_BLUE,
     HI_ORANGE,
-    PICK,
-    HINOTE,
-    YELLOW_CYMBAL,
+    WHAMMY_LSB,
+    WHAMMY_MSB,
+    
+    YELLOW_CYMBAL = 4,
     BLUE_CYMBAL,
     GREEN_CYMBAL,
     ORANGE_CYMBAL,
@@ -65,6 +68,7 @@ typedef enum {
     CYMBAL_FLAG,
     OPEN_HAT,
     CLOSED_HAT,
+    NOTHING,
     NUM_DRUMS
 } drums;
 
@@ -111,6 +115,7 @@ typedef struct drum_midi
 //    void (*handle_bass)(unsigned char);
     void (*noteup)(void* seq, unsigned char chan, unsigned char note, unsigned char vel);
     void (*notedown)(void* seq, unsigned char chan, unsigned char note, unsigned char vel);
+    void (*pitchbend)(void* seq, unsigned char chan, short val);
 }MIDIDRUM;
 
 static inline void get_state(MIDIDRUM* MIDI_DRUM, unsigned char drum){MIDI_DRUM->drum_state[drum] = MIDI_DRUM->buf[MIDI_DRUM->buf_indx[drum]] & MIDI_DRUM->buf_mask[drum];}

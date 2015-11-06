@@ -323,6 +323,23 @@ void notedown_jack(void* seqq, unsigned char chan, unsigned char note, unsigned 
     queue_message(seq->ringbuffer,&ev);
 }
 
+void pitch_jack(void* seqq, unsigned char chan, short val)
+{
+    struct MidiMessage ev;
+    JACK_SEQ* seq = (JACK_SEQ*)seqq;
+    ev.len = 3;
+    ev.data[0] = 0xE0 + chan;
+    ev.data[1] = val&0x7f;
+    ev.data[2] = val>>7;
+    ev.data[2] = (val>>7)&0x7f;
+    if(val<=0)
+        ev.data[2] |= 0x20;
+
+    ev.time = jack_frame_time(seq->jack_client);
+
+    queue_message(seq->ringbuffer,&ev);
+}
+
 //this is run in the main thread
 int 
 init_jack(JACK_SEQ* seq, unsigned char verbose)
