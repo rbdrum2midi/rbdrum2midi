@@ -80,9 +80,11 @@ typedef enum {
     XB_ROCKBAND1,
     PS_ROCKBAND1,
     GUITAR_HERO,
+    DRUMS,
 
     XB_RB_GUITAR,
-    PS_RB_GUITAR
+    PS_RB_GUITAR,
+    GUITARS
 }kit_types;
 
 //primary object for the system

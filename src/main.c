@@ -498,11 +498,6 @@ int main(int argc, char **argv)
         return -r;
     }
     init_kit(MIDI_DRUM);
-    if(MIDI_DRUM->hat_mode)
-    {
-        MIDI_DRUM->midi_note[MIDI_DRUM->hat] = MIDI_DRUM->midi_note[OPEN_HAT];
-    }
-
     if (libusb_kernel_driver_active(devh, 0)) {
         r = libusb_detach_kernel_driver(devh, 0);
         if (r < 0) {
@@ -517,6 +512,11 @@ int main(int argc, char **argv)
         return -r;
     }
     printf("claimed interface\n");
+    if(MIDI_DRUM->kit < DRUMS && MIDI_DRUM->hat_mode)
+    {
+        MIDI_DRUM->midi_note[MIDI_DRUM->hat] = MIDI_DRUM->midi_note[OPEN_HAT];
+    }
+
 
     if(seqtype >=2){
         //jack
