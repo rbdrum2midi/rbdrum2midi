@@ -2,7 +2,7 @@
 
 cmake_minimum_required(VERSION 2.8)
 
-project (rbguitar2midi)
+project (rbdrum2midi)
 
 set(CMAKE_C_FLAGS "-Wall -g")
 
@@ -17,7 +17,7 @@ link_directories (${JACK_LIBRARY_DIRS} ${ALSA_LIBRARY_DIRS} ${LIBUSB_1_INCLUDE_D
 
 # config libraries
 
-add_executable(rbguitar2midi
+add_executable(rbdrum2midi
   jackdriver.c
   main.c
   alsadriver.c
@@ -25,13 +25,14 @@ add_executable(rbguitar2midi
   jackdriver.c
   rb1kit.c
   rbkit.c
+  rbguitar.c
 )
 
 
-target_link_libraries(rbguitar2midi ${JACK_LIBRARIES} ${ALSA_LIBRARIES} ${LIBUSB_1_LIBRARIES} m)
+target_link_libraries(rbdrum2midi ${JACK_LIBRARIES} ${ALSA_LIBRARIES} ${LIBUSB_1_LIBRARIES} m)
 
 # config install
-install(TARGETS rbguitar2midi
+install(TARGETS rbdrum2midi
   DESTINATION bin
 )
 

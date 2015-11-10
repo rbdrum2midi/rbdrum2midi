@@ -21,13 +21,14 @@
 #include "mididrum.h" 
 #include "rbkit.h"
 #include "rb1kit.h"
+#include "rbguitar.h"
 #include "ghkit.h"
 #include "alsadriver.h"
 #include "jackdriver.h"
 
 static int find_rbdrum_device(MIDIDRUM* MIDI_DRUM, struct libusb_device_handle **devh)
 {
-    // TODO: Currently the i argument is ignored.
+    //DRUMS
     //PS3 RB kit
     *devh = libusb_open_device_with_vid_pid(NULL, 0x12ba, 0x0210);
     if(*devh){
@@ -36,7 +37,7 @@ static int find_rbdrum_device(MIDIDRUM* MIDI_DRUM, struct libusb_device_handle *
 	}
 
     //xbox RB kit
-    *devh = libusb_open_device_with_vid_pid(NULL, 0x1bad, 0x0002);
+    *devh = libusb_open_device_with_vid_pid(NULL, 0x1bad, 0x0003);
     if(*devh){
         MIDI_DRUM->kit=XB_ROCKBAND;
         return 0;
@@ -53,7 +54,24 @@ static int find_rbdrum_device(MIDIDRUM* MIDI_DRUM, struct libusb_device_handle *
     *devh = libusb_open_device_with_vid_pid(NULL, 0x12ba, 0x0120);
     if(*devh){
         MIDI_DRUM->kit=GUITAR_HERO;
+        return 0;
     }
+
+
+    //GUITARS
+    //ps3
+    *devh = libusb_open_device_with_vid_pid(NULL, 0x12ba, 0x0200);
+    if(*devh){
+        MIDI_DRUM->kit=PS_RB_GUITAR;
+        return 0;
+	}
+
+    //xbox360
+    *devh = libusb_open_device_with_vid_pid(NULL, 0x1bad, 0x0002);
+    if(*devh){
+        MIDI_DRUM->kit=XB_RB_GUITAR;
+        return 0;
+	}
   
     return *devh ? 0 : -EIO;
 }
@@ -77,6 +95,10 @@ void init_kit(MIDIDRUM* MIDI_DRUM)
         case GUITAR_HERO:
             init_gh_kit(MIDI_DRUM);
 	        break;
+        case XB_RB_GUITAR:
+        case PS_RB_GUITAR:
+            init_rb_guitar(MIDI_DRUM);
+            break;
     }
 }
 
@@ -178,6 +200,11 @@ static int alloc_transfers(MIDIDRUM* MIDI_DRUM, libusb_device_handle *devh, stru
         libusb_fill_interrupt_transfer(*irq_transfer, devh, EP_INTR, MIDI_DRUM->irqbuf,
             sizeof(MIDI_DRUM->irqbuf), cb_irq_gh, (void*)MIDI_DRUM, 0);
         if( MIDI_DRUM->verbose)printf("Guitar Hero World Tour drum kit detected.\n");
+    }
+    else if(MIDI_DRUM->kit == PS_RB_GUITAR || MIDI_DRUM->kit == XB_RB_GUITAR){
+        libusb_fill_interrupt_transfer(*irq_transfer, devh, EP_INTR, MIDI_DRUM->irqbuf,
+            sizeof(MIDI_DRUM->irqbuf), cb_irq_rb_guitar, (void*)MIDI_DRUM, 0);
+        if( MIDI_DRUM->verbose)printf("Rock Band Guitar detected.\n");
     }
     else{
         printf("error in drum type! %i\n",MIDI_DRUM->kit);
@@ -443,10 +470,6 @@ int main(int argc, char **argv)
             //i = atoi(argv[1]);
         }
     }
-    if(MIDI_DRUM->hat_mode)
-    {
-        //MIDI_DRUM->midi_note[MIDI_DRUM->hat] = MIDI_DRUM->midi_note[OPEN_HAT];
-    }
     r = libusb_init(NULL);
     if (r < 0) {
         fprintf(stderr, "failed to initialise libusb\n");
@@ -475,6 +498,10 @@ int main(int argc, char **argv)
         return -r;
     }
     init_kit(MIDI_DRUM);
+    if(MIDI_DRUM->hat_mode)
+    {
+        MIDI_DRUM->midi_note[MIDI_DRUM->hat] = MIDI_DRUM->midi_note[OPEN_HAT];
+    }
 
     if (libusb_kernel_driver_active(devh, 0)) {
         r = libusb_detach_kernel_driver(devh, 0);

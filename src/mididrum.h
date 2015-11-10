@@ -66,9 +66,9 @@ typedef enum {
     ORANGE_BASS,
     BLACK_BASS,
     CYMBAL_FLAG,
+    NOTHING,
     OPEN_HAT,
     CLOSED_HAT,
-    NOTHING,
     NUM_DRUMS
 } drums;
 
@@ -79,7 +79,10 @@ typedef enum {
     WII_ROCKBAND,
     XB_ROCKBAND1,
     PS_ROCKBAND1,
-    GUITAR_HERO
+    GUITAR_HERO,
+
+    XB_RB_GUITAR,
+    PS_RB_GUITAR
 }kit_types;
 
 //primary object for the system
@@ -93,13 +96,10 @@ typedef struct drum_midi
     unsigned char *buf;
     unsigned char drum_state[NUM_DRUMS];
     unsigned char prev_state[NUM_DRUMS];
-    void* sequencer;//want to move to generic sequencer, but currently more worried about latency
-//    snd_seq_t *g_seq;
-//    int g_port;
+    void* sequencer;
 
     unsigned char verbose;
     unsigned char dbg;
-//    int do_exit;
     unsigned char hat_mode;
     unsigned char hat;
     unsigned char bass_down;
@@ -107,12 +107,6 @@ typedef struct drum_midi
     unsigned char default_velocity;
     unsigned char irqbuf[INTR_LENGTH];
     unsigned char oldbuf[INTR_LENGTH];
-//    struct libusb_device_handle *devh;
-//    struct libusb_transfer *irq_transfer;
-
-//function pointers //getting rid of these because they seem to introduce latency
-//    void (*calc_velocity)(unsigned char);
-//    void (*handle_bass)(unsigned char);
     void (*noteup)(void* seq, unsigned char chan, unsigned char note, unsigned char vel);
     void (*notedown)(void* seq, unsigned char chan, unsigned char note, unsigned char vel);
     void (*pitchbend)(void* seq, unsigned char chan, short val);
