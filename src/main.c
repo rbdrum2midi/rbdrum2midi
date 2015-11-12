@@ -26,6 +26,26 @@
 #include "alsadriver.h"
 #include "jackdriver.h"
 
+static int claim_interface(struct libusb_device_handle **devh)
+{
+    int r;
+    if (libusb_kernel_driver_active(*devh, 0)) {
+        r = libusb_detach_kernel_driver(*devh, 0);
+        if (r < 0) {
+            printf("did not detach.\n");
+        }
+    }
+    r = libusb_claim_interface(*devh, 0);
+    if (r < 0) {
+        fprintf(stderr, "usb_claim_interface error %d (busy=%d)\n", r, LIBUSB_ERROR_BUSY);
+        //libusb_close(*devh);
+        //libusb_exit(NULL);
+        return -r;
+    }
+    printf("claimed interface\n");
+    return 0;
+}
+
 static int find_rbdrum_device(MIDIDRUM* MIDI_DRUM, struct libusb_device_handle **devh)
 {
     //DRUMS
@@ -33,6 +53,7 @@ static int find_rbdrum_device(MIDIDRUM* MIDI_DRUM, struct libusb_device_handle *
     *devh = libusb_open_device_with_vid_pid(NULL, 0x12ba, 0x0210);
     if(*devh){
         MIDI_DRUM->kit=PS_ROCKBAND;
+        if(claim_interface(devh) == 0)
         return 0;
 	}
 
@@ -40,6 +61,7 @@ static int find_rbdrum_device(MIDIDRUM* MIDI_DRUM, struct libusb_device_handle *
     *devh = libusb_open_device_with_vid_pid(NULL, 0x1bad, 0x0003);
     if(*devh){
         MIDI_DRUM->kit=XB_ROCKBAND;
+        if(claim_interface(devh) == 0)
         return 0;
 	}
 
@@ -47,6 +69,7 @@ static int find_rbdrum_device(MIDIDRUM* MIDI_DRUM, struct libusb_device_handle *
     *devh = libusb_open_device_with_vid_pid(NULL, 0x1bad, 0x3110);      
     if(*devh){
         MIDI_DRUM->kit=WII_ROCKBAND;
+        if(claim_interface(devh) == 0)
         return 0;
 	}
 
@@ -54,6 +77,7 @@ static int find_rbdrum_device(MIDIDRUM* MIDI_DRUM, struct libusb_device_handle *
     *devh = libusb_open_device_with_vid_pid(NULL, 0x12ba, 0x0120);
     if(*devh){
         MIDI_DRUM->kit=GUITAR_HERO;
+        if(claim_interface(devh) == 0)
         return 0;
     }
 
@@ -63,6 +87,8 @@ static int find_rbdrum_device(MIDIDRUM* MIDI_DRUM, struct libusb_device_handle *
     *devh = libusb_open_device_with_vid_pid(NULL, 0x12ba, 0x0200);
     if(*devh){
         MIDI_DRUM->kit=PS_RB_GUITAR;
+        if(MIDI_DRUM->verbose)printf("Playstation Guitar found\n");
+        if(claim_interface(devh) == 0)
         return 0;
 	}
 
@@ -70,6 +96,8 @@ static int find_rbdrum_device(MIDIDRUM* MIDI_DRUM, struct libusb_device_handle *
     *devh = libusb_open_device_with_vid_pid(NULL, 0x1bad, 0x0002);
     if(*devh){
         MIDI_DRUM->kit=XB_RB_GUITAR;
+        if(MIDI_DRUM->verbose)printf("XBox Guitar found\n");
+        if(claim_interface(devh) == 0)
         return 0;
 	}
   
@@ -146,6 +174,8 @@ void print_buf(MIDIDRUM* MIDI_DRUM)
     }
 }
 
+
+
 //debug mode callback
 static void cb_irq_dbg(struct libusb_transfer *transfer)
 {
@@ -189,22 +219,22 @@ static int alloc_transfers(MIDIDRUM* MIDI_DRUM, libusb_device_handle *devh, stru
             MIDI_DRUM->kit == WII_ROCKBAND){
         libusb_fill_interrupt_transfer(*irq_transfer, devh, EP_INTR, MIDI_DRUM->irqbuf,
             sizeof(MIDI_DRUM->irqbuf), cb_irq_rb, (void*)MIDI_DRUM, 0);
-        if( MIDI_DRUM->verbose)printf("Rock Band drum kit detected.\n");
+        if( MIDI_DRUM->verbose)printf("Rock Band drum kit connected.\n");
     }
     else if(MIDI_DRUM->kit == PS_ROCKBAND1 || MIDI_DRUM->kit == XB_ROCKBAND1){
         libusb_fill_interrupt_transfer(*irq_transfer, devh, EP_INTR, MIDI_DRUM->irqbuf,
             sizeof(MIDI_DRUM->irqbuf), cb_irq_rb1, (void*)MIDI_DRUM, 0);
-        if( MIDI_DRUM->verbose)printf("Rock Band 1 drum kit detected.\n");
+        if( MIDI_DRUM->verbose)printf("Rock Band 1 drum kit connected.\n");
     }
     else if(MIDI_DRUM->kit == GUITAR_HERO){
         libusb_fill_interrupt_transfer(*irq_transfer, devh, EP_INTR, MIDI_DRUM->irqbuf,
             sizeof(MIDI_DRUM->irqbuf), cb_irq_gh, (void*)MIDI_DRUM, 0);
-        if( MIDI_DRUM->verbose)printf("Guitar Hero World Tour drum kit detected.\n");
+        if( MIDI_DRUM->verbose)printf("Guitar Hero World Tour drum kit connected.\n");
     }
     else if(MIDI_DRUM->kit == PS_RB_GUITAR || MIDI_DRUM->kit == XB_RB_GUITAR){
         libusb_fill_interrupt_transfer(*irq_transfer, devh, EP_INTR, MIDI_DRUM->irqbuf,
             sizeof(MIDI_DRUM->irqbuf), cb_irq_rb_guitar, (void*)MIDI_DRUM, 0);
-        if( MIDI_DRUM->verbose)printf("Rock Band Guitar detected.\n");
+        if( MIDI_DRUM->verbose)printf("Rock Band Guitar connected.\n");
     }
     else{
         printf("error in drum type! %i\n",MIDI_DRUM->kit);
@@ -306,8 +336,10 @@ int main(int argc, char **argv)
     memset(MIDI_DRUM->oldbuf,0,INTR_LENGTH);
     memset(MIDI_DRUM->drum_state,0,NUM_DRUMS);
     memset(MIDI_DRUM->prev_state,0,NUM_DRUMS);
+    memset(MIDI_DRUM->midi_note,0,NUM_DRUMS);
     
     //default midi values;
+    /*
     MIDI_DRUM->midi_note[GREEN] = 53;//F
     MIDI_DRUM->midi_note[RED] = 55; //G
     MIDI_DRUM->midi_note[YELLOW] = 60; //C
@@ -318,6 +350,7 @@ int main(int argc, char **argv)
     MIDI_DRUM->midi_note[HI_GREEN] = MIDI_DRUM->midi_note[GREEN]+12;
     MIDI_DRUM->midi_note[HI_BLUE] = MIDI_DRUM->midi_note[BLUE]+12;
     MIDI_DRUM->midi_note[HI_ORANGE] = MIDI_DRUM->midi_note[ORANGE]+12;
+    */
 
     if (argc > 1) {
         for (i = 1;i<argc;i++)
@@ -498,20 +531,8 @@ int main(int argc, char **argv)
         return -r;
     }
     init_kit(MIDI_DRUM);
-    if (libusb_kernel_driver_active(devh, 0)) {
-        r = libusb_detach_kernel_driver(devh, 0);
-        if (r < 0) {
-            printf("did not detach.\n");
-        }
-    }
-    r = libusb_claim_interface(devh, 0);
-    if (r < 0) {
-        fprintf(stderr, "usb_claim_interface error %d %d\n", r, LIBUSB_ERROR_BUSY);
-        libusb_close(devh);
-        libusb_exit(NULL);
-        return -r;
-    }
-    printf("claimed interface\n");
+
+
     if(MIDI_DRUM->kit < DRUMS && MIDI_DRUM->hat_mode)
     {
         MIDI_DRUM->midi_note[MIDI_DRUM->hat] = MIDI_DRUM->midi_note[OPEN_HAT];

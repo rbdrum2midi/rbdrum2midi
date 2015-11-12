@@ -347,7 +347,7 @@ init_jack(JACK_SEQ* seq, unsigned char verbose)
 	int err;
     
     if(verbose)printf("opening client...\n");
-    seq->jack_client = jack_client_open("Game Drumkit Client", JackNoStartServer, NULL);
+    seq->jack_client = jack_client_open("Game Music Controller", JackNoStartServer, NULL);
 
 	if (seq->jack_client == NULL) {
         printf("Could not connect to the JACK server; run jackd first?");
