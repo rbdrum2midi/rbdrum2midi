@@ -56,27 +56,6 @@ void init_rb_guitar(MIDIDRUM* MIDI_DRUM)
         break;
     }
 
-    //note defaults
-    if(!MIDI_DRUM->midi_note[GREEN])
-        MIDI_DRUM->midi_note[GREEN] = 53;//F
-    if(!MIDI_DRUM->midi_note[RED])
-        MIDI_DRUM->midi_note[RED] = 55; //G
-    if(!MIDI_DRUM->midi_note[YELLOW])
-        MIDI_DRUM->midi_note[YELLOW] = 57;//A
-    if(!MIDI_DRUM->midi_note[BLUE])
-        MIDI_DRUM->midi_note[BLUE] = 60; //C
-    if(!MIDI_DRUM->midi_note[ORANGE])
-        MIDI_DRUM->midi_note[ORANGE] = 62;//D
-    if(!MIDI_DRUM->midi_note[HI_RED])
-        MIDI_DRUM->midi_note[HI_RED] = MIDI_DRUM->midi_note[RED]+12;
-    if(!MIDI_DRUM->midi_note[HI_YELLOW])
-        MIDI_DRUM->midi_note[HI_YELLOW] = MIDI_DRUM->midi_note[YELLOW]+12;
-    if(!MIDI_DRUM->midi_note[HI_GREEN])
-        MIDI_DRUM->midi_note[HI_GREEN] = MIDI_DRUM->midi_note[GREEN]+12;
-    if(!MIDI_DRUM->midi_note[HI_BLUE])
-        MIDI_DRUM->midi_note[HI_BLUE] = MIDI_DRUM->midi_note[BLUE]+12;
-    if(!MIDI_DRUM->midi_note[HI_ORANGE])
-        MIDI_DRUM->midi_note[HI_ORANGE] = MIDI_DRUM->midi_note[ORANGE]+12;
 }
 
 
@@ -180,7 +159,6 @@ void cb_irq_rb_guitar(struct libusb_transfer *transfer)
     
     if (MIDI_DRUM->verbose)
     {
-        print_hits(MIDI_DRUM);
     	print_buf(MIDI_DRUM);
     } 
     if (libusb_submit_transfer(transfer) < 0)

@@ -53,30 +53,34 @@ static int find_rbdrum_device(MIDIDRUM* MIDI_DRUM, struct libusb_device_handle *
     *devh = libusb_open_device_with_vid_pid(NULL, 0x12ba, 0x0210);
     if(*devh){
         MIDI_DRUM->kit=PS_ROCKBAND;
+        if(MIDI_DRUM->verbose)printf("PS3 Rockband kit found\n");
         if(claim_interface(devh) == 0)
         return 0;
-	}
+    }
 
     //xbox RB kit
     *devh = libusb_open_device_with_vid_pid(NULL, 0x1bad, 0x0003);
     if(*devh){
         MIDI_DRUM->kit=XB_ROCKBAND;
+        if(MIDI_DRUM->verbose)printf("XBox Rockband kit found\n");
         if(claim_interface(devh) == 0)
         return 0;
-	}
+    }
 
     //Wìì RB kit??
     *devh = libusb_open_device_with_vid_pid(NULL, 0x1bad, 0x3110);      
     if(*devh){
         MIDI_DRUM->kit=WII_ROCKBAND;
+        if(MIDI_DRUM->verbose)printf("Wii Rockband kit found\n");
         if(claim_interface(devh) == 0)
         return 0;
-	}
+    }
 
     //PS3 GH kit
     *devh = libusb_open_device_with_vid_pid(NULL, 0x12ba, 0x0120);
     if(*devh){
         MIDI_DRUM->kit=GUITAR_HERO;
+        if(MIDI_DRUM->verbose)printf("PS3 Guitar Hero kit found\n");
         if(claim_interface(devh) == 0)
         return 0;
     }
@@ -87,19 +91,19 @@ static int find_rbdrum_device(MIDIDRUM* MIDI_DRUM, struct libusb_device_handle *
     *devh = libusb_open_device_with_vid_pid(NULL, 0x12ba, 0x0200);
     if(*devh){
         MIDI_DRUM->kit=PS_RB_GUITAR;
-        if(MIDI_DRUM->verbose)printf("Playstation Guitar found\n");
+        if(MIDI_DRUM->verbose)printf("PS3 guitar found\n");
         if(claim_interface(devh) == 0)
         return 0;
-	}
+    }
 
     //xbox360
     *devh = libusb_open_device_with_vid_pid(NULL, 0x1bad, 0x0002);
     if(*devh){
         MIDI_DRUM->kit=XB_RB_GUITAR;
-        if(MIDI_DRUM->verbose)printf("XBox Guitar found\n");
+        if(MIDI_DRUM->verbose)printf("XBox guitar found\n");
         if(claim_interface(devh) == 0)
         return 0;
-	}
+    }
   
     return *devh ? 0 : -EIO;
 }
@@ -112,17 +116,17 @@ void init_kit(MIDIDRUM* MIDI_DRUM)
     switch(MIDI_DRUM->kit)
     {
         case PS_ROCKBAND:
-	    case XB_ROCKBAND:
-	    case WII_ROCKBAND:
+        case XB_ROCKBAND:
+        case WII_ROCKBAND:
             init_rb_kit(MIDI_DRUM);
-	        break;
+            break;
         case PS_ROCKBAND1:
-	    case XB_ROCKBAND1:
+        case XB_ROCKBAND1:
             init_rb1_kit(MIDI_DRUM);
-	        break;
+            break;
         case GUITAR_HERO:
             init_gh_kit(MIDI_DRUM);
-	        break;
+            break;
         case XB_RB_GUITAR:
         case PS_RB_GUITAR:
             init_rb_guitar(MIDI_DRUM);
@@ -165,15 +169,61 @@ void print_buf(MIDIDRUM* MIDI_DRUM)
     {
         printf("%02x%02x%02x%02x %02x%02x%02x%02x %02x%02x%02x%02x %02x%02x%02x%02x %02x%02x%02x%02x %02x%02x%02x%02x %02x%02x%02x kit type=%d\n",
                MIDI_DRUM->buf[0], MIDI_DRUM->buf[1], MIDI_DRUM->buf[2], MIDI_DRUM->buf[3], MIDI_DRUM->buf[4],
-	       MIDI_DRUM->buf[5], MIDI_DRUM->buf[6], MIDI_DRUM->buf[7], MIDI_DRUM->buf[8], MIDI_DRUM->buf[9],
+               MIDI_DRUM->buf[5], MIDI_DRUM->buf[6], MIDI_DRUM->buf[7], MIDI_DRUM->buf[8], MIDI_DRUM->buf[9],
                MIDI_DRUM->buf[10], MIDI_DRUM->buf[11], MIDI_DRUM->buf[12], MIDI_DRUM->buf[13], MIDI_DRUM->buf[14], 
-	       MIDI_DRUM->buf[15], MIDI_DRUM->buf[16], MIDI_DRUM->buf[17], MIDI_DRUM->buf[18], MIDI_DRUM->buf[19],
+               MIDI_DRUM->buf[15], MIDI_DRUM->buf[16], MIDI_DRUM->buf[17], MIDI_DRUM->buf[18], MIDI_DRUM->buf[19],
                MIDI_DRUM->buf[20], MIDI_DRUM->buf[21], MIDI_DRUM->buf[22], MIDI_DRUM->buf[23], MIDI_DRUM->buf[24], 
-	       MIDI_DRUM->buf[25], MIDI_DRUM->buf[26],MIDI_DRUM->kit);
-	memcpy(MIDI_DRUM->oldbuf,MIDI_DRUM->buf,INTR_LENGTH);
+               MIDI_DRUM->buf[25], MIDI_DRUM->buf[26],MIDI_DRUM->kit);
+    memcpy(MIDI_DRUM->oldbuf,MIDI_DRUM->buf,INTR_LENGTH);
     }
 }
 
+void midi_defaults(MIDIDRUM* MIDI_DRUM)
+{
+    int v;
+    if(MIDI_DRUM->kit < DRUMS)
+    {
+        MIDI_DRUM->midi_note[RED] = GM_SNARE; 
+        MIDI_DRUM->midi_note[YELLOW] = GM_HI_TOM;
+        MIDI_DRUM->midi_note[BLUE] = GM_MID_TOM;
+        MIDI_DRUM->midi_note[GREEN] = GM_LO_TOM;
+        MIDI_DRUM->midi_note[YELLOW_CYMBAL] = GM_OPEN_HAT;
+        MIDI_DRUM->midi_note[GREEN_CYMBAL] = GM_CRASH;
+        MIDI_DRUM->midi_note[BLUE_CYMBAL] = GM_RIDE;
+        MIDI_DRUM->midi_note[ORANGE_CYMBAL] = GM_CRASH;
+        MIDI_DRUM->midi_note[ORANGE_BASS] = GM_KICK;
+        MIDI_DRUM->midi_note[BLACK_BASS] = 0;
+        MIDI_DRUM->midi_note[OPEN_HAT] = GM_OPEN_HAT;
+        MIDI_DRUM->midi_note[CLOSED_HAT] = GM_CLOSED_HAT;
+    }
+    else if(MIDI_DRUM->kit < GUITARS)
+    {
+        v = 0;
+        if(MIDI_DRUM->bass_down)
+            v = -12;//this will drop everything 1 octave
+        //note defaults
+        if(!MIDI_DRUM->midi_note[GREEN])
+            MIDI_DRUM->midi_note[GREEN] = 53+v;//F
+        if(!MIDI_DRUM->midi_note[RED])
+            MIDI_DRUM->midi_note[RED] = 55+v; //G
+        if(!MIDI_DRUM->midi_note[YELLOW])
+            MIDI_DRUM->midi_note[YELLOW] = 57+v;//A
+        if(!MIDI_DRUM->midi_note[BLUE])
+            MIDI_DRUM->midi_note[BLUE] = 60+v; //C
+        if(!MIDI_DRUM->midi_note[ORANGE])
+            MIDI_DRUM->midi_note[ORANGE] = 62+v;//D
+        if(!MIDI_DRUM->midi_note[HI_RED])
+            MIDI_DRUM->midi_note[HI_RED] = MIDI_DRUM->midi_note[RED]+12;
+        if(!MIDI_DRUM->midi_note[HI_YELLOW])
+            MIDI_DRUM->midi_note[HI_YELLOW] = MIDI_DRUM->midi_note[YELLOW]+12;
+        if(!MIDI_DRUM->midi_note[HI_GREEN])
+            MIDI_DRUM->midi_note[HI_GREEN] = MIDI_DRUM->midi_note[GREEN]+12;
+        if(!MIDI_DRUM->midi_note[HI_BLUE])
+            MIDI_DRUM->midi_note[HI_BLUE] = MIDI_DRUM->midi_note[BLUE]+12;
+        if(!MIDI_DRUM->midi_note[HI_ORANGE])
+            MIDI_DRUM->midi_note[HI_ORANGE] = MIDI_DRUM->midi_note[ORANGE]+12;
+    }
+}
 
 
 //debug mode callback
@@ -262,26 +312,34 @@ static void sighandler(int signum)
 
 void useage()
 {
-    printf("rbdrum2midi a rockband/guitar hero drumset driver in userland\n");
-    printf("\n");
+    printf("rbdrum2midi a rockband/guitar hero game instrument midi driver in userland\n");
+    printf("  v 0.6\n");
     printf("\n");
     printf("USEAGE:\n");
     printf("    rbdrum2midi [-option <value>...]\n");
     printf("\n");
     printf("OPTIONS:\n");
-    printf("    -v                          verbose mode\n");
+    printf("    Drum Driver Options\n");
     printf("    -yvk                        note mapping for yamaha vintage kit in Hydrogen\n");
-    printf("    -r/y/b/g <value>            set midi note for -color of drum head\n");
+    printf("    -r/y/b/g <value>            set midi note for -color of drum\n");
     printf("    -ocy/ycy/bcy/gcy <value>    set midi note for -color of cymbal\n");
     printf("    -ob/bkb <value>             set midi note for -color bass pedal\n");
     printf("    -rb1                        specify rockband 1 drumset\n");
-    printf("    -vel <value>                set default note velocity (for rb1 or bass)\n");
-    printf("    -c <value>                  set midi channel to send notes on\n");
     printf("    -htdm <value>               set hihat color i.e, r/y.../bcy/gcy\n");
     printf("    -htp <value>                set hihat pedal color i.e. ob/bkb*\n"); 
     printf("    -hto <value>                set open hihat midi value of hihat mode drum\n");
     printf("    -htc <value>                set closed hihat midi value of hihat mode drum\n");
+    printf("\n");
+    printf("    Guitar Driver Options\n");
+    printf("    -r/y/b/g <value>            set midi note for -color of button\n");
+    printf("    -rhi/ohi/yhi/bhi/ghi <val>  set midi note for -color of upper button\n");
+    printf("    -bg                         bass guitar mode\n");
+    printf("\n");
+    printf("    General Options\n");
+    printf("    -vel <value>                set default note velocity\n");
+    printf("    -c <value>                  set midi channel to send notes on\n");
     printf("    -dbg                        debug mode (no midi output)\n");
+    printf("    -v                          verbose mode\n");
     printf("    -a                          use alsa sequencer for midi output\n");
     printf("    -j                          use JACK midi output\n");
     printf("    -h                          show this message\n");
@@ -414,66 +472,66 @@ int main(int argc, char **argv)
                 MIDI_DRUM->midi_note[ORANGE] = atoi(argv[++i]);
                 MIDI_DRUM->midi_note[HI_ORANGE] = MIDI_DRUM->midi_note[ORANGE]+12;
             }
-	    else if (strcmp(argv[i], "-vel") == 0) {
-             r = atoi(argv[++i]);
-	         MIDI_DRUM->default_velocity = min(max(r,1),127); 
-	    }
-	    else if (strcmp(argv[i], "-c") == 0) {
-             r = atoi(argv[++i]);
-	         MIDI_DRUM->channel = min(max(r,0),15); 
-	    }
-	    else if (strcmp(argv[i], "-htp") == 0){
-	         if (strcmp(argv[++i], "0" ) == 0)
-		     MIDI_DRUM->hat_mode = 0; 
-                 else if (strcmp(argv[i], "ob") == 0){
-                     if(MIDI_DRUM->midi_note[ORANGE_BASS] == GM_KICK)
-                         MIDI_DRUM->midi_note[ORANGE_BASS] = 0;
-		     MIDI_DRUM->hat_mode = ORANGE_BASS;
-		 }
-                 else if (strcmp(argv[i], "bkb") == 0) 
-		     MIDI_DRUM->hat_mode = BLACK_BASS;
-		 else {
-		     printf("ERROR! Unknown pedal for hi-hat! Using default black bass");
-		     MIDI_DRUM->hat_mode = BLACK_BASS; 
-		 }
-	    }
-	    else if (strcmp(argv[i], "-htdm") == 0){
-                 if (strcmp(argv[++i], "ocy") == 0) 
-		     MIDI_DRUM->hat = ORANGE_CYMBAL;
-                 else if (strcmp(argv[i], "ycy") == 0) 
-		     MIDI_DRUM->hat = YELLOW_CYMBAL;
-                 else if (strcmp(argv[i], "gcy") == 0) 
-		     MIDI_DRUM->hat = GREEN_CYMBAL;
-                 else if (strcmp(argv[i], "bcy") == 0) 
-		     MIDI_DRUM->hat = BLUE_CYMBAL;
-                 else if (strcmp(argv[i], "r") == 0) 
-		     MIDI_DRUM->hat = RED;
-                 else if (strcmp(argv[i], "y") == 0) 
-		     MIDI_DRUM->hat = YELLOW;
-                 else if (strcmp(argv[i], "b") == 0) 
-		     MIDI_DRUM->hat = RED;
-                 else if (strcmp(argv[i], "g") == 0) 
-		     MIDI_DRUM->hat = GREEN;
-		 else{
-		     printf("ERROR! Unknown drum for hi-hat! Using default yellow cymbal");
-                     MIDI_DRUM->hat = YELLOW_CYMBAL;
-		 }
-	    }
-	    else if (strcmp(argv[i], "-hto") == 0){
-	         MIDI_DRUM->midi_note[OPEN_HAT] = atoi(argv[++i]);
-	    }
-	    else if (strcmp(argv[i], "-htc") == 0){ 
-	         MIDI_DRUM->midi_note[CLOSED_HAT] = atoi(argv[++i]);
+            else if (strcmp(argv[i], "-vel") == 0) {
+                r = atoi(argv[++i]);
+                MIDI_DRUM->default_velocity = min(max(r,1),127); 
             }
-        else if (strcmp(argv[i], "-a") == 0) {
+            else if (strcmp(argv[i], "-c") == 0) {
+                r = atoi(argv[++i]);
+                MIDI_DRUM->channel = min(max(r,0),15); 
+            }
+            else if (strcmp(argv[i], "-htp") == 0){
+                if (strcmp(argv[++i], "0" ) == 0)
+                    MIDI_DRUM->hat_mode = 0; 
+                else if (strcmp(argv[i], "ob") == 0){
+                    if(MIDI_DRUM->midi_note[ORANGE_BASS] == GM_KICK)
+                         MIDI_DRUM->midi_note[ORANGE_BASS] = 0;
+                    MIDI_DRUM->hat_mode = ORANGE_BASS;
+                }
+                else if (strcmp(argv[i], "bkb") == 0) 
+                    MIDI_DRUM->hat_mode = BLACK_BASS;
+                else {
+                    printf("ERROR! Unknown pedal for hi-hat! Using default black bass");
+                    MIDI_DRUM->hat_mode = BLACK_BASS; 
+                }
+            }
+            else if (strcmp(argv[i], "-htdm") == 0){
+                if (strcmp(argv[++i], "ocy") == 0) 
+                    MIDI_DRUM->hat = ORANGE_CYMBAL;
+                else if (strcmp(argv[i], "ycy") == 0) 
+                    MIDI_DRUM->hat = YELLOW_CYMBAL;
+                else if (strcmp(argv[i], "gcy") == 0) 
+                    MIDI_DRUM->hat = GREEN_CYMBAL;
+                else if (strcmp(argv[i], "bcy") == 0) 
+                    MIDI_DRUM->hat = BLUE_CYMBAL;
+                else if (strcmp(argv[i], "r") == 0) 
+                    MIDI_DRUM->hat = RED;
+                else if (strcmp(argv[i], "y") == 0) 
+                    MIDI_DRUM->hat = YELLOW;
+                else if (strcmp(argv[i], "b") == 0) 
+                    MIDI_DRUM->hat = RED;
+                else if (strcmp(argv[i], "g") == 0) 
+                    MIDI_DRUM->hat = GREEN;
+                else{
+                    printf("ERROR! Unknown drum for hi-hat! Using default yellow cymbal");
+                    MIDI_DRUM->hat = YELLOW_CYMBAL;
+                }
+            }
+            else if (strcmp(argv[i], "-hto") == 0){
+                MIDI_DRUM->midi_note[OPEN_HAT] = atoi(argv[++i]);
+            }
+            else if (strcmp(argv[i], "-htc") == 0){ 
+                MIDI_DRUM->midi_note[CLOSED_HAT] = atoi(argv[++i]);
+            }
+            else if (strcmp(argv[i], "-a") == 0) {
                 //ALSA midi
                 seqtype = 1;
             }
-        else if (strcmp(argv[i], "-j") == 0) {
+            else if (strcmp(argv[i], "-j") == 0) {
                 //JACK midi
-		seqtype = 2;
+                seqtype = 2;
             }
-        else if (strcmp(argv[i], "-yvk") == 0) {
+            else if (strcmp(argv[i], "-yvk") == 0) {
                 MIDI_DRUM->midi_note[RED] = YVK_SNARE; 
                 MIDI_DRUM->midi_note[YELLOW] = YVK_HI_TOM;
                 MIDI_DRUM->midi_note[BLUE] = YVK_MID_TOM;
@@ -487,10 +545,15 @@ int main(int argc, char **argv)
                 MIDI_DRUM->midi_note[OPEN_HAT] = YVK_OPEN_HAT;
                 MIDI_DRUM->midi_note[CLOSED_HAT] = YVK_CLOSED_HAT;
             }
-        else if (strcmp(argv[i], "-dbg") == 0) {
+            else if (strcmp(argv[i], "-dbg") == 0) {
                 //debug mode
                 MIDI_DRUM->dbg = 1;
-		MIDI_DRUM->verbose = 1;
+                MIDI_DRUM->verbose = 1;
+            }
+            else if (strcmp(argv[i], "-bg") == 0) {
+                //debug mode
+                MIDI_DRUM->dbg = 1;
+                MIDI_DRUM->verbose = 1;
             }
             else if (strcmp(argv[i], "-h") == 0) {
                 //help
@@ -530,9 +593,8 @@ int main(int argc, char **argv)
         libusb_exit(NULL);
         return -r;
     }
-    init_kit(MIDI_DRUM);
-
-
+    init_kit(MIDI_DRUM); 
+    midi_defaults(MIDI_DRUM); 
     if(MIDI_DRUM->kit < DRUMS && MIDI_DRUM->hat_mode)
     {
         MIDI_DRUM->midi_note[MIDI_DRUM->hat] = MIDI_DRUM->midi_note[OPEN_HAT];
