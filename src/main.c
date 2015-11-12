@@ -183,18 +183,30 @@ void midi_defaults(MIDIDRUM* MIDI_DRUM)
     int v;
     if(MIDI_DRUM->kit < DRUMS)
     {
-        MIDI_DRUM->midi_note[RED] = GM_SNARE; 
-        MIDI_DRUM->midi_note[YELLOW] = GM_HI_TOM;
-        MIDI_DRUM->midi_note[BLUE] = GM_MID_TOM;
-        MIDI_DRUM->midi_note[GREEN] = GM_LO_TOM;
-        MIDI_DRUM->midi_note[YELLOW_CYMBAL] = GM_OPEN_HAT;
-        MIDI_DRUM->midi_note[GREEN_CYMBAL] = GM_CRASH;
-        MIDI_DRUM->midi_note[BLUE_CYMBAL] = GM_RIDE;
-        MIDI_DRUM->midi_note[ORANGE_CYMBAL] = GM_CRASH;
-        MIDI_DRUM->midi_note[ORANGE_BASS] = GM_KICK;
-        MIDI_DRUM->midi_note[BLACK_BASS] = 0;
-        MIDI_DRUM->midi_note[OPEN_HAT] = GM_OPEN_HAT;
-        MIDI_DRUM->midi_note[CLOSED_HAT] = GM_CLOSED_HAT;
+        if(!MIDI_DRUM->midi_note[RED])
+            MIDI_DRUM->midi_note[RED] = GM_SNARE; 
+        if(!MIDI_DRUM->midi_note[YELLOW])
+            MIDI_DRUM->midi_note[YELLOW] = GM_HI_TOM;
+        if(!MIDI_DRUM->midi_note[BLUE])
+            MIDI_DRUM->midi_note[BLUE] = GM_MID_TOM;
+        if(!MIDI_DRUM->midi_note[GREEN])
+            MIDI_DRUM->midi_note[GREEN] = GM_LO_TOM;
+        if(!MIDI_DRUM->midi_note[YELLOW_CYMBAL])
+            MIDI_DRUM->midi_note[YELLOW_CYMBAL] = GM_OPEN_HAT;
+        if(!MIDI_DRUM->midi_note[GREEN_CYMBAL])
+            MIDI_DRUM->midi_note[GREEN_CYMBAL] = GM_CRASH;
+        if(!MIDI_DRUM->midi_note[BLUE_CYMBAL])
+            MIDI_DRUM->midi_note[BLUE_CYMBAL] = GM_RIDE;
+        if(!MIDI_DRUM->midi_note[ORANGE_CYMBAL])
+            MIDI_DRUM->midi_note[ORANGE_CYMBAL] = GM_CRASH;
+        if(!MIDI_DRUM->midi_note[ORANGE_BASS])
+            MIDI_DRUM->midi_note[ORANGE_BASS] = GM_KICK;
+        if(!MIDI_DRUM->midi_note[BLACK_BASS])
+            MIDI_DRUM->midi_note[BLACK_BASS] = 0;
+        if(!MIDI_DRUM->midi_note[OPEN_HAT])
+            MIDI_DRUM->midi_note[OPEN_HAT] = GM_OPEN_HAT;
+        if(!MIDI_DRUM->midi_note[CLOSED_HAT])
+            MIDI_DRUM->midi_note[CLOSED_HAT] = GM_CLOSED_HAT;
     }
     else if(MIDI_DRUM->kit < GUITARS)
     {
