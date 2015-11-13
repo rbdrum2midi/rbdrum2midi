@@ -159,7 +159,7 @@ int init_alsa(ALSA_SEQ* seq, unsigned char verbose)
 
     seq->g_seq = open_client();
     if (seq->g_seq == NULL) {
-        if ( verbose >= 0) printf("Error: open_client failed.\n", );
+        if ( verbose >= 0) printf("Error: open_client failed.\n");
         return 0;
     }
 
