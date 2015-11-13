@@ -5,39 +5,61 @@
 
 void init_rb_kit(MIDIDRUM* MIDI_DRUM)
 {
-    MIDI_DRUM->buf_indx[GREEN] = 3;
-    MIDI_DRUM->buf_mask[GREEN] = 0x10;
-    MIDI_DRUM->buf_indx[RED] = 3;
-    MIDI_DRUM->buf_mask[RED] = 0x20;
-    MIDI_DRUM->buf_indx[YELLOW] = 3;
-    MIDI_DRUM->buf_mask[YELLOW] = 0x80;
-    MIDI_DRUM->buf_indx[BLUE] = 3;
-    MIDI_DRUM->buf_mask[BLUE] = 0x40;
-    MIDI_DRUM->buf_indx[ORANGE] = 3;
-    MIDI_DRUM->buf_mask[ORANGE] = 0x01;
-
-    MIDI_DRUM->buf_indx[PICK] = 2;
-    MIDI_DRUM->buf_mask[PICK] = 0x03;
-    MIDI_DRUM->buf_indx[HINOTE] = 2;
-    MIDI_DRUM->buf_mask[HINOTE] = 0x40;
-    MIDI_DRUM->buf_indx[WHAMMY_MSB] = 11;
-    MIDI_DRUM->buf_mask[WHAMMY_MSB] = 0xFF;
-    MIDI_DRUM->buf_indx[WHAMMY_LSB] = 10;
-    MIDI_DRUM->buf_mask[WHAMMY_LSB] = 0xF0;
-
+    MIDI_DRUM->buf_indx[RED] = 12;
+    MIDI_DRUM->buf_mask[RED] = 0xFF;
+    MIDI_DRUM->buf_indx[YELLOW] = 11;
+    MIDI_DRUM->buf_mask[YELLOW] = 0xFF;
+    MIDI_DRUM->buf_indx[BLUE] = 14;
+    MIDI_DRUM->buf_mask[BLUE] = 0xFF;
+    MIDI_DRUM->buf_indx[GREEN] = 13;
+    MIDI_DRUM->buf_mask[GREEN] = 0xFF;
+    MIDI_DRUM->buf_indx[CYMBAL_FLAG] = 1;
+    MIDI_DRUM->buf_mask[CYMBAL_FLAG] = 0x08;
+    MIDI_DRUM->buf_indx[YELLOW_CYMBAL] = 11;
+    MIDI_DRUM->buf_mask[YELLOW_CYMBAL] = 0xFF;
+    MIDI_DRUM->buf_indx[BLUE_CYMBAL] = 14;
+    MIDI_DRUM->buf_mask[BLUE_CYMBAL] = 0xFF;
+    MIDI_DRUM->buf_indx[GREEN_CYMBAL] = 13;
+    MIDI_DRUM->buf_mask[GREEN_CYMBAL] = 0xFF;
+    MIDI_DRUM->buf_indx[ORANGE_BASS] = 0;
+    MIDI_DRUM->buf_mask[ORANGE_BASS] = 0x10;
+    MIDI_DRUM->buf_indx[BLACK_BASS] = 0;
+    MIDI_DRUM->buf_mask[BLACK_BASS] = 0x20;
 }
 
-
-static inline void old_off(MIDIDRUM* MIDI_DRUM)
+static inline void calc_velocity(MIDIDRUM* MIDI_DRUM, unsigned char value)
 {
-    int i;
-    MIDI_DRUM->velocity = MIDI_DRUM->default_velocity;
-    for(i=0;i<PICK;i++)
-    {
-        if (MIDI_DRUM->prev_state[i])
-            MIDI_DRUM->noteup(MIDI_DRUM->sequencer, MIDI_DRUM->channel, MIDI_DRUM->midi_note[i], 0);
-        if (MIDI_DRUM->prev_state[i+HINOTE+1])
-            MIDI_DRUM->noteup(MIDI_DRUM->sequencer, MIDI_DRUM->channel, MIDI_DRUM->midi_note[i+HINOTE+1], 0);
+    MIDI_DRUM->velocity = min(max((280-value) * 2, 0), 127);
+}
+
+static inline void handle_drum(MIDIDRUM* MIDI_DRUM, unsigned char drum)
+{
+   if (MIDI_DRUM->drum_state[drum] && !MIDI_DRUM->prev_state[drum]) {
+       calc_velocity(MIDI_DRUM,MIDI_DRUM->drum_state[drum]);
+       MIDI_DRUM->noteup(MIDI_DRUM->sequencer, MIDI_DRUM->channel, MIDI_DRUM->midi_note[drum], 0);
+       MIDI_DRUM->notedown( MIDI_DRUM->sequencer, MIDI_DRUM->channel, MIDI_DRUM->midi_note[drum], MIDI_DRUM->velocity);
+   }
+}
+
+static inline void handle_bass(MIDIDRUM* MIDI_DRUM, unsigned char drum)
+{
+    if (MIDI_DRUM->drum_state[drum] != MIDI_DRUM->prev_state[drum]) {
+        if (MIDI_DRUM->drum_state[drum]) {
+            MIDI_DRUM->velocity = MIDI_DRUM->default_velocity;
+            MIDI_DRUM->notedown( MIDI_DRUM->sequencer, MIDI_DRUM->channel, MIDI_DRUM->midi_note[drum], MIDI_DRUM->velocity);
+        if(MIDI_DRUM->hat_mode == drum)
+	    {
+		MIDI_DRUM->midi_note[MIDI_DRUM->hat] = MIDI_DRUM->midi_note[CLOSED_HAT];
+	    }
+        }
+        // Up
+        else {
+            MIDI_DRUM->noteup(MIDI_DRUM->sequencer, MIDI_DRUM->channel, MIDI_DRUM->midi_note[drum], 0);
+       if(MIDI_DRUM->hat_mode == drum)
+	   {
+	       MIDI_DRUM->midi_note[MIDI_DRUM->hat] = MIDI_DRUM->midi_note[OPEN_HAT];
+	   }
+        }
     }
 }
 
@@ -52,73 +74,34 @@ void cb_irq_rb(struct libusb_transfer *transfer)
         transfer = NULL;
         return;
     }
-    int i,j,k;
 
-    //RockBand 3 Guitar
-    get_state(MIDI_DRUM,PICK);
-    get_state(MIDI_DRUM,HINOTE);
-    get_state(MIDI_DRUM,WHAMMY_LSB);
-    get_state(MIDI_DRUM,WHAMMY_MSB);
+    //RockBand 3 Drumkit
+    get_state(MIDI_DRUM,RED);
+    get_state(MIDI_DRUM,YELLOW);
+    get_state(MIDI_DRUM,GREEN);
+    get_state(MIDI_DRUM,BLUE);
+    get_state(MIDI_DRUM,CYMBAL_FLAG);
+    //cymbals are same data as pads
+    MIDI_DRUM->drum_state[YELLOW_CYMBAL] = MIDI_DRUM->drum_state[YELLOW];
+    MIDI_DRUM->drum_state[GREEN_CYMBAL] = MIDI_DRUM->drum_state[GREEN];
+    MIDI_DRUM->drum_state[BLUE_CYMBAL] = MIDI_DRUM->drum_state[BLUE];
+    get_state(MIDI_DRUM,ORANGE_BASS);
+    get_state(MIDI_DRUM,BLACK_BASS);
 
-    if(MIDI_DRUM->drum_state[PICK] != MIDI_DRUM->prev_state[PICK])
-    {
-        //new notes
-        get_state(MIDI_DRUM,RED);
-        get_state(MIDI_DRUM,YELLOW);
-        get_state(MIDI_DRUM,GREEN);
-        get_state(MIDI_DRUM,BLUE);
-        get_state(MIDI_DRUM,ORANGE);
-        //first kill all old ones
-        old_off(MIDI_DRUM); 
-        //then send the new notes
-        i=0;
-        if(MIDI_DRUM->drum_state[HINOTE])
-            i = HINOTE+1;
-        for(j=0;j<PICK;j++)
-            if(MIDI_DRUM->drum_state[j])
-            {
-                MIDI_DRUM->notedown( MIDI_DRUM->sequencer, MIDI_DRUM->channel, MIDI_DRUM->midi_note[j+i], MIDI_DRUM->velocity);
-                //swap the 2 so low notes and high notes are correct
-                k = MIDI_DRUM->drum_state[i+j];
-                MIDI_DRUM->drum_state[i+j] = MIDI_DRUM->drum_state[j];
-                MIDI_DRUM->drum_state[j] = k;
-                
-            }
-    }
-    else
-    {
-        //stop any sounding notes that are let go
-        for(j=0;j<PICK;j++)
-        {
-            if(MIDI_DRUM->prev_state[j]) 
-            {
-                get_state(MIDI_DRUM,j);
-                if(!MIDI_DRUM->drum_state[j])
-                    MIDI_DRUM->noteup(MIDI_DRUM->sequencer, MIDI_DRUM->channel, MIDI_DRUM->midi_note[j], 0);
-            }
-            if(MIDI_DRUM->prev_state[j+HINOTE+1])
-            {
-                k = MIDI_DRUM->drum_state[j];
-                get_state(MIDI_DRUM,j);
-                i = HINOTE+1;
-                if(!MIDI_DRUM->drum_state[j])
-                    MIDI_DRUM->noteup(MIDI_DRUM->sequencer, MIDI_DRUM->channel, MIDI_DRUM->midi_note[j+i], 0);
-                MIDI_DRUM->drum_state[i+j] = MIDI_DRUM->drum_state[j];
-                MIDI_DRUM->drum_state[j] = k;
-            }
-        }
-        
-    }
+    handle_drum(MIDI_DRUM,RED); 
+    if(MIDI_DRUM->drum_state[CYMBAL_FLAG]){
     
-    if(MIDI_DRUM->drum_state[WHAMMY_LSB] != MIDI_DRUM->prev_state[WHAMMY_LSB] ||
-        MIDI_DRUM->drum_state[WHAMMY_MSB] != MIDI_DRUM->prev_state[WHAMMY_MSB])
-    {
-        unsigned short val = (MIDI_DRUM->drum_state[WHAMMY_MSB]+0x80)&0xff;
-        val = (val<<5) + (MIDI_DRUM->drum_state[WHAMMY_LSB]>>3);
-        val = 0x2000-val;
-        printf("pitch %i %x\n",val,val);
-        MIDI_DRUM->pitchbend(MIDI_DRUM->sequencer, MIDI_DRUM->channel, val);
-    }
+       	handle_drum(MIDI_DRUM,YELLOW_CYMBAL); 
+       	handle_drum(MIDI_DRUM,BLUE_CYMBAL); 
+       	handle_drum(MIDI_DRUM,GREEN_CYMBAL); 
+    }    
+    else{
+        handle_drum(MIDI_DRUM,YELLOW);
+       	handle_drum(MIDI_DRUM,BLUE);
+        handle_drum(MIDI_DRUM,GREEN);
+    }   
+    handle_bass(MIDI_DRUM,ORANGE_BASS);
+    handle_bass(MIDI_DRUM,BLACK_BASS);
         
     //now that the time-critical stuff is done, lets do the assignments 
     memcpy(MIDI_DRUM->prev_state,MIDI_DRUM->drum_state,NUM_DRUMS);
@@ -126,7 +109,7 @@ void cb_irq_rb(struct libusb_transfer *transfer)
     if (MIDI_DRUM->verbose)
     {
         print_hits(MIDI_DRUM);
-    	print_buf(MIDI_DRUM);
+	print_buf(MIDI_DRUM);
     } 
     if (libusb_submit_transfer(transfer) < 0)
         do_exit = 2;
