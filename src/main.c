@@ -23,6 +23,7 @@
 #include "rb1kit.h"
 #include "rbguitar.h"
 #include "ghkit.h"
+#include "rb3keyboard.h"
 #include "alsadriver.h"
 #include "jackdriver.h"
 
@@ -55,7 +56,7 @@ static int find_rbdrum_device(MIDIDRUM* MIDI_DRUM, struct libusb_device_handle *
         MIDI_DRUM->kit=PS_ROCKBAND;
         if(MIDI_DRUM->verbose)printf("PS3 Rockband kit found\n");
         if(claim_interface(devh) == 0)
-        return 0;
+            return 0;
     }
 
     //xbox RB kit
@@ -64,7 +65,7 @@ static int find_rbdrum_device(MIDIDRUM* MIDI_DRUM, struct libusb_device_handle *
         MIDI_DRUM->kit=XB_ROCKBAND;
         if(MIDI_DRUM->verbose)printf("XBox Rockband kit found\n");
         if(claim_interface(devh) == 0)
-        return 0;
+            return 0;
     }
 
     //Wìì RB kit??
@@ -73,7 +74,7 @@ static int find_rbdrum_device(MIDIDRUM* MIDI_DRUM, struct libusb_device_handle *
         MIDI_DRUM->kit=WII_ROCKBAND;
         if(MIDI_DRUM->verbose)printf("Wii Rockband kit found\n");
         if(claim_interface(devh) == 0)
-        return 0;
+            return 0;
     }
 
     //PS3 GH kit
@@ -82,7 +83,7 @@ static int find_rbdrum_device(MIDIDRUM* MIDI_DRUM, struct libusb_device_handle *
         MIDI_DRUM->kit=GUITAR_HERO;
         if(MIDI_DRUM->verbose)printf("PS3 Guitar Hero kit found\n");
         if(claim_interface(devh) == 0)
-        return 0;
+            return 0;
     }
 
 
@@ -93,7 +94,7 @@ static int find_rbdrum_device(MIDIDRUM* MIDI_DRUM, struct libusb_device_handle *
         MIDI_DRUM->kit=PS_RB_GUITAR;
         if(MIDI_DRUM->verbose)printf("PS3 guitar found\n");
         if(claim_interface(devh) == 0)
-        return 0;
+            return 0;
     }
 
     //xbox360
@@ -102,7 +103,17 @@ static int find_rbdrum_device(MIDIDRUM* MIDI_DRUM, struct libusb_device_handle *
         MIDI_DRUM->kit=XB_RB_GUITAR;
         if(MIDI_DRUM->verbose)printf("XBox guitar found\n");
         if(claim_interface(devh) == 0)
-        return 0;
+            return 0;
+    }
+
+    //KEYBOARDS
+    //Wii
+    *devh = libusb_open_device_with_vid_pid(NULL, 0x1bad, 0x3330);
+    if(*devh){
+        MIDI_DRUM->kit=WII_RB3_KEYBOARD;
+        if(MIDI_DRUM->verbose)printf("Wii keyboard found\n");
+        if(claim_interface(devh) == 0)
+            return 0;
     }
   
     return *devh ? 0 : -EIO;
@@ -130,6 +141,9 @@ void init_kit(MIDIDRUM* MIDI_DRUM)
         case XB_RB_GUITAR:
         case PS_RB_GUITAR:
             init_rb_guitar(MIDI_DRUM);
+            break;
+        case WII_RB3_KEYBOARD:
+            init_rb3_keyboard(MIDI_DRUM);
             break;
     }
 }
@@ -176,6 +190,24 @@ void print_buf(MIDIDRUM* MIDI_DRUM)
                MIDI_DRUM->buf[25], MIDI_DRUM->buf[26],MIDI_DRUM->kit);
     memcpy(MIDI_DRUM->oldbuf,MIDI_DRUM->buf,INTR_LENGTH);
     }
+}
+
+void print_guitar(MIDIDRUM* MIDI_DRUM)
+{
+    //TODO    
+}
+
+void print_keys(MIDIDRUM* MIDI_DRUM)
+{
+    //TODO
+/*
+    if (MIDI_DRUM->key_state!=MIDI_DRUM->prev_keystate)
+	    printf("Keys: %08x %02x\n",MIDI_DRUM->key_state,MIDI_DRUM->velocity);
+    if (MIDI_DRUM->button_state != MIDI_DRUM->prev_buttonstate)
+        printf("Buttons: %08x\n",MIDI_DRUM->button_state);
+    if (MIDI_DRUM->controller_value != MIDI_DRUM->prev_controller_value)
+        printf("Controller: %02x\n",MIDI_DRUM->controller_value);
+*/
 }
 
 void midi_defaults(MIDIDRUM* MIDI_DRUM)
@@ -297,6 +329,11 @@ static int alloc_transfers(MIDIDRUM* MIDI_DRUM, libusb_device_handle *devh, stru
         libusb_fill_interrupt_transfer(*irq_transfer, devh, EP_INTR, MIDI_DRUM->irqbuf,
             sizeof(MIDI_DRUM->irqbuf), cb_irq_rb_guitar, (void*)MIDI_DRUM, 0);
         if( MIDI_DRUM->verbose)printf("Rock Band Guitar connected.\n");
+    }
+    else if(MIDI_DRUM->kit == WII_ROCKBAND3_KEYBOARD){
+        libusb_fill_interrupt_transfer(*irq_transfer, devh, EP_INTR, MIDI_DRUM->irqbuf,
+            sizeof(MIDI_DRUM->irqbuf), cb_irq_rb3_keyboard, (void*)MIDI_DRUM, 0);
+        if( MIDI_DRUM->verbose)printf("Wii Rock Band 3 Wireless keyboard detected.\n");
     }
     else{
         printf("error in drum type! %i\n",MIDI_DRUM->kit);

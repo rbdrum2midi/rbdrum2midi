@@ -44,7 +44,15 @@ enum GM{
 #define min(a, b) (((a) < (b)) ? (a) : (b))
 
 typedef enum {
-    GREEN = 0,
+    UP = 0,
+    DOWN,
+    LEFT,
+    RIGHT,
+    START,
+    SELECT,
+    CONNECT,//6
+
+    GREEN = 7,
     RED,
     YELLOW,
     BLUE,
@@ -58,8 +66,15 @@ typedef enum {
     HI_ORANGE,
     WHAMMY_LSB,
     WHAMMY_MSB,
+
+    KEYS0 = 7,
+    KEYS1,
+    KEYS2,
+    KEYS3,
+    EXPRESSION,
+    EXPR_TOGGLE,
     
-    YELLOW_CYMBAL = 4,
+    YELLOW_CYMBAL = 7,
     BLUE_CYMBAL,
     GREEN_CYMBAL,
     ORANGE_CYMBAL,
@@ -69,11 +84,12 @@ typedef enum {
     NOTHING,
     OPEN_HAT,
     CLOSED_HAT,
-    NUM_DRUMS
+    NUM_DRUMS,//NUM DRUMS determines array sizes!  
 } drums;
 
 typedef enum {
     UNKNOWN = 0,
+
     PS_ROCKBAND,
     XB_ROCKBAND,
     WII_ROCKBAND,
@@ -84,7 +100,9 @@ typedef enum {
 
     XB_RB_GUITAR,
     PS_RB_GUITAR,
-    GUITARS
+    GUITARS,
+
+    WII_RB3_KEYBOARD
 }kit_types;
 
 //primary object for the system
@@ -98,6 +116,8 @@ typedef struct drum_midi
     unsigned char *buf;
     unsigned char drum_state[NUM_DRUMS];
     unsigned char prev_state[NUM_DRUMS];
+    unsigned long key_state;
+    unsigned long prev_keystate;
     void* sequencer;
 
     unsigned char verbose;
@@ -119,6 +139,7 @@ static inline void get_state(MIDIDRUM* MIDI_DRUM, unsigned char drum){MIDI_DRUM-
 //inline void noteup(snd_seq_t *seq, int port, int chan, int pitch, int vol);
 void print_hits(MIDIDRUM* MIDI_DRUM);
 void print_buf(MIDIDRUM* MIDI_DRUM);
+void print_keys(MIDIDRUM* MIDI_DRUM);
 
 //other globals
 int do_exit;

@@ -63,7 +63,7 @@ static inline void old_off(MIDIDRUM* MIDI_DRUM)
 {
     int i;
     MIDI_DRUM->velocity = MIDI_DRUM->default_velocity;
-    for(i=0;i<PICK;i++)
+    for(i=GREEN;i<PICK;i++)
     {
         if (MIDI_DRUM->prev_state[i])
             MIDI_DRUM->noteup(MIDI_DRUM->sequencer, MIDI_DRUM->channel, MIDI_DRUM->midi_note[i], 0);
@@ -106,7 +106,7 @@ void cb_irq_rb_guitar(struct libusb_transfer *transfer)
         i=0;
         if(MIDI_DRUM->drum_state[HINOTE])
             i = HINOTE+1;
-        for(j=0;j<PICK;j++)
+        for(j=GREEN;j<PICK;j++)
             if(MIDI_DRUM->drum_state[j])
             {
                 MIDI_DRUM->notedown( MIDI_DRUM->sequencer, MIDI_DRUM->channel, MIDI_DRUM->midi_note[j+i], MIDI_DRUM->velocity);
@@ -120,7 +120,7 @@ void cb_irq_rb_guitar(struct libusb_transfer *transfer)
     else
     {
         //stop any sounding notes that are let go
-        for(j=0;j<PICK;j++)
+        for(j=GREEN;j<PICK;j++)
         {
             if(MIDI_DRUM->prev_state[j]) 
             {
@@ -150,7 +150,7 @@ void cb_irq_rb_guitar(struct libusb_transfer *transfer)
         if(MIDI_DRUM->drum_state[WHAMMY_MSB] == 0x7f && MIDI_DRUM->prev_state[WHAMMY_MSB] == 0x00)
             val = 0;//some set the whammy to 0x7f when it is released
         val = 0x2000-val;
-        printf("pitch %i %x\n",val,val);
+        //printf("pitch %i %x\n",val,val);
         MIDI_DRUM->pitchbend(MIDI_DRUM->sequencer, MIDI_DRUM->channel, val);
     }
         
@@ -159,6 +159,7 @@ void cb_irq_rb_guitar(struct libusb_transfer *transfer)
     
     if (MIDI_DRUM->verbose)
     {
+    	//print_guitar(MIDI_DRUM);
     	print_buf(MIDI_DRUM);
     } 
     if (libusb_submit_transfer(transfer) < 0)
