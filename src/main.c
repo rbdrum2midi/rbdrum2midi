@@ -330,7 +330,7 @@ static int alloc_transfers(MIDIDRUM* MIDI_DRUM, libusb_device_handle *devh, stru
             sizeof(MIDI_DRUM->irqbuf), cb_irq_rb_guitar, (void*)MIDI_DRUM, 0);
         if( MIDI_DRUM->verbose)printf("Rock Band Guitar connected.\n");
     }
-    else if(MIDI_DRUM->kit == WII_ROCKBAND3_KEYBOARD){
+    else if(MIDI_DRUM->kit == WII_RB3_KEYBOARD){
         libusb_fill_interrupt_transfer(*irq_transfer, devh, EP_INTR, MIDI_DRUM->irqbuf,
             sizeof(MIDI_DRUM->irqbuf), cb_irq_rb3_keyboard, (void*)MIDI_DRUM, 0);
         if( MIDI_DRUM->verbose)printf("Wii Rock Band 3 Wireless keyboard detected.\n");
@@ -433,6 +433,7 @@ int main(int argc, char **argv)
     //initial conditions, defaults
     MIDI_DRUM->bass_down = 0;
     MIDI_DRUM->default_velocity = 125;
+    MIDI_DRUM->octave = 0;
     MIDI_DRUM->channel = DEFAULT_CHANNEL;
     MIDI_DRUM->verbose = 0;
     MIDI_DRUM->dbg = 0;

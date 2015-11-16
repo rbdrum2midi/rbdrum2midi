@@ -126,6 +126,7 @@ typedef struct drum_midi
     unsigned char hat;
     unsigned char bass_down;
     int velocity;
+    char octave
     unsigned char default_velocity;
     unsigned char irqbuf[INTR_LENGTH];
     unsigned char oldbuf[INTR_LENGTH];

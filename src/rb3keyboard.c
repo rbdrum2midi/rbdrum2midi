@@ -10,34 +10,106 @@ void init_rb3_keyboard(MIDIDRUM* MIDI_DRUM)
     MIDI_DRUM->prev_keystate=0;
     MIDI_DRUM->velocity=0;
     MIDI_DRUM->channel=0;
+    /*
++typedef enum {
++    BUTTON_CROSS_UP = 0, //cross button controller behaves very odd
++    BUTTON_CROSS_UP_RIGHT,
++    BUTTON_CROSS_RIGHT,
++    BUTTON_CROSS_DOWN_RIGHT,
++    BUTTON_CROSS_DOWN,
++    BUTTON_CROSS_DOWN_LEFT,
++    BUTTON_CROSS_LEFT,
++    BUTTON_CROSS_UP_LEFT,
++    BUTTON_CROSS_NOTPRESSED,
++    BUTTON_MINUS = 0x100,
++    BUTTON_PLUS = 0x200,
++    BUTTON_KEYBOARD = 0x1000, 
++    BUTTON_1 = 0x10000,
++    BUTTON_A = 0x20000,
++    BUTTON_B = 0x40000,
++    BUTTON_2 = 0x80000
++} buttons;
+*/
 }
+
+/*
++static inline void handle_button(MIDIDRUM* MIDI_DRUM)
++{
++    if ((MIDI_DRUM->button_state&BUTTON_MINUS) &&
++        !(MIDI_DRUM->prev_buttonstate&BUTTON_MINUS))
++        MIDI_DRUM->octave=max(MIDI_DRUM->octave-12, 0);
++     if ((MIDI_DRUM->button_state&BUTTON_PLUS) &&
++        !(MIDI_DRUM->prev_buttonstate&BUTTON_PLUS))
++        MIDI_DRUM->octave=min(MIDI_DRUM->octave+12, 108);
++     if ((MIDI_DRUM->button_state&BUTTON_KEYBOARD) &&
++        !(MIDI_DRUM->prev_buttonstate&BUTTON_KEYBOARD))
++        MIDI_DRUM->octave=MIDI_DRUM->octave=48;
++}
++static inline void handle_controller(MIDIDRUM* MIDI_DRUM)
++{
++    int prev_value=MIDI_DRUM->prev_controller_value & 0x7f;
++    int value=MIDI_DRUM->controller_value & 0x7f;
++
++    if (MIDI_DRUM->controller_value & 0x80) // lets do the pitch bend stuff
++    {
++        if ((MIDI_DRUM->controller_value & 0x7f) !=
++        (MIDI_DRUM->prev_controller_value & 0x7f))
++        {
++           //Here we try to implement some clever pitch bend stuff
++//        if ((MIDI_DRUM->prev_controller_value & 0x7f) > 0x0f)
++            //if !((MIDI_DRUM->controller_value & 0x7f) >0x40)
++        if ((prev_value-value)*(prev_value-value)<0x100)
++        {
++            MIDI_DRUM->pitchbend_value=min(max(MIDI_DRUM->pitchbend_value+
++            (prev_value-value),0),0x7f);
++            MIDI_DRUM->pitchbend(MIDI_DRUM->sequencer, MIDI_DRUM->channel, MIDI_DRUM->pitchbend_value);
++        }
++//        else
++//            MIDI_DRUM->pitchbend_value=0x2000;
++        }
++    }
++    else
++    {
++        if (MIDI_DRUM->prev_controller_value & 0x80)
++        {
++            MIDI_DRUM->pitchbend_value=0x40;
++            MIDI_DRUM->pitchbend(MIDI_DRUM->sequencer, MIDI_DRUM->channel, MIDI_DRUM->pitchbend_value);
++        }
++        //Send control event
++    }
++    printf ("pitcbend: %02x\n",MIDI_DRUM->pitchbend_value);
++}
+*/
 
 static inline void get_velocity(MIDIDRUM* MIDI_DRUM)
 {
+    //Velocity data is transmitted for up to 5 keys pressed same time.
+    //This is the reason for the weird velocity reading algorithm.
+    //For this reason the 6th key wont get any reasonable velocity data.
     if (MIDI_DRUM->buf[12]!=0)
-	MIDI_DRUM->velocity=MIDI_DRUM->buf[12];
+    MIDI_DRUM->velocity=MIDI_DRUM->buf[12];
     else if (MIDI_DRUM->buf[11]!=0)
-	MIDI_DRUM->velocity=MIDI_DRUM->buf[11];
+    MIDI_DRUM->velocity=MIDI_DRUM->buf[11];
     else if (MIDI_DRUM->buf[10]!=0)
         MIDI_DRUM->velocity=MIDI_DRUM->buf[10];
     else if (MIDI_DRUM->buf[9]!=0)
         MIDI_DRUM->velocity=MIDI_DRUM->buf[9];
     else 
-	MIDI_DRUM->velocity=MIDI_DRUM->buf[8]&0x7f;
+    MIDI_DRUM->velocity=MIDI_DRUM->buf[8]&0x7f;
 }
 
 static inline void handle_key(MIDIDRUM* MIDI_DRUM, unsigned char key)
 {
-	//printf("%d\n",1<<(24-key));
+    //printf("%d\n",1<<(24-key));
     if ((MIDI_DRUM->key_state&(1<<(24-key))) != 
-	(MIDI_DRUM->prev_keystate&(1<<(24-key))))
+    (MIDI_DRUM->prev_keystate&(1<<(24-key))))
     {
         get_velocity(MIDI_DRUM);
-	printf("key %d\n",key);
-	if (MIDI_DRUM->key_state&(1<<(24-key)))
-	    MIDI_DRUM->notedown( MIDI_DRUM->sequencer, MIDI_DRUM->channel, 48+key, MIDI_DRUM->velocity);
-	else
-	    MIDI_DRUM->noteup(MIDI_DRUM->sequencer, MIDI_DRUM->channel, 48+key, 0);
+        printf("key %d\n",key);
+        if (MIDI_DRUM->key_state&(1<<(24-key)))
+            MIDI_DRUM->notedown( MIDI_DRUM->sequencer, MIDI_DRUM->channel, 48+key+12*MIDI_DRUM->octave, MIDI_DRUM->velocity);
+        else
+            MIDI_DRUM->noteup(MIDI_DRUM->sequencer, MIDI_DRUM->channel, 48+key+12*MIDI_DRUM->octave, 0);
    }
 }
 
@@ -53,10 +125,25 @@ void cb_irq_rb3_keyboard(struct libusb_transfer *transfer)
         return;
     }
     MIDI_DRUM->key_state=
-	(MIDI_DRUM->buf[5]<<17)+(MIDI_DRUM->buf[6]<<9)+
-	(MIDI_DRUM->buf[7]<<1)+((MIDI_DRUM->buf[8]&0x80)>>7);
+    (MIDI_DRUM->buf[5]<<17)+(MIDI_DRUM->buf[6]<<9)+
+    (MIDI_DRUM->buf[7]<<1)+((MIDI_DRUM->buf[8]&0x80)>>7);
     //get_velocity(MIDI_DRUM);
 
+//The button next to control slider is stored in controller_value variable instead of button_state
+    MIDI_DRUM->controller_value=(MIDI_DRUM->buf[15]&0x7f)+(MIDI_DRUM->buf[13]&0x80);
+    MIDI_DRUM->button_state=
+        (MIDI_DRUM->buf[0]<<16)+(MIDI_DRUM->buf[1]<<8)+
+        MIDI_DRUM->buf[2];
+
+    if (MIDI_DRUM->button_state != MIDI_DRUM->prev_buttonstate)
+	handle_button(MIDI_DRUM);
+
+    if (MIDI_DRUM->controller_value != MIDI_DRUM->prev_controller_value)
+        handle_controller(MIDI_DRUM);
+
+    //get_velocity(MIDI_DRUM);
+    if (MIDI_DRUM->key_state != MIDI_DRUM->prev_keystate)
+    {
     handle_key(MIDI_DRUM,0);
     handle_key(MIDI_DRUM,1);
     handle_key(MIDI_DRUM,2);
@@ -82,13 +169,21 @@ void cb_irq_rb3_keyboard(struct libusb_transfer *transfer)
     handle_key(MIDI_DRUM,22);
     handle_key(MIDI_DRUM,23);
     handle_key(MIDI_DRUM,24);
+    }
+
+    //octave can get up to +-4 octaves
+    //these buttons control octave
+    get_state(MIDI_DRUM,RED);
+    get_state(MIDI_DRUM,BLUE);
 
     if (MIDI_DRUM->verbose)
     {
         print_keys(MIDI_DRUM);
-	print_buf(MIDI_DRUM);
+        print_buf(MIDI_DRUM);
     }
     MIDI_DRUM->prev_keystate=MIDI_DRUM->key_state; 
+    MIDI_DRUM->prev_buttonstate=MIDI_DRUM->button_state;
+    MIDI_DRUM->prev_controller_value=MIDI_DRUM->controller_value;
     
     if (libusb_submit_transfer(transfer) < 0)
         do_exit = 2;
