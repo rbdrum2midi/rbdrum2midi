@@ -10,26 +10,44 @@ void init_rb3_keyboard(MIDIDRUM* MIDI_DRUM)
     MIDI_DRUM->prev_keystate=0;
     MIDI_DRUM->velocity=0;
     MIDI_DRUM->channel=0;
-    /*
-+typedef enum {
-+    BUTTON_CROSS_UP = 0, //cross button controller behaves very odd
-+    BUTTON_CROSS_UP_RIGHT,
-+    BUTTON_CROSS_RIGHT,
-+    BUTTON_CROSS_DOWN_RIGHT,
-+    BUTTON_CROSS_DOWN,
-+    BUTTON_CROSS_DOWN_LEFT,
-+    BUTTON_CROSS_LEFT,
-+    BUTTON_CROSS_UP_LEFT,
-+    BUTTON_CROSS_NOTPRESSED,
-+    BUTTON_MINUS = 0x100,
-+    BUTTON_PLUS = 0x200,
-+    BUTTON_KEYBOARD = 0x1000, 
-+    BUTTON_1 = 0x10000,
-+    BUTTON_A = 0x20000,
-+    BUTTON_B = 0x40000,
-+    BUTTON_2 = 0x80000
-+} buttons;
-*/
+
+	MIDI_DRUM->buf_indx[ONE] = 0;
+	MIDI_DRUM->buf_mask[ONE] = 0x04;
+	MIDI_DRUM->buf_indx[B_BUTTON] = 0;
+	MIDI_DRUM->buf_mask[B_BUTTON] = 0x04;
+
+	MIDI_DRUM->buf_indx[UP] = 2;
+	MIDI_DRUM->buf_mask[UP] = 0x08;
+	MIDI_DRUM->buf_indx[DOWN] = 2;
+	MIDI_DRUM->buf_mask[DOWN] = 0x04;
+	MIDI_DRUM->buf_indx[LEFT] = 2
+	MIDI_DRUM->buf_mask[LEFT] = 0x01;
+	MIDI_DRUM->buf_indx[RIGHT] = 2;
+	MIDI_DRUM->buf_mask[RIGHT] = 0x02;
+
+	MIDI_DRUM->buf_indx[PLUS] = 1
+	MIDI_DRUM->buf_mask[PLUS] = 0x01;
+	MIDI_DRUM->buf_indx[MINUS] = 1;
+	MIDI_DRUM->buf_mask[MINUS] = 0x02;
+
+	MIDI_DRUM->buf_indx[A_BUTTON] = 0;
+	MIDI_DRUM->buf_mask[A_BUTTON] = 0x02;
+	MIDI_DRUM->buf_indx[B_BUTTON] = 0;
+	MIDI_DRUM->buf_mask[B_BUTTON] = 0x04;
+	MIDI_DRUM->buf_indx[ONE] = 0
+	MIDI_DRUM->buf_mask[ONE] = 0x01;
+	MIDI_DRUM->buf_indx[TWO] = 0;
+	MIDI_DRUM->buf_mask[TWO] = 0x08;
+
+	MIDI_DRUM->buf_indx[KEY0] = 5;
+	MIDI_DRUM->buf_indx[KEY1] = 6;
+	MIDI_DRUM->buf_indx[KEY2] = 7;
+	MIDI_DRUM->buf_indx[KEY3] = 8;
+
+	MIDI_DRUM->buf_indx[EXPRESSION] = 15;
+	MIDI_DRUM->buf_mask[EXPRESSION] = 0x7f;
+	MIDI_DRUM->buf_indx[EXPR_TOGGLE] = 13;
+	MIDI_DRUM->buf_mask[EXPR_TOGGLE] = 0x80;
 }
 
 /*
@@ -124,12 +142,15 @@ void cb_irq_rb3_keyboard(struct libusb_transfer *transfer)
         transfer = NULL;
         return;
     }
+    //MIDI_DRUM->key_state=
+    //(MIDI_DRUM->buf[5]<<17)+(MIDI_DRUM->buf[6]<<9)+
+    //(MIDI_DRUM->buf[7]<<1)+((MIDI_DRUM->buf[8]&0x80)>>7);
     MIDI_DRUM->key_state=
-    (MIDI_DRUM->buf[5]<<17)+(MIDI_DRUM->buf[6]<<9)+
-    (MIDI_DRUM->buf[7]<<1)+((MIDI_DRUM->buf[8]&0x80)>>7);
+      (MIDI_DRUM->buf[MIDI_DRUM->buf_indx[KEY0]]<<17)+(MIDI_DRUM->buf[MIDI_DRUM->buf_indx[KEY1]]<<9)+
+      (MIDI_DRUM->buf[MIDI_DRUM->buf_indx[KEY2]]<<1)+((MIDI_DRUM->buf[MIDI_DRUM->buf_indx[KEY3]])>>7);
     //get_velocity(MIDI_DRUM);
 
-//The button next to control slider is stored in controller_value variable instead of button_state
+    //The button next to control slider is stored in controller_value variable instead of button_state
     MIDI_DRUM->controller_value=(MIDI_DRUM->buf[15]&0x7f)+(MIDI_DRUM->buf[13]&0x80);
     MIDI_DRUM->button_state=
         (MIDI_DRUM->buf[0]<<16)+(MIDI_DRUM->buf[1]<<8)+
@@ -144,31 +165,31 @@ void cb_irq_rb3_keyboard(struct libusb_transfer *transfer)
     //get_velocity(MIDI_DRUM);
     if (MIDI_DRUM->key_state != MIDI_DRUM->prev_keystate)
     {
-    handle_key(MIDI_DRUM,0);
-    handle_key(MIDI_DRUM,1);
-    handle_key(MIDI_DRUM,2);
-    handle_key(MIDI_DRUM,3);
-    handle_key(MIDI_DRUM,4);
-    handle_key(MIDI_DRUM,5);
-    handle_key(MIDI_DRUM,6);
-    handle_key(MIDI_DRUM,7);
-    handle_key(MIDI_DRUM,8);
-    handle_key(MIDI_DRUM,9);
-    handle_key(MIDI_DRUM,10);
-    handle_key(MIDI_DRUM,11);
-    handle_key(MIDI_DRUM,12);
-    handle_key(MIDI_DRUM,13);
-    handle_key(MIDI_DRUM,14);
-    handle_key(MIDI_DRUM,15);
-    handle_key(MIDI_DRUM,16);
-    handle_key(MIDI_DRUM,17);
-    handle_key(MIDI_DRUM,18);
-    handle_key(MIDI_DRUM,19);
-    handle_key(MIDI_DRUM,20);
-    handle_key(MIDI_DRUM,21);
-    handle_key(MIDI_DRUM,22);
-    handle_key(MIDI_DRUM,23);
-    handle_key(MIDI_DRUM,24);
+        handle_key(MIDI_DRUM,0);
+        handle_key(MIDI_DRUM,1);
+        handle_key(MIDI_DRUM,2);
+        handle_key(MIDI_DRUM,3);
+        handle_key(MIDI_DRUM,4);
+        handle_key(MIDI_DRUM,5);
+        handle_key(MIDI_DRUM,6);
+        handle_key(MIDI_DRUM,7);
+        handle_key(MIDI_DRUM,8);
+        handle_key(MIDI_DRUM,9);
+        handle_key(MIDI_DRUM,10);
+        handle_key(MIDI_DRUM,11);
+        handle_key(MIDI_DRUM,12);
+        handle_key(MIDI_DRUM,13);
+        handle_key(MIDI_DRUM,14);
+        handle_key(MIDI_DRUM,15);
+        handle_key(MIDI_DRUM,16);
+        handle_key(MIDI_DRUM,17);
+        handle_key(MIDI_DRUM,18);
+        handle_key(MIDI_DRUM,19);
+        handle_key(MIDI_DRUM,20);
+        handle_key(MIDI_DRUM,21);
+        handle_key(MIDI_DRUM,22);
+        handle_key(MIDI_DRUM,23);
+        handle_key(MIDI_DRUM,24);
     }
 
     //octave can get up to +-4 octaves

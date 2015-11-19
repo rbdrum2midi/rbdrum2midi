@@ -48,16 +48,29 @@ typedef enum {
     DOWN,
     LEFT,
     RIGHT,
+    CONNECT,//4
     START,
-    SELECT,
-    CONNECT,//6
+    SELECT,//6
 
-    GREEN = 7,
+    PLUS = 5,//WII buttons
+    MINUS,
+    A_BUTTON,
+    B_BUTTON,
+    ONE,
+    TWO,
+
+    CROSS = 7,//PS3 buttons
+    CIRCLE,
+    SQUARE,
+    TRIANGLE, 
+
+    GREEN = 7, //XBox buttons
     RED,
-    YELLOW,
     BLUE,
-    ORANGE,
-    PICK,//5 //warning, don't mess with the order here, it affects guitar logic
+    YELLOW,//10
+
+    ORANGE = 11,
+    PICK,//warning, don't mess with the order here, it affects guitar logic
     HINOTE,
     HI_GREEN,
     HI_RED,
@@ -67,14 +80,15 @@ typedef enum {
     WHAMMY_LSB,
     WHAMMY_MSB,
 
-    KEYS0 = 7,
+
+    KEYS0 = 11,
     KEYS1,
     KEYS2,
     KEYS3,
     EXPRESSION,
     EXPR_TOGGLE,
     
-    YELLOW_CYMBAL = 7,
+    YELLOW_CYMBAL = 11,
     BLUE_CYMBAL,
     GREEN_CYMBAL,
     ORANGE_CYMBAL,
