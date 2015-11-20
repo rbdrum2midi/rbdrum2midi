@@ -9,7 +9,7 @@ typedef struct _jseq{
     jack_port_t	*output_port;
 }JACK_SEQ;
 
-int init_jack(JACK_SEQ* seq, unsigned char verbose);
+int init_jack_client(JACK_SEQ* seq, unsigned char verbose, const char* name);
 void close_jack(JACK_SEQ* seq);
 void noteup_jack(void* seqq, unsigned char chan, unsigned char note, unsigned char vel);
 void notedown_jack(void* seqq, unsigned char chan, unsigned char note, unsigned char vel);

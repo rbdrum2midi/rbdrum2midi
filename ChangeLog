@@ -1,2 +1,5 @@
 v0.2 added guitar hero drumkit?
 v0.3 added discrete irqs, rb1 support, cli options for selecting midi out
+v0.4 added jack support?
+v0.5 moved to cmake
+v0.6 added keyboard and guitar controllers

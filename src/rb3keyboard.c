@@ -20,12 +20,12 @@ void init_rb3_keyboard(MIDIDRUM* MIDI_DRUM)
 	MIDI_DRUM->buf_mask[UP] = 0x08;
 	MIDI_DRUM->buf_indx[DOWN] = 2;
 	MIDI_DRUM->buf_mask[DOWN] = 0x04;
-	MIDI_DRUM->buf_indx[LEFT] = 2
+	MIDI_DRUM->buf_indx[LEFT] = 2;
 	MIDI_DRUM->buf_mask[LEFT] = 0x01;
 	MIDI_DRUM->buf_indx[RIGHT] = 2;
 	MIDI_DRUM->buf_mask[RIGHT] = 0x02;
 
-	MIDI_DRUM->buf_indx[PLUS] = 1
+	MIDI_DRUM->buf_indx[PLUS] = 1;
 	MIDI_DRUM->buf_mask[PLUS] = 0x01;
 	MIDI_DRUM->buf_indx[MINUS] = 1;
 	MIDI_DRUM->buf_mask[MINUS] = 0x02;
@@ -34,70 +34,24 @@ void init_rb3_keyboard(MIDIDRUM* MIDI_DRUM)
 	MIDI_DRUM->buf_mask[A_BUTTON] = 0x02;
 	MIDI_DRUM->buf_indx[B_BUTTON] = 0;
 	MIDI_DRUM->buf_mask[B_BUTTON] = 0x04;
-	MIDI_DRUM->buf_indx[ONE] = 0
+	MIDI_DRUM->buf_indx[ONE] = 0;
 	MIDI_DRUM->buf_mask[ONE] = 0x01;
 	MIDI_DRUM->buf_indx[TWO] = 0;
 	MIDI_DRUM->buf_mask[TWO] = 0x08;
 
-	MIDI_DRUM->buf_indx[KEY0] = 5;
-	MIDI_DRUM->buf_indx[KEY1] = 6;
-	MIDI_DRUM->buf_indx[KEY2] = 7;
-	MIDI_DRUM->buf_indx[KEY3] = 8;
+	MIDI_DRUM->buf_indx[CONNECT] = 1;
+	MIDI_DRUM->buf_mask[CONNECT] = 0x10;
+
+	MIDI_DRUM->buf_indx[KEYS0] = 5;
+	MIDI_DRUM->buf_indx[KEYS1] = 6;
+	MIDI_DRUM->buf_indx[KEYS2] = 7;
+	MIDI_DRUM->buf_indx[KEYS3] = 8;
 
 	MIDI_DRUM->buf_indx[EXPRESSION] = 15;
 	MIDI_DRUM->buf_mask[EXPRESSION] = 0x7f;
 	MIDI_DRUM->buf_indx[EXPR_TOGGLE] = 13;
 	MIDI_DRUM->buf_mask[EXPR_TOGGLE] = 0x80;
 }
-
-/*
-+static inline void handle_button(MIDIDRUM* MIDI_DRUM)
-+{
-+    if ((MIDI_DRUM->button_state&BUTTON_MINUS) &&
-+        !(MIDI_DRUM->prev_buttonstate&BUTTON_MINUS))
-+        MIDI_DRUM->octave=max(MIDI_DRUM->octave-12, 0);
-+     if ((MIDI_DRUM->button_state&BUTTON_PLUS) &&
-+        !(MIDI_DRUM->prev_buttonstate&BUTTON_PLUS))
-+        MIDI_DRUM->octave=min(MIDI_DRUM->octave+12, 108);
-+     if ((MIDI_DRUM->button_state&BUTTON_KEYBOARD) &&
-+        !(MIDI_DRUM->prev_buttonstate&BUTTON_KEYBOARD))
-+        MIDI_DRUM->octave=MIDI_DRUM->octave=48;
-+}
-+static inline void handle_controller(MIDIDRUM* MIDI_DRUM)
-+{
-+    int prev_value=MIDI_DRUM->prev_controller_value & 0x7f;
-+    int value=MIDI_DRUM->controller_value & 0x7f;
-+
-+    if (MIDI_DRUM->controller_value & 0x80) // lets do the pitch bend stuff
-+    {
-+        if ((MIDI_DRUM->controller_value & 0x7f) !=
-+        (MIDI_DRUM->prev_controller_value & 0x7f))
-+        {
-+           //Here we try to implement some clever pitch bend stuff
-+//        if ((MIDI_DRUM->prev_controller_value & 0x7f) > 0x0f)
-+            //if !((MIDI_DRUM->controller_value & 0x7f) >0x40)
-+        if ((prev_value-value)*(prev_value-value)<0x100)
-+        {
-+            MIDI_DRUM->pitchbend_value=min(max(MIDI_DRUM->pitchbend_value+
-+            (prev_value-value),0),0x7f);
-+            MIDI_DRUM->pitchbend(MIDI_DRUM->sequencer, MIDI_DRUM->channel, MIDI_DRUM->pitchbend_value);
-+        }
-+//        else
-+//            MIDI_DRUM->pitchbend_value=0x2000;
-+        }
-+    }
-+    else
-+    {
-+        if (MIDI_DRUM->prev_controller_value & 0x80)
-+        {
-+            MIDI_DRUM->pitchbend_value=0x40;
-+            MIDI_DRUM->pitchbend(MIDI_DRUM->sequencer, MIDI_DRUM->channel, MIDI_DRUM->pitchbend_value);
-+        }
-+        //Send control event
-+    }
-+    printf ("pitcbend: %02x\n",MIDI_DRUM->pitchbend_value);
-+}
-*/
 
 static inline void get_velocity(MIDIDRUM* MIDI_DRUM)
 {
@@ -142,27 +96,12 @@ void cb_irq_rb3_keyboard(struct libusb_transfer *transfer)
         transfer = NULL;
         return;
     }
-    //MIDI_DRUM->key_state=
-    //(MIDI_DRUM->buf[5]<<17)+(MIDI_DRUM->buf[6]<<9)+
-    //(MIDI_DRUM->buf[7]<<1)+((MIDI_DRUM->buf[8]&0x80)>>7);
+
+    //the keys are the most critical for latency, ctl values can be slower
     MIDI_DRUM->key_state=
-      (MIDI_DRUM->buf[MIDI_DRUM->buf_indx[KEY0]]<<17)+(MIDI_DRUM->buf[MIDI_DRUM->buf_indx[KEY1]]<<9)+
-      (MIDI_DRUM->buf[MIDI_DRUM->buf_indx[KEY2]]<<1)+((MIDI_DRUM->buf[MIDI_DRUM->buf_indx[KEY3]])>>7);
-    //get_velocity(MIDI_DRUM);
+      (MIDI_DRUM->buf[MIDI_DRUM->buf_indx[KEYS0]]<<17)+(MIDI_DRUM->buf[MIDI_DRUM->buf_indx[KEYS1]]<<9)+
+      (MIDI_DRUM->buf[MIDI_DRUM->buf_indx[KEYS2]]<<1)+((MIDI_DRUM->buf[MIDI_DRUM->buf_indx[KEYS3]])>>7);
 
-    //The button next to control slider is stored in controller_value variable instead of button_state
-    MIDI_DRUM->controller_value=(MIDI_DRUM->buf[15]&0x7f)+(MIDI_DRUM->buf[13]&0x80);
-    MIDI_DRUM->button_state=
-        (MIDI_DRUM->buf[0]<<16)+(MIDI_DRUM->buf[1]<<8)+
-        MIDI_DRUM->buf[2];
-
-    if (MIDI_DRUM->button_state != MIDI_DRUM->prev_buttonstate)
-	handle_button(MIDI_DRUM);
-
-    if (MIDI_DRUM->controller_value != MIDI_DRUM->prev_controller_value)
-        handle_controller(MIDI_DRUM);
-
-    //get_velocity(MIDI_DRUM);
     if (MIDI_DRUM->key_state != MIDI_DRUM->prev_keystate)
     {
         handle_key(MIDI_DRUM,0);
@@ -192,10 +131,43 @@ void cb_irq_rb3_keyboard(struct libusb_transfer *transfer)
         handle_key(MIDI_DRUM,24);
     }
 
-    //octave can get up to +-4 octaves
     //these buttons control octave
-    get_state(MIDI_DRUM,RED);
-    get_state(MIDI_DRUM,BLUE);
+    //octave can get up to +-4 octaves
+    get_state(MIDI_DRUM,PLUS);
+    get_state(MIDI_DRUM,MINUS);
+    get_state(MIDI_DRUM,CONNECT);
+    
+    //TODO: this leaves opportunity for currently-on notes to be "orphaned" 
+    //so that the note-off comes for a different octave
+    //NOTE: Also the + and - buttons correspond to start and select on other
+    //platforms, when using the midi out port the 1 and B buttons change octave
+    //for now, I don't mind just doing it this way
+    if(MIDI_DRUM->drum_state[MINUS] && ! MIDI_DRUM->prev_state[MINUS]
+        && MIDI_DRUM->octave>-4)
+        MIDI_DRUM->octave--;
+    if(MIDI_DRUM->drum_state[PLUS] && ! MIDI_DRUM->prev_state[PLUS]
+        && MIDI_DRUM->octave<4)
+        MIDI_DRUM->octave++;
+    if(MIDI_DRUM->drum_state[CONNECT] && ! MIDI_DRUM->prev_state[CONNECT])
+        MIDI_DRUM->octave = 0;
+
+    //now the pitchbender
+    get_state(MIDI_DRUM,EXPR_TOGGLE);
+    get_state(MIDI_DRUM,EXPRESSION);
+    if(MIDI_DRUM->drum_state[EXPRESSION] != MIDI_DRUM->prev_state[EXPRESSION])
+    {
+        if(MIDI_DRUM->drum_state[EXPR_TOGGLE])
+        {
+            //should be MOD wheel change
+        }
+        else
+        {
+            //TODO: figure out how this data is formatted.
+            MIDI_DRUM->pitchbend(MIDI_DRUM->sequencer,MIDI_DRUM->channel,MIDI_DRUM->drum_state[EXPRESSION]); 
+        }
+    }
+
+    memcpy(MIDI_DRUM->prev_state,MIDI_DRUM->drum_state,NUM_DRUMS);
 
     if (MIDI_DRUM->verbose)
     {
@@ -203,8 +175,6 @@ void cb_irq_rb3_keyboard(struct libusb_transfer *transfer)
         print_buf(MIDI_DRUM);
     }
     MIDI_DRUM->prev_keystate=MIDI_DRUM->key_state; 
-    MIDI_DRUM->prev_buttonstate=MIDI_DRUM->button_state;
-    MIDI_DRUM->prev_controller_value=MIDI_DRUM->controller_value;
     
     if (libusb_submit_transfer(transfer) < 0)
         do_exit = 2;

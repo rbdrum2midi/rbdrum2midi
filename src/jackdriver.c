@@ -342,12 +342,12 @@ void pitch_jack(void* seqq, unsigned char chan, short val)
 
 //this is run in the main thread
 int 
-init_jack(JACK_SEQ* seq, unsigned char verbose)
+init_jack_client(JACK_SEQ* seq, unsigned char verbose, const char* name)
 {
 	int err;
     
     if(verbose)printf("opening client...\n");
-    seq->jack_client = jack_client_open("Game Music Controller", JackNoStartServer, NULL);
+    seq->jack_client = jack_client_open(name, JackNoStartServer, NULL);
 
 	if (seq->jack_client == NULL) {
         printf("Could not connect to the JACK server; run jackd first?");
