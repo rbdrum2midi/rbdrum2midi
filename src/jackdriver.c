@@ -329,11 +329,9 @@ void pitch_jack(void* seqq, unsigned char chan, short val)
     JACK_SEQ* seq = (JACK_SEQ*)seqq;
     ev.len = 3;
     ev.data[0] = 0xE0 + chan;
+    val += 0x2000;
     ev.data[1] = val&0x7f;
-    ev.data[2] = val>>7;
     ev.data[2] = (val>>7)&0x7f;
-    if(val<=0)
-        ev.data[2] |= 0x20;
 
     ev.time = jack_frame_time(seq->jack_client);
 

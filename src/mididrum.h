@@ -146,7 +146,7 @@ typedef struct drum_midi
     unsigned char oldbuf[INTR_LENGTH];
     void (*noteup)(void* seq, unsigned char chan, unsigned char note, unsigned char vel);
     void (*notedown)(void* seq, unsigned char chan, unsigned char note, unsigned char vel);
-    void (*pitchbend)(void* seq, unsigned char chan, short val);
+    void (*pitchbend)(void* seq, unsigned char chan, short val);//expect val in range [-8192, 8191]
 }MIDIDRUM;
 
 static inline void get_state(MIDIDRUM* MIDI_DRUM, unsigned char drum){MIDI_DRUM->drum_state[drum] = MIDI_DRUM->buf[MIDI_DRUM->buf_indx[drum]] & MIDI_DRUM->buf_mask[drum];}

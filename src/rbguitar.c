@@ -149,7 +149,8 @@ void cb_irq_rb_guitar(struct libusb_transfer *transfer)
         val = (val<<5) + (MIDI_DRUM->drum_state[WHAMMY_LSB]>>3);
         if(MIDI_DRUM->drum_state[WHAMMY_MSB] == 0x7f && MIDI_DRUM->prev_state[WHAMMY_MSB] == 0x00)
             val = 0;//some set the whammy to 0x7f when it is released
-        val = 0x2000-val;
+        //val = 0x2000-val;
+        val = -val;
         //printf("pitch %i %x\n",val,val);
         MIDI_DRUM->pitchbend(MIDI_DRUM->sequencer, MIDI_DRUM->channel, val);
     }
