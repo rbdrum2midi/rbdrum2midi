@@ -329,11 +329,9 @@ void pitch_jack(void* seqq, unsigned char chan, short val)
     JACK_SEQ* seq = (JACK_SEQ*)seqq;
     ev.len = 3;
     ev.data[0] = 0xE0 + chan;
+    val += 0x2000;
     ev.data[1] = val&0x7f;
-    ev.data[2] = val>>7;
     ev.data[2] = (val>>7)&0x7f;
-    if(val<=0)
-        ev.data[2] |= 0x20;
 
     ev.time = jack_frame_time(seq->jack_client);
 
@@ -342,12 +340,12 @@ void pitch_jack(void* seqq, unsigned char chan, short val)
 
 //this is run in the main thread
 int 
-init_jack(JACK_SEQ* seq, unsigned char verbose)
+init_jack_client(JACK_SEQ* seq, unsigned char verbose, const char* name)
 {
 	int err;
     
     if(verbose)printf("opening client...\n");
-    seq->jack_client = jack_client_open("Game Music Controller", JackNoStartServer, NULL);
+    seq->jack_client = jack_client_open(name, JackNoStartServer, NULL);
 
 	if (seq->jack_client == NULL) {
         printf("Could not connect to the JACK server; run jackd first?");

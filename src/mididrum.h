@@ -48,16 +48,29 @@ typedef enum {
     DOWN,
     LEFT,
     RIGHT,
+    CONNECT,//4
     START,
-    SELECT,
-    CONNECT,//6
+    SELECT,//6
 
-    GREEN = 7,
+    PLUS = 5,//WII buttons
+    MINUS,
+    A_BUTTON,
+    B_BUTTON,
+    ONE,
+    TWO,
+
+    CROSS = 7,//PS3 buttons
+    CIRCLE,
+    SQUARE,
+    TRIANGLE, 
+
+    GREEN = 7, //XBox buttons
     RED,
-    YELLOW,
     BLUE,
-    ORANGE,
-    PICK,//5 //warning, don't mess with the order here, it affects guitar logic
+    YELLOW,//10
+
+    ORANGE = 11,
+    PICK,//warning, don't mess with the order here, it affects guitar logic
     HINOTE,
     HI_GREEN,
     HI_RED,
@@ -67,14 +80,15 @@ typedef enum {
     WHAMMY_LSB,
     WHAMMY_MSB,
 
-    KEYS0 = 7,
+
+    KEYS0 = 11,
     KEYS1,
     KEYS2,
     KEYS3,
     EXPRESSION,
     EXPR_TOGGLE,
     
-    YELLOW_CYMBAL = 7,
+    YELLOW_CYMBAL = 11,
     BLUE_CYMBAL,
     GREEN_CYMBAL,
     ORANGE_CYMBAL,
@@ -126,12 +140,13 @@ typedef struct drum_midi
     unsigned char hat;
     unsigned char bass_down;
     int velocity;
+    char octave;
     unsigned char default_velocity;
     unsigned char irqbuf[INTR_LENGTH];
     unsigned char oldbuf[INTR_LENGTH];
     void (*noteup)(void* seq, unsigned char chan, unsigned char note, unsigned char vel);
     void (*notedown)(void* seq, unsigned char chan, unsigned char note, unsigned char vel);
-    void (*pitchbend)(void* seq, unsigned char chan, short val);
+    void (*pitchbend)(void* seq, unsigned char chan, short val);//expect val in range [-8192, 8191]
 }MIDIDRUM;
 
 static inline void get_state(MIDIDRUM* MIDI_DRUM, unsigned char drum){MIDI_DRUM->drum_state[drum] = MIDI_DRUM->buf[MIDI_DRUM->buf_indx[drum]] & MIDI_DRUM->buf_mask[drum];}

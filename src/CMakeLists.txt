@@ -25,6 +25,7 @@ add_executable(rbdrum2midi
   jackdriver.c
   rb1kit.c
   rbkit.c
+  rb3keyboard.c
   rbguitar.c
 )
 

@@ -200,14 +200,8 @@ void print_guitar(MIDIDRUM* MIDI_DRUM)
 void print_keys(MIDIDRUM* MIDI_DRUM)
 {
     //TODO
-/*
     if (MIDI_DRUM->key_state!=MIDI_DRUM->prev_keystate)
 	    printf("Keys: %08x %02x\n",MIDI_DRUM->key_state,MIDI_DRUM->velocity);
-    if (MIDI_DRUM->button_state != MIDI_DRUM->prev_buttonstate)
-        printf("Buttons: %08x\n",MIDI_DRUM->button_state);
-    if (MIDI_DRUM->controller_value != MIDI_DRUM->prev_controller_value)
-        printf("Controller: %02x\n",MIDI_DRUM->controller_value);
-*/
 }
 
 void midi_defaults(MIDIDRUM* MIDI_DRUM)
@@ -267,6 +261,7 @@ void midi_defaults(MIDIDRUM* MIDI_DRUM)
         if(!MIDI_DRUM->midi_note[HI_ORANGE])
             MIDI_DRUM->midi_note[HI_ORANGE] = MIDI_DRUM->midi_note[ORANGE]+12;
     }
+    //keyboards don't have midi note options
 }
 
 
@@ -330,7 +325,7 @@ static int alloc_transfers(MIDIDRUM* MIDI_DRUM, libusb_device_handle *devh, stru
             sizeof(MIDI_DRUM->irqbuf), cb_irq_rb_guitar, (void*)MIDI_DRUM, 0);
         if( MIDI_DRUM->verbose)printf("Rock Band Guitar connected.\n");
     }
-    else if(MIDI_DRUM->kit == WII_ROCKBAND3_KEYBOARD){
+    else if(MIDI_DRUM->kit == WII_RB3_KEYBOARD){
         libusb_fill_interrupt_transfer(*irq_transfer, devh, EP_INTR, MIDI_DRUM->irqbuf,
             sizeof(MIDI_DRUM->irqbuf), cb_irq_rb3_keyboard, (void*)MIDI_DRUM, 0);
         if( MIDI_DRUM->verbose)printf("Wii Rock Band 3 Wireless keyboard detected.\n");
@@ -340,6 +335,26 @@ static int alloc_transfers(MIDIDRUM* MIDI_DRUM, libusb_device_handle *devh, stru
     }
 
     return 0;
+}
+
+int init_jack(JACK_SEQ* seq, unsigned char verbose)
+{
+    if(MIDI_DRUM->kit == PS_ROCKBAND  || MIDI_DRUM->kit == XB_ROCKBAND ||
+        return init_jack_client(seq,verbose,"Rockband Drum Controller");
+    }
+    else if(MIDI_DRUM->kit == PS_ROCKBAND1 || MIDI_DRUM->kit == XB_ROCKBAND1){
+        return init_jack_client(seq,verbose,"Rockband 1 Drum Controller");
+    }
+    else if(MIDI_DRUM->kit == GUITAR_HERO){
+        return init_jack_client(seq,verbose,"Guitar Hero Drum Controller");
+    }
+    else if(MIDI_DRUM->kit == PS_RB_GUITAR || MIDI_DRUM->kit == XB_RB_GUITAR){
+        return init_jack_client(seq,verbose,"Rockband Guitar Controller");
+    }
+    else if(MIDI_DRUM->kit == WII_RB3_KEYBOARD){
+        return init_jack_client(seq,verbose,"Rockband Keyboard Controller");
+    }
+
 }
 
 void close_seq(ALSA_SEQ* aseq, JACK_SEQ* jseq, unsigned char seqtype)
@@ -380,8 +395,8 @@ void useage()
     printf("    -htc <value>                set closed hihat midi value of hihat mode drum\n");
     printf("\n");
     printf("    Guitar Driver Options\n");
-    printf("    -r/y/b/g <value>            set midi note for -color of button\n");
-    printf("    -rhi/ohi/yhi/bhi/ghi <val>  set midi note for -color of upper button\n");
+    printf("    -r/o/y/g/b <value>            set midi note for -color of button\n");
+    printf("    -rhi/ohi/yhi/ghi/bhi <val>  set midi note for -color of upper button\n");
     printf("    -bg                         bass guitar mode\n");
     printf("\n");
     printf("    General Options\n");
@@ -433,6 +448,7 @@ int main(int argc, char **argv)
     //initial conditions, defaults
     MIDI_DRUM->bass_down = 0;
     MIDI_DRUM->default_velocity = 125;
+    MIDI_DRUM->octave = 0;
     MIDI_DRUM->channel = DEFAULT_CHANNEL;
     MIDI_DRUM->verbose = 0;
     MIDI_DRUM->dbg = 0;
