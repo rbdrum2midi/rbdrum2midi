@@ -66,8 +66,8 @@ typedef enum {
 
     GREEN = 7, //XBox buttons
     RED,
-    BLUE,
-    YELLOW,//10
+    YELLOW,
+    BLUE,//10
 
     ORANGE = 11,
     PICK,//warning, don't mess with the order here, it affects guitar logic
@@ -155,6 +155,7 @@ static inline void get_state(MIDIDRUM* MIDI_DRUM, unsigned char drum){MIDI_DRUM-
 void print_hits(MIDIDRUM* MIDI_DRUM);
 void print_buf(MIDIDRUM* MIDI_DRUM);
 void print_keys(MIDIDRUM* MIDI_DRUM);
+void print_guitar(MIDIDRUM* MIDI_DRUM);
 
 //other globals
 int do_exit;

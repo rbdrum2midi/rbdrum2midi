@@ -63,12 +63,12 @@ static inline void old_off(MIDIDRUM* MIDI_DRUM)
 {
     int i;
     MIDI_DRUM->velocity = MIDI_DRUM->default_velocity;
-    for(i=GREEN;i<PICK;i++)
+    for(i=GREEN;i<=ORANGE;i++)
     {
         if (MIDI_DRUM->prev_state[i])
             MIDI_DRUM->noteup(MIDI_DRUM->sequencer, MIDI_DRUM->channel, MIDI_DRUM->midi_note[i], 0);
-        if (MIDI_DRUM->prev_state[i+HINOTE+1])
-            MIDI_DRUM->noteup(MIDI_DRUM->sequencer, MIDI_DRUM->channel, MIDI_DRUM->midi_note[i+HINOTE+1], 0);
+        if (MIDI_DRUM->prev_state[i+HI_GREEN-GREEN])
+            MIDI_DRUM->noteup(MIDI_DRUM->sequencer, MIDI_DRUM->channel, MIDI_DRUM->midi_note[i+HI_GREEN-GREEN], 0);
     }
 }
 
@@ -87,7 +87,6 @@ void cb_irq_rb_guitar(struct libusb_transfer *transfer)
 
     //RockBand 3 Guitar
     get_state(MIDI_DRUM,PICK);
-    get_state(MIDI_DRUM,HINOTE);
     get_state(MIDI_DRUM,WHAMMY_LSB);
     get_state(MIDI_DRUM,WHAMMY_MSB);
 
@@ -100,13 +99,14 @@ void cb_irq_rb_guitar(struct libusb_transfer *transfer)
         get_state(MIDI_DRUM,GREEN);
         get_state(MIDI_DRUM,BLUE);
         get_state(MIDI_DRUM,ORANGE);
+        get_state(MIDI_DRUM,HINOTE);
         //first kill all old ones
         old_off(MIDI_DRUM); 
         //then send the new notes
         i=0;
         if(MIDI_DRUM->drum_state[HINOTE])
-            i = HINOTE+1;
-        for(j=GREEN;j<PICK;j++)
+            i = HI_GREEN-GREEN;
+        for(j=GREEN;j<=ORANGE;j++)
             if(MIDI_DRUM->drum_state[j])
             {
                 MIDI_DRUM->notedown( MIDI_DRUM->sequencer, MIDI_DRUM->channel, MIDI_DRUM->midi_note[j+i], MIDI_DRUM->velocity);
@@ -120,7 +120,7 @@ void cb_irq_rb_guitar(struct libusb_transfer *transfer)
     else
     {
         //stop any sounding notes that are let go
-        for(j=GREEN;j<PICK;j++)
+        for(j=GREEN;j<=ORANGE;j++)
         {
             if(MIDI_DRUM->prev_state[j]) 
             {
@@ -128,11 +128,11 @@ void cb_irq_rb_guitar(struct libusb_transfer *transfer)
                 if(!MIDI_DRUM->drum_state[j])
                     MIDI_DRUM->noteup(MIDI_DRUM->sequencer, MIDI_DRUM->channel, MIDI_DRUM->midi_note[j], 0);
             }
-            if(MIDI_DRUM->prev_state[j+HINOTE+1])
+            if(MIDI_DRUM->prev_state[j+HI_GREEN-GREEN])
             {
                 k = MIDI_DRUM->drum_state[j];
                 get_state(MIDI_DRUM,j);
-                i = HINOTE+1;
+                i = HI_GREEN-GREEN;
                 if(!MIDI_DRUM->drum_state[j])
                     MIDI_DRUM->noteup(MIDI_DRUM->sequencer, MIDI_DRUM->channel, MIDI_DRUM->midi_note[j+i], 0);
                 MIDI_DRUM->drum_state[i+j] = MIDI_DRUM->drum_state[j];
@@ -160,7 +160,7 @@ void cb_irq_rb_guitar(struct libusb_transfer *transfer)
     
     if (MIDI_DRUM->verbose)
     {
-    	//print_guitar(MIDI_DRUM);
+    	print_guitar(MIDI_DRUM);
     	print_buf(MIDI_DRUM);
     } 
     if (libusb_submit_transfer(transfer) < 0)

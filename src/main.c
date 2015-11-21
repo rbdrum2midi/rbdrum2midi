@@ -158,7 +158,8 @@ void print_hits(MIDIDRUM* MIDI_DRUM)
          MIDI_DRUM->drum_state[YELLOW_CYMBAL] ||  
          MIDI_DRUM->drum_state[ORANGE_BASS]   ||
          MIDI_DRUM->drum_state[BLACK_BASS] ) {
-         printf("%s %s %s %s %s %s %s %s\n",  MIDI_DRUM->drum_state[RED]>0?"VV":"  ",
+         printf("%s %s %s %s %s %s %s %s\n",  
+        MIDI_DRUM->drum_state[RED]>0?"VV":"  ",
                 MIDI_DRUM->drum_state[YELLOW]>0?"VV":"  ", 
                 MIDI_DRUM->drum_state[BLUE]>0?"VV":"  ", 
                 MIDI_DRUM->drum_state[GREEN]>0?"VV":"  ",
@@ -195,13 +196,41 @@ void print_buf(MIDIDRUM* MIDI_DRUM)
 void print_guitar(MIDIDRUM* MIDI_DRUM)
 {
     //TODO    
+    if ( MIDI_DRUM->drum_state[HINOTE] )
+    {
+        if ( MIDI_DRUM->drum_state[GREEN] )
+            printf("%i ", MIDI_DRUM->midi_note[HI_GREEN]);
+        if ( MIDI_DRUM->drum_state[RED] )
+            printf("%i ", MIDI_DRUM->midi_note[HI_RED]);
+        if ( MIDI_DRUM->drum_state[YELLOW] )
+            printf("%i ", MIDI_DRUM->midi_note[HI_YELLOW]);
+        if ( MIDI_DRUM->drum_state[BLUE] )
+            printf("%i ", MIDI_DRUM->midi_note[HI_BLUE]);
+        if ( MIDI_DRUM->drum_state[ORANGE] )
+            printf("%i ", MIDI_DRUM->midi_note[HI_ORANGE]);
+    printf("\n");
+    }
+    else
+    {
+        if ( MIDI_DRUM->drum_state[GREEN] )
+            printf("%i ", MIDI_DRUM->midi_note[GREEN]);
+        if ( MIDI_DRUM->drum_state[RED] )
+            printf("%i ", MIDI_DRUM->midi_note[RED]);
+        if ( MIDI_DRUM->drum_state[YELLOW] )
+            printf("%i ", MIDI_DRUM->midi_note[YELLOW]);
+        if ( MIDI_DRUM->drum_state[BLUE] )
+            printf("%i ", MIDI_DRUM->midi_note[BLUE]);
+        if ( MIDI_DRUM->drum_state[ORANGE] )
+            printf("%i ", MIDI_DRUM->midi_note[ORANGE]);
+    printf("\n");
+    }
 }
 
 void print_keys(MIDIDRUM* MIDI_DRUM)
 {
     //TODO
     if (MIDI_DRUM->key_state!=MIDI_DRUM->prev_keystate)
-	    printf("Keys: %08x %02x\n",MIDI_DRUM->key_state,MIDI_DRUM->velocity);
+        printf("Keys: %08X %02x\n",MIDI_DRUM->key_state,MIDI_DRUM->velocity);
 }
 
 void midi_defaults(MIDIDRUM* MIDI_DRUM)
@@ -337,9 +366,10 @@ static int alloc_transfers(MIDIDRUM* MIDI_DRUM, libusb_device_handle *devh, stru
     return 0;
 }
 
-int init_jack(JACK_SEQ* seq, unsigned char verbose)
+int init_jack(MIDIDRUM* MIDI_DRUM, JACK_SEQ* seq, unsigned char verbose)
 {
     if(MIDI_DRUM->kit == PS_ROCKBAND  || MIDI_DRUM->kit == XB_ROCKBAND ||
+            MIDI_DRUM->kit == WII_ROCKBAND){
         return init_jack_client(seq,verbose,"Rockband Drum Controller");
     }
     else if(MIDI_DRUM->kit == PS_ROCKBAND1 || MIDI_DRUM->kit == XB_ROCKBAND1){
@@ -355,17 +385,18 @@ int init_jack(JACK_SEQ* seq, unsigned char verbose)
         return init_jack_client(seq,verbose,"Rockband Keyboard Controller");
     }
 
+    return 0;
 }
 
 void close_seq(ALSA_SEQ* aseq, JACK_SEQ* jseq, unsigned char seqtype)
 {
     if(seqtype>=2){
         //jack
-	close_jack(jseq);
+    close_jack(jseq);
     }
     else{
         //alsa
-	close_alsa(aseq);
+    close_alsa(aseq);
     }
 }
 
@@ -617,8 +648,7 @@ int main(int argc, char **argv)
             }
             else if (strcmp(argv[i], "-bg") == 0) {
                 //debug mode
-                MIDI_DRUM->dbg = 1;
-                MIDI_DRUM->verbose = 1;
+                MIDI_DRUM->bass_down = 1;
             }
             else if (strcmp(argv[i], "-h") == 0) {
                 //help
@@ -640,15 +670,15 @@ int main(int argc, char **argv)
         //no way of knowing if device is RB1 so reassign kit after claiming
         r = find_rbdrum_device(MIDI_DRUM,&devh);
         switch(MIDI_DRUM->kit)
-	    {
-	    case PS_ROCKBAND:
-	    case WII_ROCKBAND:
-  	        MIDI_DRUM->kit = PS_ROCKBAND1; 
-	        break;
-	    case XB_ROCKBAND:
-	        MIDI_DRUM->kit = XB_ROCKBAND1; 
-	        break;
-	    }
+        {
+        case PS_ROCKBAND:
+        case WII_ROCKBAND:
+              MIDI_DRUM->kit = PS_ROCKBAND1; 
+            break;
+        case XB_ROCKBAND:
+            MIDI_DRUM->kit = XB_ROCKBAND1; 
+            break;
+        }
     }
     else
         r = find_rbdrum_device(MIDI_DRUM,&devh);
@@ -668,14 +698,14 @@ int main(int argc, char **argv)
 
     if(seqtype >=2){
         //jack
-    	r = init_jack(&jseqq,MIDI_DRUM->verbose);
+        r = init_jack(MIDI_DRUM,&jseqq,MIDI_DRUM->verbose);
         MIDI_DRUM->sequencer = (void*)&jseqq;
         MIDI_DRUM->noteup = &noteup_jack;
         MIDI_DRUM->notedown = notedown_jack;
         MIDI_DRUM->pitchbend = pitch_jack;
     }
     else{
-    	r = init_alsa(&aseqq,MIDI_DRUM->verbose);
+        r = init_alsa(&aseqq,MIDI_DRUM->verbose);
         MIDI_DRUM->sequencer = (void*)&aseqq;
         MIDI_DRUM->noteup = &noteup_alsa;
         MIDI_DRUM->notedown = notedown_alsa;
