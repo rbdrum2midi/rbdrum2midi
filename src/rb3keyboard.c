@@ -25,10 +25,10 @@ void init_rb3_keyboard(MIDIDRUM* MIDI_DRUM)
 	MIDI_DRUM->buf_indx[RIGHT] = 2;
 	MIDI_DRUM->buf_mask[RIGHT] = 0x02;
 
-	MIDI_DRUM->buf_indx[PLUS] = 1;
-	MIDI_DRUM->buf_mask[PLUS] = 0x01;
 	MIDI_DRUM->buf_indx[MINUS] = 1;
-	MIDI_DRUM->buf_mask[MINUS] = 0x02;
+	MIDI_DRUM->buf_mask[MINUS] = 0x01;
+	MIDI_DRUM->buf_indx[PLUS] = 1;
+	MIDI_DRUM->buf_mask[PLUS] = 0x02;
 
 	MIDI_DRUM->buf_indx[A_BUTTON] = 0;
 	MIDI_DRUM->buf_mask[A_BUTTON] = 0x02;
