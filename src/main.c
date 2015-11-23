@@ -195,7 +195,6 @@ void print_buf(MIDIDRUM* MIDI_DRUM)
 
 void print_guitar(MIDIDRUM* MIDI_DRUM)
 {
-    //TODO    
     if ( MIDI_DRUM->drum_state[HINOTE] )
     {
         if ( MIDI_DRUM->drum_state[GREEN] )
@@ -208,7 +207,6 @@ void print_guitar(MIDIDRUM* MIDI_DRUM)
             printf("%i ", MIDI_DRUM->midi_note[HI_BLUE]);
         if ( MIDI_DRUM->drum_state[ORANGE] )
             printf("%i ", MIDI_DRUM->midi_note[HI_ORANGE]);
-    printf("\n");
     }
     else
     {
@@ -222,7 +220,6 @@ void print_guitar(MIDIDRUM* MIDI_DRUM)
             printf("%i ", MIDI_DRUM->midi_note[BLUE]);
         if ( MIDI_DRUM->drum_state[ORANGE] )
             printf("%i ", MIDI_DRUM->midi_note[ORANGE]);
-    printf("\n");
     }
 }
 

@@ -145,7 +145,7 @@ void cb_irq_rb_guitar(struct libusb_transfer *transfer)
     if(MIDI_DRUM->drum_state[WHAMMY_LSB] != MIDI_DRUM->prev_state[WHAMMY_LSB] ||
         MIDI_DRUM->drum_state[WHAMMY_MSB] != MIDI_DRUM->prev_state[WHAMMY_MSB])
     {
-        unsigned short val = (MIDI_DRUM->drum_state[WHAMMY_MSB]+MIDI_DRUM->midi_note[WHAMMY_MSB])&0xff;
+        short val = (MIDI_DRUM->drum_state[WHAMMY_MSB]+MIDI_DRUM->midi_note[WHAMMY_MSB])&0xff;
         val = (val<<5) + (MIDI_DRUM->drum_state[WHAMMY_LSB]>>3);
         if(MIDI_DRUM->drum_state[WHAMMY_MSB] == 0x7f && MIDI_DRUM->prev_state[WHAMMY_MSB] == 0x00)
             val = 0;//some set the whammy to 0x7f when it is released
@@ -161,6 +161,7 @@ void cb_irq_rb_guitar(struct libusb_transfer *transfer)
     if (MIDI_DRUM->verbose)
     {
     	print_guitar(MIDI_DRUM);
+	//printf("\n");
     	print_buf(MIDI_DRUM);
     } 
     if (libusb_submit_transfer(transfer) < 0)
