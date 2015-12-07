@@ -57,12 +57,12 @@ typedef enum {
     A_BUTTON,
     B_BUTTON,
     ONE,
-    TWO,
+    TWO,//10
 
     CROSS = 7,//PS3 buttons
     CIRCLE,
     SQUARE,
-    TRIANGLE, 
+    TRIANGLE, //10
 
     GREEN = 7, //XBox buttons
     RED,

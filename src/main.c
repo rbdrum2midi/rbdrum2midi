@@ -235,6 +235,13 @@ void midi_defaults(MIDIDRUM* MIDI_DRUM)
     int v;
     if(MIDI_DRUM->kit < DRUMS)
     {
+        if(MIDI_DRUM->kit == XB_ROCKBAND1 || MIDI_DRUM->kit == PS_ROCKBAND1)
+        {
+            if(!MIDI_DRUM->midi_note[YELLOW])
+                MIDI_DRUM->midi_note[YELLOW] = GM_CLOSED_HAT;
+            if(!MIDI_DRUM->midi_note[BLUE])
+                MIDI_DRUM->midi_note[BLUE] = GM_CRASH;
+        }
         if(!MIDI_DRUM->midi_note[RED])
             MIDI_DRUM->midi_note[RED] = GM_SNARE; 
         if(!MIDI_DRUM->midi_note[YELLOW])
@@ -512,9 +519,6 @@ int main(int argc, char **argv)
             else if (strcmp(argv[i], "-rb1") == 0) {
                 //rockband 1 set, use different irq routine
                 MIDI_DRUM->kit = PS_ROCKBAND1;
-                //and different mapping
-                MIDI_DRUM->midi_note[YELLOW] = MIDI_DRUM->midi_note[CLOSED_HAT];
-                MIDI_DRUM->midi_note[BLUE] = MIDI_DRUM->midi_note[ORANGE_CYMBAL];
             }
             else if (strcmp(argv[i], "-ocy") == 0) {
                 //orange cymbal
