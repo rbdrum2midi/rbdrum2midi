@@ -485,6 +485,7 @@ int main(int argc, char **argv)
     MIDI_DRUM->default_velocity = 125;
     MIDI_DRUM->octave = 0;
     MIDI_DRUM->channel = DEFAULT_CHANNEL;
+    MIDI_DRUM->prog = 0;
     MIDI_DRUM->verbose = 0;
     MIDI_DRUM->dbg = 0;
     MIDI_DRUM->kit = PS_ROCKBAND;
@@ -701,16 +702,20 @@ int main(int argc, char **argv)
         //jack
         r = init_jack(MIDI_DRUM,&jseqq,MIDI_DRUM->verbose);
         MIDI_DRUM->sequencer = (void*)&jseqq;
-        MIDI_DRUM->noteup = &noteup_jack;
+        MIDI_DRUM->noteup = noteup_jack;
         MIDI_DRUM->notedown = notedown_jack;
         MIDI_DRUM->pitchbend = pitch_jack;
+        MIDI_DRUM->control = control_jack;
+        MIDI_DRUM->program = prog_jack;
     }
     else{
         r = init_alsa(&aseqq,MIDI_DRUM->verbose);
         MIDI_DRUM->sequencer = (void*)&aseqq;
-        MIDI_DRUM->noteup = &noteup_alsa;
+        MIDI_DRUM->noteup = noteup_alsa;
         MIDI_DRUM->notedown = notedown_alsa;
         MIDI_DRUM->pitchbend = pitch_alsa;
+        MIDI_DRUM->control = control_alsa;
+        MIDI_DRUM->program = prog_alsa;
     }
     // 0 is fail.
     if (r == 0) {

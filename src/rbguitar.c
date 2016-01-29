@@ -27,6 +27,18 @@ void init_rb_guitar(MIDIDRUM* MIDI_DRUM)
         MIDI_DRUM->buf_indx[WHAMMY_LSB] = 10;
         MIDI_DRUM->buf_mask[WHAMMY_LSB] = 0xF0;
 
+        MIDI_DRUM->buf_indx[SELECTOR] = 4;
+        MIDI_DRUM->buf_mask[SELECTOR] = 0xFF;
+        MIDI_DRUM->buf_indx[LEFT] = 2;
+        MIDI_DRUM->buf_mask[LEFT] = 0x04;
+        MIDI_DRUM->buf_indx[RIGHT] = 2;
+        MIDI_DRUM->buf_mask[RIGHT] = 0x08;
+
+        MIDI_DRUM->buf_indx[START] = 2;
+        MIDI_DRUM->buf_mask[START] = 0x10;
+        MIDI_DRUM->buf_indx[SELECT] = 2;
+        MIDI_DRUM->buf_mask[SELECT] = 0x20;
+
         MIDI_DRUM->midi_note[PICK] = 0x00;//this is a misuse of the midi note array, but it is a convenient place to keep what the "unpressed" state of the pick should be
         MIDI_DRUM->midi_note[WHAMMY_MSB] = 0x80;//similarly, this is an offset for the pitchbend
         break;
@@ -50,6 +62,18 @@ void init_rb_guitar(MIDIDRUM* MIDI_DRUM)
         MIDI_DRUM->buf_mask[WHAMMY_MSB] = 0xFF;
         MIDI_DRUM->buf_indx[WHAMMY_LSB] = 7;
         MIDI_DRUM->buf_mask[WHAMMY_LSB] = 0x00;
+
+        MIDI_DRUM->buf_indx[SELECTOR] = 4; //TODO: CURRENTLY THESE ARE GUESSES
+        MIDI_DRUM->buf_mask[SELECTOR] = 0xFF;
+        MIDI_DRUM->buf_indx[LEFT] = 2;
+        MIDI_DRUM->buf_mask[LEFT] = 0x04;
+        MIDI_DRUM->buf_indx[RIGHT] = 2;
+        MIDI_DRUM->buf_mask[RIGHT] = 0x08;
+
+        MIDI_DRUM->buf_indx[START] = 2;
+        MIDI_DRUM->buf_mask[START] = 0x10;
+        MIDI_DRUM->buf_indx[SELECT] = 2;
+        MIDI_DRUM->buf_mask[SELECT] = 0x20;
 
         MIDI_DRUM->midi_note[PICK] = 0x08;//this is a misuse of the midi note array, but it is a convenient place to keep what the "unpressed" state of the pick should be
         MIDI_DRUM->midi_note[WHAMMY_MSB] = 0x00;//similarly, this is an offset for the pitchbend
@@ -90,8 +114,8 @@ void cb_irq_rb_guitar(struct libusb_transfer *transfer)
     get_state(MIDI_DRUM,WHAMMY_LSB);
     get_state(MIDI_DRUM,WHAMMY_MSB);
 
-    if(MIDI_DRUM->drum_state[PICK] != MIDI_DRUM->prev_state[PICK] 
-       && MIDI_DRUM->drum_state[PICK] != MIDI_DRUM->midi_note[PICK])
+    //TODO: add tapping mode when start pressed
+    if(changed(MIDI_DRUM,PICK) && MIDI_DRUM->drum_state[PICK] != MIDI_DRUM->midi_note[PICK]) //PICK note isn't actually a midi note
     {
         //new notes
         get_state(MIDI_DRUM,RED);
@@ -142,8 +166,8 @@ void cb_irq_rb_guitar(struct libusb_transfer *transfer)
         
     }
     
-    if(MIDI_DRUM->drum_state[WHAMMY_LSB] != MIDI_DRUM->prev_state[WHAMMY_LSB] ||
-        MIDI_DRUM->drum_state[WHAMMY_MSB] != MIDI_DRUM->prev_state[WHAMMY_MSB])
+    //other controls
+    if(changed(MIDI_DRUM,WHAMMY_LSB) || changed(MIDI_DRUM,WHAMMY_MSB))
     {
         short val = (MIDI_DRUM->drum_state[WHAMMY_MSB]+MIDI_DRUM->midi_note[WHAMMY_MSB])&0xff;
         val = (val<<5) + (MIDI_DRUM->drum_state[WHAMMY_LSB]>>3);
@@ -153,6 +177,25 @@ void cb_irq_rb_guitar(struct libusb_transfer *transfer)
         val = -val;
         //printf("pitch %i %x\n",val,val);
         MIDI_DRUM->pitchbend(MIDI_DRUM->sequencer, MIDI_DRUM->channel, val);
+    }
+
+    get_state(MIDI_DRUM,SELECTOR);
+    get_state(MIDI_DRUM,LEFT);
+    get_state(MIDI_DRUM,RIGHT);
+
+    if(changed(MIDI_DRUM,SELECTOR))
+        MIDI_DRUM->control(MIDI_DRUM->sequencer, MIDI_DRUM->channel, 1, MIDI_DRUM->drum_state[SELECTOR]);//MOD WHEEL
+    if(changed(MIDI_DRUM,LEFT))
+    {
+        if(!MIDI_DRUM->prog--)
+            MIDI_DRUM->prog = 0;
+        MIDI_DRUM->program(MIDI_DRUM->sequencer, MIDI_DRUM->channel, MIDI_DRUM->prog); 
+    }
+    if(changed(MIDI_DRUM,RIGHT))
+    {
+        if(MIDI_DRUM->prog++ > 126)
+            MIDI_DRUM->prog = 127;
+        MIDI_DRUM->program(MIDI_DRUM->sequencer, MIDI_DRUM->channel, MIDI_DRUM->prog); 
     }
         
     //now that the time-critical stuff is done, lets do the assignments 

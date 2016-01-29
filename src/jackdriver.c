@@ -338,6 +338,33 @@ void pitch_jack(void* seqq, unsigned char chan, short val)
     queue_message(seq->ringbuffer,&ev);
 }
 
+void control_jack(void* seqq, unsigned char chan, unsigned char indx, unsigned char val)
+{
+    struct MidiMessage ev;
+    JACK_SEQ* seq = (JACK_SEQ*)seqq;
+    ev.len = 3;
+    ev.data[0] = 0x90 + chan;
+    ev.data[1] = indx;
+    ev.data[2] = val;
+
+    ev.time = jack_frame_time(seq->jack_client);
+
+    queue_message(seq->ringbuffer,&ev);
+}
+
+void prog_jack(void* seqq, unsigned char chan, unsigned char indx)
+{
+    struct MidiMessage ev;
+    JACK_SEQ* seq = (JACK_SEQ*)seqq;
+    ev.len = 2;
+    ev.data[0] = 0x90 + chan;
+    ev.data[1] = indx;
+
+    ev.time = jack_frame_time(seq->jack_client);
+
+    queue_message(seq->ringbuffer,&ev);
+}
+
 //this is run in the main thread
 int 
 init_jack_client(JACK_SEQ* seq, unsigned char verbose, const char* name)

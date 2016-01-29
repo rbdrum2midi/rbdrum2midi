@@ -79,6 +79,7 @@ typedef enum {
     HI_ORANGE,
     WHAMMY_LSB,
     WHAMMY_MSB,
+    SELECTOR,
 
 
     KEYS0 = 11,
@@ -99,6 +100,7 @@ typedef enum {
     OPEN_HAT,
     CLOSED_HAT,
     NUM_DRUMS,//NUM DRUMS determines array sizes!  
+
 } drums;
 
 typedef enum {
@@ -141,15 +143,19 @@ typedef struct drum_midi
     unsigned char bass_down;
     int velocity;
     char octave;
+    unsigned char prog;
     unsigned char default_velocity;
     unsigned char irqbuf[INTR_LENGTH];
     unsigned char oldbuf[INTR_LENGTH];
     void (*noteup)(void* seq, unsigned char chan, unsigned char note, unsigned char vel);
     void (*notedown)(void* seq, unsigned char chan, unsigned char note, unsigned char vel);
     void (*pitchbend)(void* seq, unsigned char chan, short val);//expect val in range [-8192, 8191]
+    void (*control)(void* seq, unsigned char chan, unsigned char indx, unsigned char val);//expect val in range [0,127]
+    void (*program)(void* seq, unsigned char chan, unsigned char indx);//expect val in range [0,127]
 }MIDIDRUM;
 
 static inline void get_state(MIDIDRUM* MIDI_DRUM, unsigned char drum){MIDI_DRUM->drum_state[drum] = MIDI_DRUM->buf[MIDI_DRUM->buf_indx[drum]] & MIDI_DRUM->buf_mask[drum];}
+static inline unsigned char changed(MIDIDRUM* MIDI_DRUM, unsigned char drum){return MIDI_DRUM->drum_state[drum] != MIDI_DRUM->prev_state[drum];}
 //inline void notedown(snd_seq_t *seq, int port, int chan, int pitch, int vol);
 //inline void noteup(snd_seq_t *seq, int port, int chan, int pitch, int vol);
 void print_hits(MIDIDRUM* MIDI_DRUM);

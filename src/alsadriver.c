@@ -153,6 +153,40 @@ void pitch_alsa(void* seqq, unsigned char chan, short val)
     snd_seq_drain_output(seq->g_seq);
 }
 
+void control_alsa(void* seqq, unsigned char chan, unsigned char indx, unsigned char val)
+{
+    ALSA_SEQ* seq = (ALSA_SEQ*)seqq;
+    snd_seq_event_t ev;
+
+    snd_seq_ev_clear(&ev);
+    snd_seq_ev_set_source(&ev, seq->g_port);
+    snd_seq_ev_set_subs(&ev);
+    snd_seq_ev_set_direct(&ev);
+    //... // set event type, data, so on..
+
+    snd_seq_ev_set_controller(&ev, chan, indx, val);
+
+    snd_seq_event_output(seq->g_seq, &ev);
+    snd_seq_drain_output(seq->g_seq);
+}
+
+void prog_alsa(void* seqq, unsigned char chan, unsigned char indx)
+{
+    ALSA_SEQ* seq = (ALSA_SEQ*)seqq;
+    snd_seq_event_t ev;
+
+    snd_seq_ev_clear(&ev);
+    snd_seq_ev_set_source(&ev, seq->g_port);
+    snd_seq_ev_set_subs(&ev);
+    snd_seq_ev_set_direct(&ev);
+    //... // set event type, data, so on..
+
+    snd_seq_ev_set_pgmchange(&ev, chan, indx);
+
+    snd_seq_event_output(seq->g_seq, &ev);
+    snd_seq_drain_output(seq->g_seq);
+}
+
 int init_alsa(ALSA_SEQ* seq, unsigned char verbose)
 {
     if ( verbose) printf("Setting up alsa\n");
