@@ -343,7 +343,7 @@ void control_jack(void* seqq, unsigned char chan, unsigned char indx, unsigned c
     struct MidiMessage ev;
     JACK_SEQ* seq = (JACK_SEQ*)seqq;
     ev.len = 3;
-    ev.data[0] = 0x90 + chan;
+    ev.data[0] = 0xb0 + chan;
     ev.data[1] = indx;
     ev.data[2] = val;
 
@@ -357,7 +357,7 @@ void prog_jack(void* seqq, unsigned char chan, unsigned char indx)
     struct MidiMessage ev;
     JACK_SEQ* seq = (JACK_SEQ*)seqq;
     ev.len = 2;
-    ev.data[0] = 0x90 + chan;
+    ev.data[0] = 0xc0 + chan;
     ev.data[1] = indx;
 
     ev.time = jack_frame_time(seq->jack_client);

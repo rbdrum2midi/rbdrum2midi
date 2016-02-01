@@ -184,14 +184,14 @@ void cb_irq_rb_guitar(struct libusb_transfer *transfer)
     get_state(MIDI_DRUM,RIGHT);
 
     if(changed(MIDI_DRUM,SELECTOR))
-        MIDI_DRUM->control(MIDI_DRUM->sequencer, MIDI_DRUM->channel, 1, MIDI_DRUM->drum_state[SELECTOR]);//MOD WHEEL
-    if(changed(MIDI_DRUM,LEFT))
+        MIDI_DRUM->control(MIDI_DRUM->sequencer, MIDI_DRUM->channel, 1, MIDI_DRUM->drum_state[SELECTOR]>>1);//MOD WHEEL
+    if(released(MIDI_DRUM,LEFT))
     {
         if(!MIDI_DRUM->prog--)
             MIDI_DRUM->prog = 0;
         MIDI_DRUM->program(MIDI_DRUM->sequencer, MIDI_DRUM->channel, MIDI_DRUM->prog); 
     }
-    if(changed(MIDI_DRUM,RIGHT))
+    if(released(MIDI_DRUM,RIGHT))
     {
         if(MIDI_DRUM->prog++ > 126)
             MIDI_DRUM->prog = 127;

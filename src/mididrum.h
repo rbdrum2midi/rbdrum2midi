@@ -99,6 +99,7 @@ typedef enum {
     NOTHING,
     OPEN_HAT,
     CLOSED_HAT,
+    NOTHING2,
     NUM_DRUMS,//NUM DRUMS determines array sizes!  
 
 } drums;
@@ -156,8 +157,9 @@ typedef struct drum_midi
 
 static inline void get_state(MIDIDRUM* MIDI_DRUM, unsigned char drum){MIDI_DRUM->drum_state[drum] = MIDI_DRUM->buf[MIDI_DRUM->buf_indx[drum]] & MIDI_DRUM->buf_mask[drum];}
 static inline unsigned char changed(MIDIDRUM* MIDI_DRUM, unsigned char drum){return MIDI_DRUM->drum_state[drum] != MIDI_DRUM->prev_state[drum];}
-//inline void notedown(snd_seq_t *seq, int port, int chan, int pitch, int vol);
-//inline void noteup(snd_seq_t *seq, int port, int chan, int pitch, int vol);
+static inline unsigned char pressed(MIDIDRUM* MIDI_DRUM, unsigned char drum){return MIDI_DRUM->drum_state[drum] && !MIDI_DRUM->prev_state[drum];}
+static inline unsigned char released(MIDIDRUM* MIDI_DRUM, unsigned char drum){return !MIDI_DRUM->drum_state[drum] && MIDI_DRUM->prev_state[drum];}
+
 void print_hits(MIDIDRUM* MIDI_DRUM);
 void print_buf(MIDIDRUM* MIDI_DRUM);
 void print_keys(MIDIDRUM* MIDI_DRUM);
