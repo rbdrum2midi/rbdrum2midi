@@ -68,6 +68,15 @@ static int find_rbdrum_device(MIDIDRUM* MIDI_DRUM, struct libusb_device_handle *
             return 0;
     }
 
+    //Wìì RB1 kit
+    *devh = libusb_open_device_with_vid_pid(NULL, 0x1bad, 0x0005);      
+    if(*devh){
+        MIDI_DRUM->kit=WII_ROCKBAND;
+        if(MIDI_DRUM->verbose)printf("Wii Rockband1 kit found\n");
+        if(claim_interface(devh) == 0)
+            return 0;
+    }
+
     //Wìì RB kit??
     *devh = libusb_open_device_with_vid_pid(NULL, 0x1bad, 0x3110);      
     if(*devh){
