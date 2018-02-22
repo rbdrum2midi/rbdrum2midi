@@ -12,7 +12,7 @@
 #include <libusb-1.0/libusb.h>
 
 #define EP_INTR			(1 | LIBUSB_ENDPOINT_IN)
-#define INTR_LENGTH		27
+#define INTR_LENGTH		47
 
 #define DEFAULT_CHANNEL 9
 
@@ -118,7 +118,8 @@ typedef enum {
     PS_RB_GUITAR,
     GUITARS,
 
-    WII_RB3_KEYBOARD
+    WII_RB3_KEYBOARD,
+    KEYMANIA_KB
 }kit_types;
 
 //primary object for the system

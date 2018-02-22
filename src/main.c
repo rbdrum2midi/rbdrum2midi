@@ -124,6 +124,14 @@ static int find_rbdrum_device(MIDIDRUM* MIDI_DRUM, struct libusb_device_handle *
         if(claim_interface(devh) == 0)
             return 0;
     }
+    //KB Mania controller
+    *devh = libusb_open_device_with_vid_pid(NULL, 0x0507, 0x0010);
+    if(*devh){
+        MIDI_DRUM->kit=KEYMANIA_KB;
+        if(MIDI_DRUM->verbose)printf("Keyboard Mania keyboard found\n");
+        if(claim_interface(devh) == 0)
+            return 0;
+    }
   
     return *devh ? 0 : -EIO;
 }
@@ -152,6 +160,7 @@ void init_kit(MIDIDRUM* MIDI_DRUM)
             init_rb_guitar(MIDI_DRUM);
             break;
         case WII_RB3_KEYBOARD:
+        case KEYMANIA_KB:
             init_rb3_keyboard(MIDI_DRUM);
             break;
     }
@@ -236,7 +245,7 @@ void print_keys(MIDIDRUM* MIDI_DRUM)
 {
     //TODO
     if (MIDI_DRUM->key_state!=MIDI_DRUM->prev_keystate)
-        printf("Keys: %08X %02x\n",MIDI_DRUM->key_state,MIDI_DRUM->velocity);
+        printf("Keys: %08lX %02x\n",MIDI_DRUM->key_state,MIDI_DRUM->velocity);
 }
 
 void midi_defaults(MIDIDRUM* MIDI_DRUM)
@@ -370,7 +379,12 @@ static int alloc_transfers(MIDIDRUM* MIDI_DRUM, libusb_device_handle *devh, stru
     else if(MIDI_DRUM->kit == WII_RB3_KEYBOARD){
         libusb_fill_interrupt_transfer(*irq_transfer, devh, EP_INTR, MIDI_DRUM->irqbuf,
             sizeof(MIDI_DRUM->irqbuf), cb_irq_rb3_keyboard, (void*)MIDI_DRUM, 0);
-        if( MIDI_DRUM->verbose)printf("Wii Rock Band 3 Wireless keyboard detected.\n");
+        if( MIDI_DRUM->verbose)printf("Wii Rock Band 3 Wireless keyboard connected.\n");
+    }
+    else if(MIDI_DRUM->kit == KEYMANIA_KB){
+        libusb_fill_interrupt_transfer(*irq_transfer, devh, EP_INTR, MIDI_DRUM->irqbuf,
+            sizeof(MIDI_DRUM->irqbuf), cb_irq_rb3_keyboard, (void*)MIDI_DRUM, 0);
+        if( MIDI_DRUM->verbose)printf("Wii Rock Band 3 Wireless keyboard connected.\n");
     }
     else{
         printf("error in drum type! %i\n",MIDI_DRUM->kit);
@@ -394,8 +408,8 @@ int init_jack(MIDIDRUM* MIDI_DRUM, JACK_SEQ* seq, unsigned char verbose)
     else if(MIDI_DRUM->kit == PS_RB_GUITAR || MIDI_DRUM->kit == XB_RB_GUITAR){
         return init_jack_client(seq,verbose,"Rockband Guitar Controller");
     }
-    else if(MIDI_DRUM->kit == WII_RB3_KEYBOARD){
-        return init_jack_client(seq,verbose,"Rockband Keyboard Controller");
+    else if(MIDI_DRUM->kit == WII_RB3_KEYBOARD || MIDI_DRUM->kit == KEYMANIA_KB){
+        return init_jack_client(seq,verbose,"Keyboard Controller");
     }
 
     return 0;
