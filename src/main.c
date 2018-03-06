@@ -21,6 +21,7 @@
 #include "mididrum.h" 
 #include "rbkit.h"
 #include "rb1kit.h"
+#include "rb4kit.h"
 #include "rbguitar.h"
 #include "ghkit.h"
 #include "rb3keyboard.h"
@@ -64,6 +65,15 @@ static int find_rbdrum_device(MIDIDRUM* MIDI_DRUM, struct libusb_device_handle *
     if(*devh){
         MIDI_DRUM->kit=XB_ROCKBAND;
         if(MIDI_DRUM->verbose)printf("XBox Rockband kit found\n");
+        if(claim_interface(devh) == 0)
+            return 0;
+    }
+
+    //xbox wireless
+    *devh = libusb_open_device_with_vid_pid(NULL, 0x045e, 0x0291);
+    if(*devh){
+        MIDI_DRUM->kit=XB_ROCKBAND4;
+        if(MIDI_DRUM->verbose)printf("XBox Rockband 4 kit found\n");
         if(claim_interface(devh) == 0)
             return 0;
     }
@@ -139,6 +149,9 @@ void init_kit(MIDIDRUM* MIDI_DRUM)
         case XB_ROCKBAND:
         case WII_ROCKBAND:
             init_rb_kit(MIDI_DRUM);
+            break;
+        case XB_ROCKBAND4:
+            init_rb4_kit(MIDI_DRUM);
             break;
         case PS_ROCKBAND1:
         case XB_ROCKBAND1:
@@ -351,6 +364,11 @@ static int alloc_transfers(MIDIDRUM* MIDI_DRUM, libusb_device_handle *devh, stru
         libusb_fill_interrupt_transfer(*irq_transfer, devh, EP_INTR, MIDI_DRUM->irqbuf,
             sizeof(MIDI_DRUM->irqbuf), cb_irq_rb, (void*)MIDI_DRUM, 0);
         if( MIDI_DRUM->verbose)printf("Rock Band drum kit connected.\n");
+    }
+    else if(MIDI_DRUM->kit == XB_ROCKBAND4){
+        libusb_fill_interrupt_transfer(*irq_transfer, devh, EP_INTR, MIDI_DRUM->irqbuf,
+            sizeof(MIDI_DRUM->irqbuf), cb_irq_rb4, (void*)MIDI_DRUM, 0);
+        if( MIDI_DRUM->verbose)printf("Rock Band 4 drum kit connected.\n");
     }
     else if(MIDI_DRUM->kit == PS_ROCKBAND1 || MIDI_DRUM->kit == XB_ROCKBAND1){
         libusb_fill_interrupt_transfer(*irq_transfer, devh, EP_INTR, MIDI_DRUM->irqbuf,
