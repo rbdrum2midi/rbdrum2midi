@@ -4,7 +4,24 @@
 //#include "constants.h"
 
 void init_gh_kit(MIDIDRUM* MIDI_DRUM)
-{
+{	
+    switch(MIDI_DRUM->kit)
+    {
+     case XB_GUITAR_HERO:
+	    MIDI_DRUM->buf_indx[RED] = 13;
+	    MIDI_DRUM->buf_mask[RED] = 0xFF;	
+	    MIDI_DRUM->buf_indx[YELLOW_CYMBAL] = 14;
+	    MIDI_DRUM->buf_mask[YELLOW_CYMBAL] = 0xff;
+	    MIDI_DRUM->buf_indx[BLUE] = 15;
+	    MIDI_DRUM->buf_mask[BLUE] = 0xff;
+	    MIDI_DRUM->buf_indx[GREEN] = 12;
+	    MIDI_DRUM->buf_mask[GREEN] = 0xff;
+	    MIDI_DRUM->buf_indx[ORANGE_CYMBAL] = 16;
+	    MIDI_DRUM->buf_mask[ORANGE_CYMBAL] = 0xff;
+	    MIDI_DRUM->buf_indx[ORANGE_BASS] = 17;
+	    MIDI_DRUM->buf_mask[ORANGE_BASS] = 0xff;
+        break;          
+     case PS_GUITAR_HERO:     
 	    MIDI_DRUM->buf_indx[RED] = 12;
 	    MIDI_DRUM->buf_mask[RED] = 0xFF;	
 	    MIDI_DRUM->buf_indx[YELLOW_CYMBAL] = 11;
@@ -17,6 +34,8 @@ void init_gh_kit(MIDIDRUM* MIDI_DRUM)
 	    MIDI_DRUM->buf_mask[ORANGE_CYMBAL] = 0xff;
 	    MIDI_DRUM->buf_indx[ORANGE_BASS] = 15;
 	    MIDI_DRUM->buf_mask[ORANGE_BASS] = 0xff;
+        break;
+    }	
 }
 
 static inline void calc_velocity(MIDIDRUM* MIDI_DRUM, unsigned char value)
