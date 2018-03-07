@@ -89,7 +89,7 @@ static int find_rbdrum_device(MIDIDRUM* MIDI_DRUM, struct libusb_device_handle *
     //PS3 GH kit
     *devh = libusb_open_device_with_vid_pid(NULL, 0x12ba, 0x0120);
     if(*devh){
-        MIDI_DRUM->kit=GUITAR_HERO;
+        MIDI_DRUM->kit=PS_GUITAR_HERO;
         if(MIDI_DRUM->verbose)printf("PS3 Guitar Hero kit found\n");
         if(claim_interface(devh) == 0)
             return 0;
