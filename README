@@ -27,6 +27,7 @@ rbdrum2midi
 Tested Drumkits:
 -PS3 Rockband pro drumkit
 -PS3 Guitar Hero world tour kit
+-XBox 360 Guitar Hero world tour kit
 -PS3 Rockband 1 drumkit
 -XBox 360 Rockband 1 drumkit
 If your kit isn't listed theres a chance it will still work. If it is a rockband kit try the option '-rb1'.If it doesn't we will happily add support for your kit if you can build and run the commands:
