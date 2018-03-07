@@ -12,7 +12,7 @@
 #include <libusb-1.0/libusb.h>
 
 #define EP_INTR			(1 | LIBUSB_ENDPOINT_IN)
-#define INTR_LENGTH		27
+#define INTR_LENGTH		47
 
 #define DEFAULT_CHANNEL 9
 
@@ -111,7 +111,8 @@ typedef enum {
     WII_ROCKBAND,
     XB_ROCKBAND1,
     PS_ROCKBAND1,
-    GUITAR_HERO,
+    XB_GUITAR_HERO,
+    PS_GUITAR_HERO,    
     DRUMS,
 
     XB_RB_GUITAR,
