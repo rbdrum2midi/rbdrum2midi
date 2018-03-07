@@ -95,6 +95,14 @@ static int find_rbdrum_device(MIDIDRUM* MIDI_DRUM, struct libusb_device_handle *
             return 0;
     }
 
+    //xbox360 GH kit
+    *devh = libusb_open_device_with_vid_pid(NULL, 0x045e, 0x0291);
+    if(*devh){
+        MIDI_DRUM->kit=XB_GUITAR_HERO;
+        if(MIDI_DRUM->verbose)printf("XBox Guitar Hero kit found\n");
+        if(claim_interface(devh) == 0)
+            return 0;
+    }
 
     //GUITARS
     //ps3
@@ -144,7 +152,8 @@ void init_kit(MIDIDRUM* MIDI_DRUM)
         case XB_ROCKBAND1:
             init_rb1_kit(MIDI_DRUM);
             break;
-        case GUITAR_HERO:
+        case XB_GUITAR_HERO:
+        case PS_GUITAR_HERO:        
             init_gh_kit(MIDI_DRUM);
             break;
         case XB_RB_GUITAR:
@@ -357,7 +366,7 @@ static int alloc_transfers(MIDIDRUM* MIDI_DRUM, libusb_device_handle *devh, stru
             sizeof(MIDI_DRUM->irqbuf), cb_irq_rb1, (void*)MIDI_DRUM, 0);
         if( MIDI_DRUM->verbose)printf("Rock Band 1 drum kit connected.\n");
     }
-    else if(MIDI_DRUM->kit == GUITAR_HERO){
+    else if(MIDI_DRUM->kit == PS_GUITAR_HERO || MIDI_DRUM->kit == XB_GUITAR_HERO){
         libusb_fill_interrupt_transfer(*irq_transfer, devh, EP_INTR, MIDI_DRUM->irqbuf,
             sizeof(MIDI_DRUM->irqbuf), cb_irq_gh, (void*)MIDI_DRUM, 0);
         if( MIDI_DRUM->verbose)printf("Guitar Hero World Tour drum kit connected.\n");
@@ -388,7 +397,7 @@ int init_jack(MIDIDRUM* MIDI_DRUM, JACK_SEQ* seq, unsigned char verbose)
     else if(MIDI_DRUM->kit == PS_ROCKBAND1 || MIDI_DRUM->kit == XB_ROCKBAND1){
         return init_jack_client(seq,verbose,"Rockband 1 Drum Controller");
     }
-    else if(MIDI_DRUM->kit == GUITAR_HERO){
+    else if(MIDI_DRUM->kit == PS_GUITAR_HERO || MIDI_DRUM->kit == XB_GUITAR_HERO){
         return init_jack_client(seq,verbose,"Guitar Hero Drum Controller");
     }
     else if(MIDI_DRUM->kit == PS_RB_GUITAR || MIDI_DRUM->kit == XB_RB_GUITAR){
