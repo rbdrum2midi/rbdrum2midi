@@ -111,7 +111,8 @@ typedef enum {
     WII_ROCKBAND,
     XB_ROCKBAND1,
     PS_ROCKBAND1,
-    GUITAR_HERO,
+    XB_GUITAR_HERO,
+    PS_GUITAR_HERO,    
     DRUMS,
 
     XB_RB_GUITAR,
