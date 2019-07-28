@@ -197,7 +197,7 @@ nframes_to_ms(jack_client_t* jack_client,jack_nframes_t nframes)
 void
 process_midi_output(JACK_SEQ* seq,jack_nframes_t nframes)
 {
-	int read, t, bytes_remaining;
+	int read, t;
 	unsigned char *buffer;
 	void *port_buffer;
 	jack_nframes_t last_frame_time;
@@ -217,8 +217,6 @@ process_midi_output(JACK_SEQ* seq,jack_nframes_t nframes)
 	jack_midi_clear_buffer(port_buffer);
 #endif
 
-	/* We may push at most one byte per 0.32ms to stay below 31.25 Kbaud limit. */
-	//bytes_remaining = nframes_to_ms(seq->jack_client,nframes) * rate_limit;
 
 	while (jack_ringbuffer_read_space(seq->ringbuffer)) {
 		read = jack_ringbuffer_peek(seq->ringbuffer, (char *)&ev, sizeof(ev));
@@ -228,8 +226,6 @@ process_midi_output(JACK_SEQ* seq,jack_nframes_t nframes)
 			jack_ringbuffer_read_advance(seq->ringbuffer, read);
 			continue;
 		}
-
-		bytes_remaining -= ev.len;
 
 		t = ev.time + nframes - last_frame_time;
 
