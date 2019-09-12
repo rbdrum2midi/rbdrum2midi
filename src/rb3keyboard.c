@@ -16,18 +16,18 @@ void init_rb3_keyboard(MIDIDRUM* MIDI_DRUM)
 	MIDI_DRUM->buf_indx[B_BUTTON] = 0;
 	MIDI_DRUM->buf_mask[B_BUTTON] = 0x04;
 
-	MIDI_DRUM->buf_indx[UP] = 2;
-	MIDI_DRUM->buf_mask[UP] = 0x08;
-	MIDI_DRUM->buf_indx[DOWN] = 2;
-	MIDI_DRUM->buf_mask[DOWN] = 0x04;
-	MIDI_DRUM->buf_indx[LEFT] = 2;
-	MIDI_DRUM->buf_mask[LEFT] = 0x01;
-	MIDI_DRUM->buf_indx[RIGHT] = 2;
-	MIDI_DRUM->buf_mask[RIGHT] = 0x02;
+	MIDI_DRUM->buf_indx[UP] = 14;
+	MIDI_DRUM->buf_mask[UP] = 0x01;
+	MIDI_DRUM->buf_indx[DOWN] = 14;
+	MIDI_DRUM->buf_mask[DOWN] = 0x02;
+	MIDI_DRUM->buf_indx[LEFT] = 14;
+	MIDI_DRUM->buf_mask[LEFT] = 0x04;
+	MIDI_DRUM->buf_indx[RIGHT] = 14;
+	MIDI_DRUM->buf_mask[RIGHT] = 0x08;
 
-	MIDI_DRUM->buf_indx[MINUS] = 1;
-	MIDI_DRUM->buf_mask[MINUS] = 0x01;
-	MIDI_DRUM->buf_indx[PLUS] = 1;
+	MIDI_DRUM->buf_indx[MINUS] = 15;
+	MIDI_DRUM->buf_mask[MINUS] = 0x04;
+	MIDI_DRUM->buf_indx[PLUS] = 15;
 	MIDI_DRUM->buf_mask[PLUS] = 0x02;
 
 	MIDI_DRUM->buf_indx[A_BUTTON] = 0;
@@ -42,15 +42,19 @@ void init_rb3_keyboard(MIDIDRUM* MIDI_DRUM)
 	MIDI_DRUM->buf_indx[CONNECT] = 1;
 	MIDI_DRUM->buf_mask[CONNECT] = 0x10;
 
-	MIDI_DRUM->buf_indx[KEYS0] = 5;
-	MIDI_DRUM->buf_indx[KEYS1] = 6;
-	MIDI_DRUM->buf_indx[KEYS2] = 7;
-	MIDI_DRUM->buf_indx[KEYS3] = 8;
+	MIDI_DRUM->buf_indx[KEYS0] = 8;
+	MIDI_DRUM->buf_indx[KEYS1] = 9;
+	MIDI_DRUM->buf_indx[KEYS2] = 10;
+	MIDI_DRUM->buf_indx[KEYS3] = 11;
 
 	MIDI_DRUM->buf_indx[EXPRESSION] = 15;
 	MIDI_DRUM->buf_mask[EXPRESSION] = 0x7f;
 	MIDI_DRUM->buf_indx[EXPR_TOGGLE] = 13;
 	MIDI_DRUM->buf_mask[EXPR_TOGGLE] = 0x80;
+
+	MIDI_DRUM->buf_indx[NOTHING] = 17;
+	MIDI_DRUM->buf_mask[NOTHING] = 0x7f;
+
 }
 
 static inline void get_velocity(MIDIDRUM* MIDI_DRUM)
@@ -68,6 +72,8 @@ static inline void get_velocity(MIDIDRUM* MIDI_DRUM)
         MIDI_DRUM->velocity=MIDI_DRUM->buf[9];
     else 
     MIDI_DRUM->velocity=MIDI_DRUM->buf[8]&0x7f;
+
+	 //MIDI_DRUM->velocity=255;
 }
 
 static inline void handle_key(MIDIDRUM* MIDI_DRUM, unsigned char key)
@@ -77,13 +83,13 @@ static inline void handle_key(MIDIDRUM* MIDI_DRUM, unsigned char key)
     (MIDI_DRUM->prev_keystate&(1<<(24-key))))
     {
         get_velocity(MIDI_DRUM);
-        printf("key %d\n",key);
-        if (MIDI_DRUM->key_state&(1<<(24-key)))
-            MIDI_DRUM->notedown( MIDI_DRUM->sequencer, MIDI_DRUM->channel, 48+key+12*MIDI_DRUM->octave, MIDI_DRUM->velocity);
-        else
-            MIDI_DRUM->noteup(MIDI_DRUM->sequencer, MIDI_DRUM->channel, 48+key+12*MIDI_DRUM->octave, 0);
+        //printf("key %d\n",key);
+        if (MIDI_DRUM->key_state&(1<<(24-key))){
+            MIDI_DRUM->notedown( MIDI_DRUM->sequencer, MIDI_DRUM->channel, 48+key+12*MIDI_DRUM->octave, MIDI_DRUM->velocity);}
    }
-}
+        else{
+		      //printf("noteup\n");
+            MIDI_DRUM->noteup(MIDI_DRUM->sequencer, MIDI_DRUM->channel, 48+key+12*MIDI_DRUM->octave, 0);}}
 
 //callback for rockband3 keyboard
 void cb_irq_rb3_keyboard(struct libusb_transfer *transfer)
@@ -101,9 +107,8 @@ void cb_irq_rb3_keyboard(struct libusb_transfer *transfer)
     MIDI_DRUM->key_state=
       (MIDI_DRUM->buf[MIDI_DRUM->buf_indx[KEYS0]]<<17)+(MIDI_DRUM->buf[MIDI_DRUM->buf_indx[KEYS1]]<<9)+
       (MIDI_DRUM->buf[MIDI_DRUM->buf_indx[KEYS2]]<<1)+((MIDI_DRUM->buf[MIDI_DRUM->buf_indx[KEYS3]])>>7);
-
-    if (MIDI_DRUM->key_state != MIDI_DRUM->prev_keystate)
-    {
+get_state(MIDI_DRUM,NOTHING);
+if (MIDI_DRUM->drum_state[NOTHING]){
         handle_key(MIDI_DRUM,0);
         handle_key(MIDI_DRUM,1);
         handle_key(MIDI_DRUM,2);
@@ -129,7 +134,7 @@ void cb_irq_rb3_keyboard(struct libusb_transfer *transfer)
         handle_key(MIDI_DRUM,22);
         handle_key(MIDI_DRUM,23);
         handle_key(MIDI_DRUM,24);
-    }
+}
 
     //these buttons control octave
     //octave can get up to +-4 octaves

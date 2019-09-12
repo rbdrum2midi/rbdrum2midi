@@ -96,13 +96,13 @@ static int find_rbdrum_device(MIDIDRUM* MIDI_DRUM, struct libusb_device_handle *
     }
 
     //xbox360 GH kit
-    *devh = libusb_open_device_with_vid_pid(NULL, 0x045e, 0x0291);
+/*    *devh = libusb_open_device_with_vid_pid(NULL, 0x045e, 0x0291);
     if(*devh){
         MIDI_DRUM->kit=XB_GUITAR_HERO;
         if(MIDI_DRUM->verbose)printf("XBox Guitar Hero kit found\n");
         if(claim_interface(devh) == 0)
             return 0;
-    }
+    }*/
 
     //GUITARS
     //ps3
@@ -129,6 +129,15 @@ static int find_rbdrum_device(MIDIDRUM* MIDI_DRUM, struct libusb_device_handle *
     if(*devh){
         MIDI_DRUM->kit=WII_RB3_KEYBOARD;
         if(MIDI_DRUM->verbose)printf("Wii keyboard found\n");
+        if(claim_interface(devh) == 0)
+            return 0;
+    }
+
+    //Xbox360
+    *devh = libusb_open_device_with_vid_pid(NULL, 0x045e, 0x0291);
+    if(*devh){
+        MIDI_DRUM->kit=WII_RB3_KEYBOARD;
+        if(MIDI_DRUM->verbose)printf("Xbox360 keyboard found\n");
         if(claim_interface(devh) == 0)
             return 0;
     }
