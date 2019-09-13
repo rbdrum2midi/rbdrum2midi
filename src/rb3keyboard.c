@@ -83,12 +83,12 @@ static inline void handle_key(MIDIDRUM* MIDI_DRUM, unsigned char key)
     (MIDI_DRUM->prev_keystate&(1<<(24-key))))
     {
         get_velocity(MIDI_DRUM);
-        //printf("key %d\n",key);
+        printf("key %d\n",key);
         if (MIDI_DRUM->key_state&(1<<(24-key))){
             MIDI_DRUM->notedown( MIDI_DRUM->sequencer, MIDI_DRUM->channel, 48+key+12*MIDI_DRUM->octave, MIDI_DRUM->velocity);}
-   }
-        else{
-		      //printf("noteup\n");
+    }
+        if (!(MIDI_DRUM->key_state&(1<<(24-key)))) {
+		      printf("noteup %d\n",key);
             MIDI_DRUM->noteup(MIDI_DRUM->sequencer, MIDI_DRUM->channel, 48+key+12*MIDI_DRUM->octave, 0);}}
 
 //callback for rockband3 keyboard
