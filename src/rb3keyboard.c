@@ -186,10 +186,10 @@ void cb_irq_rb3_keyboard(struct libusb_transfer *transfer) {
   // NOTE: Also the + and - buttons correspond to start and select on other
   // platforms, when using the midi out port the 1 and B buttons change octave
   // for now, I don't mind just doing it this way
-  if (MIDI_DRUM->drum_state[MINUS] && !MIDI_DRUM->prev_state[MINUS] &&
+  if (MIDI_DRUM->drum_state[MINUS] &&
       MIDI_DRUM->octave > -4) {
     MIDI_DRUM->octave--; }
-  if (MIDI_DRUM->drum_state[PLUS] && !MIDI_DRUM->prev_state[PLUS] &&
+  if (MIDI_DRUM->drum_state[PLUS] &&
       MIDI_DRUM->octave < 4) {
     MIDI_DRUM->octave++; }
   if (MIDI_DRUM->drum_state[CONNECT] && !MIDI_DRUM->prev_state[CONNECT]) {
