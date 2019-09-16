@@ -1,7 +1,7 @@
 Rockband Instrument Midi Driver
 by Randommatt and ssj71
 
-Version 0.6
+Version 0.7
 
 Installation:
 Requires libusb-1.0, libjack, and libasound2 dev packages to compile and runtime libraries to run
@@ -38,6 +38,7 @@ Hit each drum a few times and copy and paste the output to a new issue in github
 Other Tested Instruments:
 -PS3 Rockband wireless guitar
 -Xbox 360 Rockband wired guitar
+-Xbox 360 Rockband3 wireless keyboard (-xbkey argument)
 
 Usage:
 connect rbdrumkit wireless dongle (PS3 works, Wii should, xbox probably won't), 
