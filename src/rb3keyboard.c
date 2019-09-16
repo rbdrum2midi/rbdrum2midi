@@ -58,15 +58,15 @@ void init_rb3_keyboard(MIDIDRUM *MIDI_DRUM) {
     MIDI_DRUM->buf_indx[RIGHT] = 7;
     MIDI_DRUM->buf_mask[RIGHT] = 0x08;
 
-    MIDI_DRUM->buf_indx[MINUS] = 8;
-    MIDI_DRUM->buf_mask[MINUS] = 0x04;
-    MIDI_DRUM->buf_indx[PLUS] = 8;
-    MIDI_DRUM->buf_mask[PLUS] = 0x08;
+    MIDI_DRUM->buf_indx[MINUS] = 7;
+    MIDI_DRUM->buf_mask[MINUS] = 0x40;
+    MIDI_DRUM->buf_indx[PLUS] = 7;
+    MIDI_DRUM->buf_mask[PLUS] = 0x80;
 
-    MIDI_DRUM->buf_indx[A_BUTTON] = 8;
-    MIDI_DRUM->buf_mask[A_BUTTON] = 0x01;
-    MIDI_DRUM->buf_indx[B_BUTTON] = 8;
-    MIDI_DRUM->buf_mask[B_BUTTON] = 0x02;
+    MIDI_DRUM->buf_indx[A_BUTTON] = 7;
+    MIDI_DRUM->buf_mask[A_BUTTON] = 0x10;
+    MIDI_DRUM->buf_indx[B_BUTTON] = 7;
+    MIDI_DRUM->buf_mask[B_BUTTON] = 0x20;
     MIDI_DRUM->buf_indx[ONE] = 0;
     MIDI_DRUM->buf_mask[ONE] = 0x01;
     MIDI_DRUM->buf_indx[TWO] = 0;
@@ -187,13 +187,13 @@ void cb_irq_rb3_keyboard(struct libusb_transfer *transfer) {
   // platforms, when using the midi out port the 1 and B buttons change octave
   // for now, I don't mind just doing it this way
   if (MIDI_DRUM->drum_state[MINUS] && !MIDI_DRUM->prev_state[MINUS] &&
-      MIDI_DRUM->octave > -4)
-    MIDI_DRUM->octave--;
+      MIDI_DRUM->octave > -4) {
+    MIDI_DRUM->octave--; }
   if (MIDI_DRUM->drum_state[PLUS] && !MIDI_DRUM->prev_state[PLUS] &&
-      MIDI_DRUM->octave < 4)
-    MIDI_DRUM->octave++;
-  if (MIDI_DRUM->drum_state[CONNECT] && !MIDI_DRUM->prev_state[CONNECT])
-    MIDI_DRUM->octave = 0;
+      MIDI_DRUM->octave < 4) {
+    MIDI_DRUM->octave++; }
+  if (MIDI_DRUM->drum_state[CONNECT] && !MIDI_DRUM->prev_state[CONNECT]) {
+    MIDI_DRUM->octave = 0; }
 
   // now the pitchbender
   get_state(MIDI_DRUM, EXPR_TOGGLE);
