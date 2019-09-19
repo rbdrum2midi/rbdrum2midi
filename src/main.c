@@ -95,11 +95,11 @@ static int find_rbdrum_device(MIDIDRUM* MIDI_DRUM, struct libusb_device_handle *
             return 0;
     }
 
-    //xbox360 GH kit
+    //xbox360 GH kit/keytar
     *devh = libusb_open_device_with_vid_pid(NULL, 0x045e, 0x0291);
     if(*devh){
         MIDI_DRUM->kit=XB_GUITAR_HERO;
-        if(MIDI_DRUM->verbose)printf("XBox Guitar Hero kit found\n");
+        if(MIDI_DRUM->verbose)printf("XBox Guitar Hero kit or keyboard found\n");
         if(claim_interface(devh) == 0)
             return 0;
     }
@@ -132,7 +132,7 @@ static int find_rbdrum_device(MIDIDRUM* MIDI_DRUM, struct libusb_device_handle *
         if(claim_interface(devh) == 0)
             return 0;
     }
-  
+
     return *devh ? 0 : -EIO;
 }
 
@@ -161,6 +161,7 @@ void init_kit(MIDIDRUM* MIDI_DRUM)
             init_rb_guitar(MIDI_DRUM);
             break;
         case WII_RB3_KEYBOARD:
+		  case XB_RB3_KEYBOARD:
             init_rb3_keyboard(MIDI_DRUM);
             break;
     }
@@ -355,6 +356,11 @@ static int alloc_transfers(MIDIDRUM* MIDI_DRUM, libusb_device_handle *devh, stru
             sizeof(MIDI_DRUM->irqbuf), cb_irq_dbg, (void*)MIDI_DRUM, 0);
         if( MIDI_DRUM->verbose)printf("Debug Mode Enabled..\n");
     }
+    else if(MIDI_DRUM->kit == XB_RB3_KEYBOARD){
+        libusb_fill_interrupt_transfer(*irq_transfer, devh, EP_INTR, MIDI_DRUM->irqbuf,
+            sizeof(MIDI_DRUM->irqbuf), cb_irq_rb3_keyboard, (void*)MIDI_DRUM, 0);
+        if( MIDI_DRUM->verbose)printf("Xbox Rock Band 3 Wireless keyboard detected.\n");
+    }
     else if(MIDI_DRUM->kit == PS_ROCKBAND  || MIDI_DRUM->kit == XB_ROCKBAND ||
             MIDI_DRUM->kit == WII_ROCKBAND){
         libusb_fill_interrupt_transfer(*irq_transfer, devh, EP_INTR, MIDI_DRUM->irqbuf,
@@ -403,7 +409,7 @@ int init_jack(MIDIDRUM* MIDI_DRUM, JACK_SEQ* seq, unsigned char verbose)
     else if(MIDI_DRUM->kit == PS_RB_GUITAR || MIDI_DRUM->kit == XB_RB_GUITAR){
         return init_jack_client(seq,verbose,"Rockband Guitar Controller");
     }
-    else if(MIDI_DRUM->kit == WII_RB3_KEYBOARD){
+    else if(MIDI_DRUM->kit == WII_RB3_KEYBOARD || MIDI_DRUM->kit == XB_RB3_KEYBOARD){
         return init_jack_client(seq,verbose,"Rockband Keyboard Controller");
     }
 
@@ -442,6 +448,7 @@ void useage()
     printf("    -ocy/ycy/bcy/gcy <value>    set midi note for -color of cymbal\n");
     printf("    -ob/bkb <value>             set midi note for -color bass pedal\n");
     printf("    -rb1                        specify rockband 1 drumset\n");
+    printf("    -xbkey                      specify rockband 3 xbox keytar\n");
     printf("    -htdm <value>               set hihat color i.e, r/y.../bcy/gcy\n");
     printf("    -htp <value>                set hihat pedal color i.e. ob/bkb*\n"); 
     printf("    -hto <value>                set open hihat midi value of hihat mode drum\n");
@@ -538,6 +545,10 @@ int main(int argc, char **argv)
             else if (strcmp(argv[i], "-rb1") == 0) {
                 //rockband 1 set, use different irq routine
                 MIDI_DRUM->kit = PS_ROCKBAND1;
+            }
+            else if (strcmp(argv[i], "-xbkey") == 0) {
+                //rockband 3 keytar for xbox
+                MIDI_DRUM->kit = XB_RB3_KEYBOARD;
             }
             else if (strcmp(argv[i], "-ocy") == 0) {
                 //orange cymbal
@@ -700,6 +711,11 @@ int main(int argc, char **argv)
             break;
         }
     }
+	 //reassign xb rb3 keyboard if option selected
+	 else if (MIDI_DRUM->kit==XB_RB3_KEYBOARD){
+		  r = find_rbdrum_device(MIDI_DRUM,&devh);
+ 		  MIDI_DRUM->kit = XB_RB3_KEYBOARD;
+	 }
     else
         r = find_rbdrum_device(MIDI_DRUM,&devh);
     if (r < 0) {
