@@ -21,6 +21,7 @@
 #include "mididrum.h" 
 #include "rbkit.h"
 #include "rb1kit.h"
+#include "rbprokit.h"
 #include "rbguitar.h"
 #include "ghkit.h"
 #include "rb3keyboard.h"
@@ -104,6 +105,16 @@ static int find_rbdrum_device(MIDIDRUM* MIDI_DRUM, struct libusb_device_handle *
             return 0;
     }
 
+    //xbox360 Wireless RB kit
+    *devh = libusb_open_device_with_vid_pid(NULL, 0x045e, 0x0719);
+    if(*devh){
+        MIDI_DRUM->kit=XB_ROCKBAND_PRO;
+        if(MIDI_DRUM->verbose)printf("XBox 360 Wireless Rockband Pro kit found\n");
+        if(claim_interface(devh) == 0)
+            return 0;
+    }
+
+
     //GUITARS
     //ps3
     *devh = libusb_open_device_with_vid_pid(NULL, 0x12ba, 0x0200);
@@ -151,6 +162,9 @@ void init_kit(MIDIDRUM* MIDI_DRUM)
         case PS_ROCKBAND1:
         case XB_ROCKBAND1:
             init_rb1_kit(MIDI_DRUM);
+            break;
+        case XB_ROCKBAND_PRO:
+            init_rb_pro_kit(MIDI_DRUM);
             break;
         case XB_GUITAR_HERO:
         case PS_GUITAR_HERO:        
@@ -367,6 +381,11 @@ static int alloc_transfers(MIDIDRUM* MIDI_DRUM, libusb_device_handle *devh, stru
             sizeof(MIDI_DRUM->irqbuf), cb_irq_rb, (void*)MIDI_DRUM, 0);
         if( MIDI_DRUM->verbose)printf("Rock Band drum kit connected.\n");
     }
+    else if(MIDI_DRUM->kit == XB_ROCKBAND_PRO){
+        libusb_fill_interrupt_transfer(*irq_transfer, devh, EP_INTR, MIDI_DRUM->irqbuf,
+            sizeof(MIDI_DRUM->irqbuf), cb_irq_rb_pro, (void*)MIDI_DRUM, 0);
+        if( MIDI_DRUM->verbose)printf("Rock Band pro drum kit connected.\n");
+    }
     else if(MIDI_DRUM->kit == PS_ROCKBAND1 || MIDI_DRUM->kit == XB_ROCKBAND1){
         libusb_fill_interrupt_transfer(*irq_transfer, devh, EP_INTR, MIDI_DRUM->irqbuf,
             sizeof(MIDI_DRUM->irqbuf), cb_irq_rb1, (void*)MIDI_DRUM, 0);
@@ -397,7 +416,7 @@ static int alloc_transfers(MIDIDRUM* MIDI_DRUM, libusb_device_handle *devh, stru
 int init_jack(MIDIDRUM* MIDI_DRUM, JACK_SEQ* seq, unsigned char verbose)
 {
     if(MIDI_DRUM->kit == PS_ROCKBAND  || MIDI_DRUM->kit == XB_ROCKBAND ||
-            MIDI_DRUM->kit == WII_ROCKBAND){
+            MIDI_DRUM->kit == WII_ROCKBAND || MIDI_DRUM->kit == XB_ROCKBAND_PRO){
         return init_jack_client(seq,verbose,"Rockband Drum Controller");
     }
     else if(MIDI_DRUM->kit == PS_ROCKBAND1 || MIDI_DRUM->kit == XB_ROCKBAND1){

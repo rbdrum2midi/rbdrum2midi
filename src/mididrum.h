@@ -108,6 +108,7 @@ typedef enum {
 
     PS_ROCKBAND,
     XB_ROCKBAND,
+    XB_ROCKBAND_PRO,
     WII_ROCKBAND,
     XB_ROCKBAND1,
     PS_ROCKBAND1,
