@@ -117,6 +117,7 @@ typedef enum {
     DRUMS,
 
     XB_RB_GUITAR,
+    XB_RB3_GUITAR,
     PS_RB_GUITAR,
     GUITARS,
 

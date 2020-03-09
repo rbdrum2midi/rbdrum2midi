@@ -42,6 +42,42 @@ void init_rb_guitar(MIDIDRUM* MIDI_DRUM)
         MIDI_DRUM->midi_note[PICK] = 0x00;//this is a misuse of the midi note array, but it is a convenient place to keep what the "unpressed" state of the pick should be
         MIDI_DRUM->midi_note[WHAMMY_MSB] = 0x80;//similarly, this is an offset for the pitchbend
         break;
+     case XB_RB3_GUITAR:
+        MIDI_DRUM->buf_indx[GREEN] = 7;
+        MIDI_DRUM->buf_mask[GREEN] = 0x10;
+        MIDI_DRUM->buf_indx[RED] = 7;
+        MIDI_DRUM->buf_mask[RED] = 0x20;
+        MIDI_DRUM->buf_indx[YELLOW] = 7;
+        MIDI_DRUM->buf_mask[YELLOW] = 0x80;
+        MIDI_DRUM->buf_indx[BLUE] = 7;
+        MIDI_DRUM->buf_mask[BLUE] = 0x40;
+        MIDI_DRUM->buf_indx[ORANGE] = 7;
+        MIDI_DRUM->buf_mask[ORANGE] = 0x01;
+
+        MIDI_DRUM->buf_indx[PICK] = 6;
+        MIDI_DRUM->buf_mask[PICK] = 0x03;
+        MIDI_DRUM->buf_indx[HINOTE] = 2;
+        MIDI_DRUM->buf_mask[HINOTE] = 0x40;
+        MIDI_DRUM->buf_indx[WHAMMY_MSB] = 15;
+        MIDI_DRUM->buf_mask[WHAMMY_MSB] = 0xFF;
+        MIDI_DRUM->buf_indx[WHAMMY_LSB] = 14;
+        MIDI_DRUM->buf_mask[WHAMMY_LSB] = 0xFF;
+
+        MIDI_DRUM->buf_indx[SELECTOR] = 4;
+        MIDI_DRUM->buf_mask[SELECTOR] = 0xFF;
+        MIDI_DRUM->buf_indx[LEFT] = 2;
+        MIDI_DRUM->buf_mask[LEFT] = 0x04;
+        MIDI_DRUM->buf_indx[RIGHT] = 2;
+        MIDI_DRUM->buf_mask[RIGHT] = 0x08;
+
+        MIDI_DRUM->buf_indx[START] = 2;
+        MIDI_DRUM->buf_mask[START] = 0x10;
+        MIDI_DRUM->buf_indx[SELECT] = 2;
+        MIDI_DRUM->buf_mask[SELECT] = 0x20;
+
+        MIDI_DRUM->midi_note[PICK] = 0x00;//this is a misuse of the midi note array, but it is a convenient place to keep what the "unpressed" state of the pick should be
+        MIDI_DRUM->midi_note[WHAMMY_MSB] = 0x80;//similarly, this is an offset for the pitchbend
+        break;
      case PS_RB_GUITAR:
         MIDI_DRUM->buf_indx[GREEN] = 0;
         MIDI_DRUM->buf_mask[GREEN] = 0x02;

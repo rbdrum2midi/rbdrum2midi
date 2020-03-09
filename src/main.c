@@ -1,5 +1,4 @@
-/*
- * libusb rockband 2 drum interface
+/* * libusb rockband 2 drum interface
  * based on U.are.U 4000B fingerprint scanner.
  * Copyright (C) 2007 Daniel Drake <dsd@gentoo.org>
  *
@@ -425,7 +424,8 @@ int init_jack(MIDIDRUM* MIDI_DRUM, JACK_SEQ* seq, unsigned char verbose)
     else if(MIDI_DRUM->kit == PS_GUITAR_HERO || MIDI_DRUM->kit == XB_GUITAR_HERO){
         return init_jack_client(seq,verbose,"Guitar Hero Drum Controller");
     }
-    else if(MIDI_DRUM->kit == PS_RB_GUITAR || MIDI_DRUM->kit == XB_RB_GUITAR){
+    else if(MIDI_DRUM->kit == PS_RB_GUITAR || MIDI_DRUM->kit == XB_RB_GUITAR ||
+            MIDI_DRUM->kit == XB_RB3_GUITAR){
         return init_jack_client(seq,verbose,"Rockband Guitar Controller");
     }
     else if(MIDI_DRUM->kit == WII_RB3_KEYBOARD || MIDI_DRUM->kit == XB_RB3_KEYBOARD){
@@ -477,6 +477,7 @@ void useage()
     printf("    -r/o/y/g/b <value>            set midi note for -color of button\n");
     printf("    -rhi/ohi/yhi/ghi/bhi <val>  set midi note for -color of upper button\n");
     printf("    -bg                         bass guitar mode\n");
+    printf("    -xbgtr                        force guitar mode (some devices default to drum)\n");
     printf("\n");
     printf("    General Options\n");
     printf("    -vel <value>                set default note velocity\n");
@@ -560,6 +561,10 @@ int main(int argc, char **argv)
         {
             if (strcmp(argv[i], "-v") == 0) {
                  MIDI_DRUM->verbose = 1;
+            }
+            else if (strcmp(argv[i], "-xbgtr") == 0) {
+                //rockband 1 set, use different irq routine
+                MIDI_DRUM->kit = XB_RB3_GUITAR;
             }
             else if (strcmp(argv[i], "-rb1") == 0) {
                 //rockband 1 set, use different irq routine
@@ -730,11 +735,15 @@ int main(int argc, char **argv)
             break;
         }
     }
-	 //reassign xb rb3 keyboard if option selected
-	 else if (MIDI_DRUM->kit==XB_RB3_KEYBOARD){
-		  r = find_rbdrum_device(MIDI_DRUM,&devh);
- 		  MIDI_DRUM->kit = XB_RB3_KEYBOARD;
-	 }
+    //reassign xb rb3 keyboard if option selected
+    else if (MIDI_DRUM->kit==XB_RB3_KEYBOARD){
+        r = find_rbdrum_device(MIDI_DRUM,&devh);
+        MIDI_DRUM->kit = XB_RB3_KEYBOARD;
+    }
+    else if (MIDI_DRUM->kit==XB_RB3_GUITAR){
+        r = find_rbdrum_device(MIDI_DRUM,&devh);
+        MIDI_DRUM->kit = XB_RB3_GUITAR;
+    }
     else
         r = find_rbdrum_device(MIDI_DRUM,&devh);
     if (r < 0) {
