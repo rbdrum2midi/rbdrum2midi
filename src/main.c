@@ -395,7 +395,8 @@ static int alloc_transfers(MIDIDRUM* MIDI_DRUM, libusb_device_handle *devh, stru
             sizeof(MIDI_DRUM->irqbuf), cb_irq_gh, (void*)MIDI_DRUM, 0);
         if( MIDI_DRUM->verbose)printf("Guitar Hero World Tour drum kit connected.\n");
     }
-    else if(MIDI_DRUM->kit == PS_RB_GUITAR || MIDI_DRUM->kit == XB_RB_GUITAR){
+    else if(MIDI_DRUM->kit == PS_RB_GUITAR || MIDI_DRUM->kit == XB_RB_GUITAR ||
+            MIDI_DRUM->kit == XB_RB3_GUITAR){
         libusb_fill_interrupt_transfer(*irq_transfer, devh, EP_INTR, MIDI_DRUM->irqbuf,
             sizeof(MIDI_DRUM->irqbuf), cb_irq_rb_guitar, (void*)MIDI_DRUM, 0);
         if( MIDI_DRUM->verbose)printf("Rock Band Guitar connected.\n");
