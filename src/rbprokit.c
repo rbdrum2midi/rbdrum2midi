@@ -46,18 +46,18 @@ static inline void handle_bass(MIDIDRUM* MIDI_DRUM, unsigned char drum)
         if (MIDI_DRUM->drum_state[drum]) {
             MIDI_DRUM->velocity = MIDI_DRUM->default_velocity;
             MIDI_DRUM->notedown( MIDI_DRUM->sequencer, MIDI_DRUM->channel, MIDI_DRUM->midi_note[drum], MIDI_DRUM->velocity);
-        if(MIDI_DRUM->hat_mode == drum)
-	    {
-		MIDI_DRUM->midi_note[MIDI_DRUM->hat] = MIDI_DRUM->midi_note[CLOSED_HAT];
-	    }
+            if(MIDI_DRUM->hat_mode == drum)
+            {
+                MIDI_DRUM->midi_note[MIDI_DRUM->hat] = MIDI_DRUM->midi_note[CLOSED_HAT];
+            }
         }
         // Up
         else {
             MIDI_DRUM->noteup(MIDI_DRUM->sequencer, MIDI_DRUM->channel, MIDI_DRUM->midi_note[drum], 0);
-       if(MIDI_DRUM->hat_mode == drum)
-	   {
-	       MIDI_DRUM->midi_note[MIDI_DRUM->hat] = MIDI_DRUM->midi_note[OPEN_HAT];
-	   }
+            if(MIDI_DRUM->hat_mode == drum)
+            {
+                MIDI_DRUM->midi_note[MIDI_DRUM->hat] = MIDI_DRUM->midi_note[OPEN_HAT];
+            }
         }
     }
 }
@@ -90,13 +90,13 @@ void cb_irq_rb_pro(struct libusb_transfer *transfer)
     handle_drum(MIDI_DRUM,RED); 
     if(MIDI_DRUM->drum_state[CYMBAL_FLAG]){
     
-       	handle_drum(MIDI_DRUM,YELLOW_CYMBAL); 
-       	handle_drum(MIDI_DRUM,BLUE_CYMBAL); 
-       	handle_drum(MIDI_DRUM,GREEN_CYMBAL); 
+        handle_drum(MIDI_DRUM,YELLOW_CYMBAL); 
+        handle_drum(MIDI_DRUM,BLUE_CYMBAL); 
+        handle_drum(MIDI_DRUM,GREEN_CYMBAL); 
     }    
     else{
         handle_drum(MIDI_DRUM,YELLOW);
-       	handle_drum(MIDI_DRUM,BLUE);
+        handle_drum(MIDI_DRUM,BLUE);
         handle_drum(MIDI_DRUM,GREEN);
     }   
     handle_bass(MIDI_DRUM,ORANGE_BASS);
@@ -108,7 +108,7 @@ void cb_irq_rb_pro(struct libusb_transfer *transfer)
     if (MIDI_DRUM->verbose)
     {
         print_hits(MIDI_DRUM);
-	print_buf(MIDI_DRUM);
+        print_buf(MIDI_DRUM);
     } 
     if (libusb_submit_transfer(transfer) < 0)
         do_exit = 2;
