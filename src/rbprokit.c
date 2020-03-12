@@ -14,7 +14,7 @@ void init_rb_pro_kit(MIDIDRUM* MIDI_DRUM)
     MIDI_DRUM->buf_mask[GREEN] = 0xFF;
     MIDI_DRUM->buf_indx[CYMBAL_FLAG] = 7;
     MIDI_DRUM->buf_mask[CYMBAL_FLAG] = 0x02;
-    MIDI_DRUM->buf_indx[YELLOW_CYMBAL] = 12;
+    MIDI_DRUM->buf_indx[YELLOW_CYMBAL] = 7;
     MIDI_DRUM->buf_mask[YELLOW_CYMBAL] = 0xFF;
     MIDI_DRUM->buf_indx[BLUE_CYMBAL] = 14;
     MIDI_DRUM->buf_mask[BLUE_CYMBAL] = 0xFF;
