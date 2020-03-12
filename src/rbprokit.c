@@ -27,7 +27,9 @@ void init_rb_pro_kit(MIDIDRUM* MIDI_DRUM)
 
     //velocity-less cymbals version
     MIDI_DRUM->buf_indx[YELLOW_CYMBAL] = 7;
-    MIDI_DRUM->buf_mask[YELLOW_CYMBAL] = 0xFF;
+    MIDI_DRUM->buf_mask[YELLOW_CYMBAL] = 0x80;
+    MIDI_DRUM->buf_indx[NOTHING] = 7;
+    MIDI_DRUM->buf_mask[NOTHING] = 0xFF;
     MIDI_DRUM->buf_indx[BLUE_CYMBAL] = 7;
     MIDI_DRUM->buf_mask[BLUE_CYMBAL] = 0x40;
     MIDI_DRUM->buf_indx[GREEN_CYMBAL] = 7;
@@ -100,7 +102,7 @@ void cb_irq_rb_pro(struct libusb_transfer *transfer)
     get_state(MIDI_DRUM,GREEN);
     get_state(MIDI_DRUM,BLUE);
     get_state(MIDI_DRUM,CYMBAL_FLAG);
-    get_state(MIDI_DRUM,YELLOW_CYMBAL);
+    get_state(MIDI_DRUM,NOTHING);
     get_state(MIDI_DRUM,ORANGE_BASS);
     get_state(MIDI_DRUM,BLACK_BASS);
 
@@ -118,7 +120,7 @@ void cb_irq_rb_pro(struct libusb_transfer *transfer)
         MIDI_DRUM->drum_state[GREEN] = 0;
         MIDI_DRUM->drum_state[BLUE] = 0;
     }
-    else if(MIDI_DRUM->drum_state[YELLOW_CYMBAL] == 0){
+    else if(MIDI_DRUM->drum_state[NOTHING] == 0){
         //this special case sometimes happens causing spurious hits
         MIDI_DRUM->drum_state[YELLOW] = 0;
         MIDI_DRUM->drum_state[GREEN] = 0;
