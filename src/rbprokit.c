@@ -114,6 +114,9 @@ void cb_irq_rb_pro(struct libusb_transfer *transfer)
         handle_cymbal(MIDI_DRUM,YELLOW_CYMBAL);
         handle_cymbal(MIDI_DRUM,BLUE_CYMBAL);
         handle_cymbal(MIDI_DRUM,GREEN_CYMBAL);
+        MIDI_DRUM->drum_state[YELLOW] = 0;
+        MIDI_DRUM->drum_state[GREEN] = 0;
+        MIDI_DRUM->drum_state[BLUE] = 0;
     }
     else if(MIDI_DRUM->drum_state[YELLOW_CYMBAL] == 0){
         //this special case sometimes happens causing spurious hits
