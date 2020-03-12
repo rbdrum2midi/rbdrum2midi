@@ -27,11 +27,11 @@ void init_rb_pro_kit(MIDIDRUM* MIDI_DRUM)
 
     //velocity-less cymbals version
     MIDI_DRUM->buf_indx[YELLOW_CYMBAL] = 7;
-    MIDI_DRUM->buf_mask[YELLOW_CYMBAL] = 0x80;
+    MIDI_DRUM->buf_mask[YELLOW_CYMBAL] = 0x82;
     MIDI_DRUM->buf_indx[BLUE_CYMBAL] = 7;
-    MIDI_DRUM->buf_mask[BLUE_CYMBAL] = 0x40;
+    MIDI_DRUM->buf_mask[BLUE_CYMBAL] = 0x42;
     MIDI_DRUM->buf_indx[GREEN_CYMBAL] = 7;
-    MIDI_DRUM->buf_mask[GREEN_CYMBAL] = 0x10;
+    MIDI_DRUM->buf_mask[GREEN_CYMBAL] = 0x12;
 }
 
 static inline void calc_velocity(MIDIDRUM* MIDI_DRUM, unsigned char value)
@@ -45,6 +45,7 @@ static inline void handle_drum(MIDIDRUM* MIDI_DRUM, unsigned char drum)
        calc_velocity(MIDI_DRUM,MIDI_DRUM->drum_state[drum]);
        MIDI_DRUM->noteup(MIDI_DRUM->sequencer, MIDI_DRUM->channel, MIDI_DRUM->midi_note[drum], 0);
        MIDI_DRUM->notedown( MIDI_DRUM->sequencer, MIDI_DRUM->channel, MIDI_DRUM->midi_note[drum], MIDI_DRUM->velocity);
+       printf("midi out pad note %i vel %i\n",MIDI_DRUM->midi_note[drum], MIDI_DRUM->velocity);
    }
 }
 
@@ -54,6 +55,7 @@ static inline void handle_cymbal(MIDIDRUM* MIDI_DRUM, unsigned char drum)
    if (MIDI_DRUM->drum_state[drum] && !MIDI_DRUM->prev_state[drum]) {
        MIDI_DRUM->noteup(MIDI_DRUM->sequencer, MIDI_DRUM->channel, MIDI_DRUM->midi_note[drum], 0);
        MIDI_DRUM->notedown( MIDI_DRUM->sequencer, MIDI_DRUM->channel, MIDI_DRUM->midi_note[drum], MIDI_DRUM->default_velocity);
+       printf("midi out cymbal note %i\n",MIDI_DRUM->midi_note[drum]);
    }
 }
 
@@ -107,16 +109,20 @@ void cb_irq_rb_pro(struct libusb_transfer *transfer)
 
     handle_drum(MIDI_DRUM,RED); 
     if(MIDI_DRUM->drum_state[CYMBAL_FLAG]){
+    MIDI_DRUM->drum_state[YELLOW] = 0;
+    MIDI_DRUM->drum_state[GREEN] = 0;
+    MIDI_DRUM->drum_state[BLUE] = 0;
+    }
     
         handle_cymbal(MIDI_DRUM,YELLOW_CYMBAL);
         handle_cymbal(MIDI_DRUM,BLUE_CYMBAL);
         handle_cymbal(MIDI_DRUM,GREEN_CYMBAL);
-    }    
-    else{
+    //}    
+    //else{
         handle_drum(MIDI_DRUM,YELLOW);
         handle_drum(MIDI_DRUM,BLUE);
         handle_drum(MIDI_DRUM,GREEN);
-    }   
+    //}   
     handle_bass(MIDI_DRUM,ORANGE_BASS);
     handle_bass(MIDI_DRUM,BLACK_BASS);
         
