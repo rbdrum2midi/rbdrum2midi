@@ -24,6 +24,14 @@ void init_rb_pro_kit(MIDIDRUM* MIDI_DRUM)
     MIDI_DRUM->buf_mask[ORANGE_BASS] = 0x01;
     MIDI_DRUM->buf_indx[BLACK_BASS] = 6;
     MIDI_DRUM->buf_mask[BLACK_BASS] = 0x40;
+
+    //velocity-less cymbals version
+    MIDI_DRUM->buf_indx[YELLOW_CYMBAL] = 7;
+    MIDI_DRUM->buf_mask[YELLOW_CYMBAL] = 0x80;
+    MIDI_DRUM->buf_indx[BLUE_CYMBAL] = 7;
+    MIDI_DRUM->buf_mask[BLUE_CYMBAL] = 0x40;
+    MIDI_DRUM->buf_indx[GREEN_CYMBAL] = 7;
+    MIDI_DRUM->buf_mask[GREEN_CYMBAL] = 0x10;
 }
 
 static inline void calc_velocity(MIDIDRUM* MIDI_DRUM, unsigned char value)
@@ -39,6 +47,16 @@ static inline void handle_drum(MIDIDRUM* MIDI_DRUM, unsigned char drum)
        MIDI_DRUM->notedown( MIDI_DRUM->sequencer, MIDI_DRUM->channel, MIDI_DRUM->midi_note[drum], MIDI_DRUM->velocity);
    }
 }
+
+//velocity-less
+static inline void handle_cymbal(MIDIDRUM* MIDI_DRUM, unsigned char drum)
+{
+   if (MIDI_DRUM->drum_state[drum] && !MIDI_DRUM->prev_state[drum]) {
+       MIDI_DRUM->noteup(MIDI_DRUM->sequencer, MIDI_DRUM->channel, MIDI_DRUM->midi_note[drum], 0);
+       MIDI_DRUM->notedown( MIDI_DRUM->sequencer, MIDI_DRUM->channel, MIDI_DRUM->midi_note[drum], MIDI_DRUM->default_velocity);
+   }
+}
+
 
 static inline void handle_bass(MIDIDRUM* MIDI_DRUM, unsigned char drum)
 {
@@ -90,9 +108,9 @@ void cb_irq_rb_pro(struct libusb_transfer *transfer)
     handle_drum(MIDI_DRUM,RED); 
     if(MIDI_DRUM->drum_state[CYMBAL_FLAG]){
     
-        handle_drum(MIDI_DRUM,YELLOW_CYMBAL); 
-        handle_drum(MIDI_DRUM,BLUE_CYMBAL); 
-        handle_drum(MIDI_DRUM,GREEN_CYMBAL); 
+        handle_cymbal(MIDI_DRUM,YELLOW_CYMBAL);
+        handle_cymbal(MIDI_DRUM,BLUE_CYMBAL);
+        handle_cymbal(MIDI_DRUM,GREEN_CYMBAL);
     }    
     else{
         handle_drum(MIDI_DRUM,YELLOW);
