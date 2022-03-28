@@ -29,6 +29,8 @@
 
 unsigned char rb3_ps3_keyboard_init_code[40] = {0xe9,0,0x89,0x1b,0,0,0,0x02,0,0,0,0,0,0,0,0,0,0,0,0,0,0x80,0,0,0,0,0x89,0,0,0,0,0,0xe9,0x01,0,0,0,0,0,0};
 
+int do_exit;
+
 static int claim_interface(struct libusb_device_handle **devh)
 {
     int r;
