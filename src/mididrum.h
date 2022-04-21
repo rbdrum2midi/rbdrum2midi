@@ -167,5 +167,5 @@ void print_keys(MIDIDRUM* MIDI_DRUM);
 void print_guitar(MIDIDRUM* MIDI_DRUM);
 
 //other globals
-int do_exit;
+extern int do_exit;
 #endif
