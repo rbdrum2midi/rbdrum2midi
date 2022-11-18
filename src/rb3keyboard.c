@@ -145,11 +145,12 @@ static inline void handle_key(MIDIDRUM *MIDI_DRUM, unsigned char key) {
             MIDI_DRUM->notedown(MIDI_DRUM->sequencer, MIDI_DRUM->channel,
                                                     48 + key + 12 * MIDI_DRUM->octave,
                                                     MIDI_DRUM->velocity);
-        } else {
-            MIDI_DRUM->noteup(MIDI_DRUM->sequencer, MIDI_DRUM->channel,
-                                                    48 + key + 12 * MIDI_DRUM->octave,
-                                                    0);
         }
+    }
+    if (!(MIDI_DRUM->key_state & (1 << (24 - key)))) {
+        MIDI_DRUM->noteup(MIDI_DRUM->sequencer, MIDI_DRUM->channel,
+                                                48 + key + 12 * MIDI_DRUM->octave,
+                                                0);
     }
 }
 
@@ -205,15 +206,20 @@ void cb_irq_rb3_keyboard(struct libusb_transfer *transfer) {
     get_state(MIDI_DRUM, MINUS);
     get_state(MIDI_DRUM, CONNECT);
 
-    // TODO: this leaves opportunity for currently-on notes to be "orphaned"
-    // so that the note-off comes for a different octave
-    // NOTE: Also the + and - buttons correspond to start and select on other
-    // platforms, when using the midi out port the 1 and B buttons change octave
-    // for now, I don't mind just doing it this way
     if (MIDI_DRUM->drum_state[MINUS] && MIDI_DRUM->octave > -4) {
+        for (int key=0; key<=24; key++) {
+        MIDI_DRUM->noteup(MIDI_DRUM->sequencer, MIDI_DRUM->channel,
+                                                48 + key + 12 * MIDI_DRUM->octave,
+                                                0);
+        }
         MIDI_DRUM->octave--;
     }
     if (MIDI_DRUM->drum_state[PLUS] && MIDI_DRUM->octave < 4) {
+        for (int key=0; key<=24; key++) {
+        MIDI_DRUM->noteup(MIDI_DRUM->sequencer, MIDI_DRUM->channel,
+                                                48 + key + 12 * MIDI_DRUM->octave,
+                                                0);
+        }
         MIDI_DRUM->octave++;
     }
     if (MIDI_DRUM->drum_state[CONNECT] && !MIDI_DRUM->prev_state[CONNECT]) {
